@@ -22,7 +22,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         {/* Sidebar */}
         <nav className="hidden md:flex flex-col w-64 bg-white border-r border-gray-200 p-4">
           <div className="mb-8">
-            <h1 className="text-2xl font-semibold text-mint-600">KasirPro</h1>
+            <h1 className="text-2xl font-semibold text-mint-600">KasirBengkulu</h1>
           </div>
           <div className="space-y-2">
             {navItems.map((item) => {
