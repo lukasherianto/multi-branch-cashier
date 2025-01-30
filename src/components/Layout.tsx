@@ -20,7 +20,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     <div className="min-h-screen bg-gray-50">
       <div className="flex h-screen">
         {/* Sidebar */}
-        <nav className="hidden md:flex flex-col w-64 bg-white border-r border-gray-200 p-4">
+        <nav className="hidden md:flex flex-col w-48 bg-white border-r border-gray-200 p-3">
           <div className="mb-8">
             <h1 className="text-2xl font-semibold text-mint-600">KasirBengkulu</h1>
           </div>
@@ -31,7 +31,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 ${
                     isActive(item.path)
                       ? "bg-mint-50 text-mint-600"
                       : "text-gray-600 hover:bg-gray-50"

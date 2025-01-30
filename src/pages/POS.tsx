@@ -86,7 +86,7 @@ const POS = () => {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      className="text-xs px-2 py-1 h-7"
+                      className="text-xs px-2 py-1 h-7 w-16"
                       onClick={() => {
                         setCartItems(items => {
                           const existingItem = items.find(item => item.id === product.id);
@@ -101,7 +101,7 @@ const POS = () => {
                         });
                       }}
                     >
-                      Tambah ke Keranjang
+                      Buy
                     </Button>
                   </TableCell>
                 </TableRow>
