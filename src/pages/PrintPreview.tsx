@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Printer, WhatsApp } from "lucide-react";
+import { Printer, MessageSquare } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
 import { id } from "date-fns/locale";
 
@@ -86,7 +86,7 @@ const PrintPreview = () => {
             Print Struk
           </Button>
           <Button onClick={handleWhatsApp} className="w-40">
-            <WhatsApp className="mr-2 h-4 w-4" />
+            <MessageSquare className="mr-2 h-4 w-4" />
             Kirim WhatsApp
           </Button>
         </div>
