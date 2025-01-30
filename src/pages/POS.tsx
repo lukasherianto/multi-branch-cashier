@@ -184,6 +184,22 @@ const POS = () => {
     { id: 5, name: "Produk 5", price: 35000, stock: 60, category: "Kategori B" },
   ];
 
+  const addToCart = (product: any, quantity: number) => {
+    if (quantity <= 0) return;
+    
+    setCartItems(items => {
+      const existingItem = items.find(item => item.id === product.id);
+      if (existingItem) {
+        return items.map(item =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + quantity }
+            : item
+        );
+      }
+      return [...items, { ...product, quantity }];
+    });
+  };
+
   return (
     <div className="h-[calc(100vh-2rem)] flex gap-6">
       {/* Product Search and Table Section */}
@@ -221,26 +237,37 @@ const POS = () => {
                   </TableCell>
                   <TableCell className="py-2 text-xs text-right">{product.stock}</TableCell>
                   <TableCell className="py-2 text-xs text-right">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="text-xs px-2 py-1 h-7 w-16"
-                      onClick={() => {
-                        setCartItems(items => {
-                          const existingItem = items.find(item => item.id === product.id);
-                          if (existingItem) {
-                            return items.map(item =>
-                              item.id === product.id
-                                ? { ...item, quantity: item.quantity + 1 }
-                                : item
-                            );
+                    <div className="flex items-center justify-end gap-2">
+                      <Input
+                        type="number"
+                        className="w-16 h-7 text-xs"
+                        min="1"
+                        defaultValue="1"
+                        onChange={(e) => {
+                          const input = e.target as HTMLInputElement;
+                          input.value = Math.max(1, parseInt(input.value) || 1).toString();
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const input = e.target as HTMLInputElement;
+                            addToCart(product, parseInt(input.value) || 1);
+                            input.value = "1";
                           }
-                          return [...items, { ...product, quantity: 1 }];
-                        });
-                      }}
-                    >
-                      Buy
-                    </Button>
+                        }}
+                      />
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="text-xs px-2 py-1 h-7"
+                        onClick={(e) => {
+                          const input = e.currentTarget.previousSibling as HTMLInputElement;
+                          addToCart(product, parseInt(input.value) || 1);
+                          input.value = "1";
+                        }}
+                      >
+                        Add
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
