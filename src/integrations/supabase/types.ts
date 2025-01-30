@@ -49,9 +49,11 @@ export type Database = {
       }
       karyawan: {
         Row: {
+          auth_id: string | null
           cabang_id: number | null
           created_at: string
           email: string | null
+          is_active: boolean | null
           karyawan_id: number
           name: string
           pelaku_usaha_id: number | null
@@ -60,9 +62,11 @@ export type Database = {
           whatsapp_contact: string | null
         }
         Insert: {
+          auth_id?: string | null
           cabang_id?: number | null
           created_at?: string
           email?: string | null
+          is_active?: boolean | null
           karyawan_id?: number
           name: string
           pelaku_usaha_id?: number | null
@@ -71,9 +75,11 @@ export type Database = {
           whatsapp_contact?: string | null
         }
         Update: {
+          auth_id?: string | null
           cabang_id?: number | null
           created_at?: string
           email?: string | null
+          is_active?: boolean | null
           karyawan_id?: number
           name?: string
           pelaku_usaha_id?: number | null

@@ -19,4 +19,5 @@ export interface EmployeeFormData {
   whatsapp_contact: string;
   role: string;
   cabang_id: string;
+  password?: string; // Menambahkan field password
 }

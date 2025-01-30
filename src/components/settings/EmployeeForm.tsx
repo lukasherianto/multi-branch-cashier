@@ -20,6 +20,7 @@ export function EmployeeForm() {
       whatsapp_contact: "",
       role: "",
       cabang_id: "",
+      password: "",
     },
   });
 
@@ -42,13 +43,29 @@ export function EmployeeForm() {
         return;
       }
 
-      const { error } = await supabase.from("karyawan").insert({
+      // Create auth user for employee
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password || '',
+        options: {
+          data: {
+            name: data.name,
+            role: 'employee'
+          }
+        }
+      });
+
+      if (authError) throw authError;
+
+      // Create employee record
+      const { error: employeeError } = await supabase.from("karyawan").insert({
         ...data,
+        auth_id: authData.user?.id,
         cabang_id: data.cabang_id ? parseInt(data.cabang_id) : null,
         pelaku_usaha_id: pelakuUsaha.pelaku_usaha_id,
       });
 
-      if (error) throw error;
+      if (employeeError) throw employeeError;
 
       toast({
         title: "Sukses",

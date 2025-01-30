@@ -42,6 +42,24 @@ export const EmployeeFormFields = ({ form, branches }: EmployeeFormFieldsProps) 
 
       <FormField
         control={form.control}
+        name="password"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Password</FormLabel>
+            <FormControl>
+              <Input 
+                type="password" 
+                placeholder="Password untuk login" 
+                {...field} 
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
         name="whatsapp_contact"
         render={({ field }) => (
           <FormItem>
