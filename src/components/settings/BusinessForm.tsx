@@ -34,12 +34,13 @@ export const BusinessForm = () => {
           .from('pelaku_usaha')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
 
+        console.log("Business data loaded:", businessData);
+
         if (businessData) {
-          console.log("Business data loaded:", businessData);
           setPelakuUsahaId(businessData.pelaku_usaha_id);
           setBusinessName(businessData.business_name || '');
           setWhatsapp(businessData.contact_whatsapp || '');
@@ -91,7 +92,10 @@ export const BusinessForm = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
+      console.log("Saving business data for user:", user.id);
+
       if (pelakuUsahaId) {
+        console.log("Updating existing business:", pelakuUsahaId);
         const { error: updateError } = await supabase
           .from('pelaku_usaha')
           .update({
@@ -103,6 +107,7 @@ export const BusinessForm = () => {
 
         if (updateError) throw updateError;
       } else {
+        console.log("Creating new business for user:", user.id);
         const { error: insertError } = await supabase
           .from('pelaku_usaha')
           .insert({
@@ -118,6 +123,9 @@ export const BusinessForm = () => {
         title: "Berhasil",
         description: "Data usaha berhasil diperbarui",
       });
+      
+      // Reload data to get the new pelaku_usaha_id if it was just created
+      loadBusinessData();
     } catch (error) {
       console.error("Error saving business data:", error);
       toast({
