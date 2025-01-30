@@ -11,8 +11,6 @@ import { UserRound, Store, Loader2 } from "lucide-react";
 
 const Settings = () => {
   const { toast } = useToast();
-  const [businessName, setBusinessName] = useState("");
-  const [whatsapp, setWhatsapp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
@@ -28,13 +26,15 @@ const Settings = () => {
 
   const loadUserProfile = async () => {
     try {
+      setIsLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
+      
       if (user) {
         console.log("Loading user profile:", user);
         const { data: userData, error } = await supabase
           .from('users')
           .select('*')
-          .eq('user_id', parseInt(user.id))
+          .eq('user_id', user.id)
           .single();
 
         if (error) throw error;
@@ -42,8 +42,8 @@ const Settings = () => {
         if (userData) {
           console.log("User data loaded:", userData);
           setUserId(userData.user_id.toString());
-          setName(userData.name);
-          setEmail(userData.email);
+          setName(userData.name || '');
+          setEmail(userData.email || '');
         }
       }
     } catch (error) {
@@ -53,6 +53,8 @@ const Settings = () => {
         description: "Gagal memuat profil pengguna",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -70,10 +72,9 @@ const Settings = () => {
         .update({
           name,
           email,
-          password: password || undefined, // Only include password if it's not empty
           updated_at: new Date().toISOString(),
         })
-        .eq('user_id', parseInt(user.id));
+        .eq('user_id', user.id);
 
       if (updateError) throw updateError;
 
@@ -99,68 +100,6 @@ const Settings = () => {
       });
     } finally {
       setIsSavingProfile(false);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        toast({
-          title: "Error",
-          description: "Anda harus login terlebih dahulu",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      console.log("User ID before conversion:", user.id);
-      const userId = parseInt(user.id);
-      console.log("User ID after conversion:", userId);
-
-      if (isNaN(userId)) {
-        toast({
-          title: "Error",
-          description: "ID pengguna tidak valid",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { error } = await supabase.from("pelaku_usaha").insert({
-        business_name: businessName,
-        contact_whatsapp: whatsapp,
-        user_id: userId,
-      });
-
-      if (error) {
-        console.error("Supabase error:", error);
-        throw error;
-      }
-
-      toast({
-        title: "Berhasil",
-        description: "Data pelaku usaha berhasil ditambahkan",
-      });
-
-      // Reset form
-      setBusinessName("");
-      setWhatsapp("");
-    } catch (error) {
-      console.error("Error adding pelaku usaha:", error);
-      toast({
-        title: "Error",
-        description: "Gagal menambahkan data pelaku usaha",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -255,30 +194,9 @@ const Settings = () => {
         <TabsContent value="business">
           <Card className="p-6">
             <h3 className="text-xl font-semibold mb-4">Data Pelaku Usaha</h3>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="businessName">Nama Usaha</Label>
-                <Input
-                  id="businessName"
-                  value={businessName}
-                  onChange={(e) => setBusinessName(e.target.value)}
-                  placeholder="Masukkan nama usaha"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="whatsapp">Nomor WhatsApp</Label>
-                <Input
-                  id="whatsapp"
-                  value={whatsapp}
-                  onChange={(e) => setWhatsapp(e.target.value)}
-                  placeholder="Contoh: 08123456789"
-                />
-              </div>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Menyimpan..." : "Simpan"}
-              </Button>
-            </form>
+            <p className="text-gray-500">
+              Fitur pengaturan data usaha akan segera hadir
+            </p>
           </Card>
         </TabsContent>
       </Tabs>
