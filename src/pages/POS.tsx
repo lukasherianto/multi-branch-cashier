@@ -38,9 +38,17 @@ const POS = () => {
 
   const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
+  const sampleProducts = [
+    { id: 1, name: "Produk 1", price: 25000, stock: 100, category: "Kategori A" },
+    { id: 2, name: "Produk 2", price: 30000, stock: 75, category: "Kategori B" },
+    { id: 3, name: "Produk 3", price: 15000, stock: 50, category: "Kategori A" },
+    { id: 4, name: "Produk 4", price: 40000, stock: 25, category: "Kategori C" },
+    { id: 5, name: "Produk 5", price: 35000, stock: 60, category: "Kategori B" },
+  ];
+
   return (
     <div className="h-[calc(100vh-2rem)] flex gap-6">
-      {/* Product Search Section - Now wider */}
+      {/* Product Search and Table Section */}
       <div className="flex-1 space-y-6">
         <div className="flex justify-between items-center">
           <h2 className="text-3xl font-bold text-gray-800">Kasir</h2>
@@ -54,21 +62,55 @@ const POS = () => {
           />
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((_, index) => (
-            <Card
-              key={index}
-              className="p-4 cursor-pointer hover:shadow-lg transition-shadow"
-            >
-              <div className="aspect-square bg-gray-100 rounded-lg mb-3" />
-              <h3 className="font-medium">Produk {index + 1}</h3>
-              <p className="text-sm text-gray-600">Rp 25.000</p>
-            </Card>
-          ))}
-        </div>
+        <Card className="flex-1">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nama Produk</TableHead>
+                <TableHead>Kategori</TableHead>
+                <TableHead className="text-right">Harga</TableHead>
+                <TableHead className="text-right">Stok</TableHead>
+                <TableHead className="text-right">Aksi</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sampleProducts.map((product) => (
+                <TableRow key={product.id}>
+                  <TableCell className="font-medium">{product.name}</TableCell>
+                  <TableCell>{product.category}</TableCell>
+                  <TableCell className="text-right">
+                    Rp {product.price.toLocaleString('id-ID')}
+                  </TableCell>
+                  <TableCell className="text-right">{product.stock}</TableCell>
+                  <TableCell className="text-right">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setCartItems(items => {
+                          const existingItem = items.find(item => item.id === product.id);
+                          if (existingItem) {
+                            return items.map(item =>
+                              item.id === product.id
+                                ? { ...item, quantity: item.quantity + 1 }
+                                : item
+                            );
+                          }
+                          return [...items, { ...product, quantity: 1 }];
+                        });
+                      }}
+                    >
+                      Tambah ke Keranjang
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
       </div>
 
-      {/* Cart Section - Now narrower */}
+      {/* Cart Section */}
       <Card className="w-[320px] flex flex-col">
         <div className="p-4 border-b">
           <div className="flex items-center space-x-3">
