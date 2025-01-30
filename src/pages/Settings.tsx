@@ -2,10 +2,11 @@ import { Card } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserRound, Store, GitBranch, Loader2 } from "lucide-react";
+import { UserRound, Store, GitBranch, Users, Loader2 } from "lucide-react";
 import { ProfileForm } from "@/components/settings/ProfileForm";
 import { BusinessForm } from "@/components/settings/BusinessForm";
 import { BranchForm } from "@/components/settings/BranchForm";
+import { EmployeeForm } from "@/components/settings/EmployeeForm";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -40,7 +41,6 @@ const Settings = () => {
 
       console.log("Authenticated user:", user);
       
-      // Get user data directly from auth user object
       setUserId(user.id);
       setName(user.user_metadata.name || user.email?.split('@')[0] || '');
       setEmail(user.email || '');
@@ -86,6 +86,10 @@ const Settings = () => {
             <GitBranch className="w-4 h-4" />
             <span>Cabang</span>
           </TabsTrigger>
+          <TabsTrigger value="employees" className="space-x-2 data-[state=active]:bg-mint-50 data-[state=active]:text-mint-600">
+            <Users className="w-4 h-4" />
+            <span>Karyawan</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -104,6 +108,12 @@ const Settings = () => {
 
         <TabsContent value="branches">
           <BranchForm />
+        </TabsContent>
+
+        <TabsContent value="employees">
+          <Card className="p-6">
+            <EmployeeForm />
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

@@ -47,6 +47,50 @@ export type Database = {
           },
         ]
       }
+      karyawan: {
+        Row: {
+          created_at: string
+          email: string | null
+          karyawan_id: number
+          name: string
+          pelaku_usaha_id: number | null
+          phone: string | null
+          role: string
+          updated_at: string
+          whatsapp_contact: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          karyawan_id?: number
+          name: string
+          pelaku_usaha_id?: number | null
+          phone?: string | null
+          role: string
+          updated_at?: string
+          whatsapp_contact?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          karyawan_id?: number
+          name?: string
+          pelaku_usaha_id?: number | null
+          phone?: string | null
+          role?: string
+          updated_at?: string
+          whatsapp_contact?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "karyawan_pelaku_usaha_id_fkey"
+            columns: ["pelaku_usaha_id"]
+            isOneToOne: false
+            referencedRelation: "pelaku_usaha"
+            referencedColumns: ["pelaku_usaha_id"]
+          },
+        ]
+      }
       kas: {
         Row: {
           amount: number
