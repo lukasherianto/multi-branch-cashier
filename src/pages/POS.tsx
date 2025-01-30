@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { 
   Table, 
@@ -50,11 +50,22 @@ const POS = () => {
         .from('pelaku_usaha')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (pelakuUsahaError) {
         console.error("Error mengambil data pelaku usaha:", pelakuUsahaError);
         throw pelakuUsahaError;
+      }
+
+      if (!pelakuUsahaData) {
+        console.log("Profil usaha belum dibuat");
+        toast({
+          title: "Profil Usaha Belum Dibuat",
+          description: "Silakan buat profil usaha Anda terlebih dahulu",
+          variant: "destructive",
+        });
+        navigate('/settings');
+        return;
       }
 
       console.log("Data pelaku usaha:", pelakuUsahaData);
@@ -65,11 +76,22 @@ const POS = () => {
         .from('cabang')
         .select('*')
         .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id)
-        .single();
+        .maybeSingle();
 
       if (cabangError) {
         console.error("Error mengambil data cabang:", cabangError);
         throw cabangError;
+      }
+
+      if (!cabangData) {
+        console.log("Belum ada cabang yang dibuat");
+        toast({
+          title: "Cabang Belum Dibuat",
+          description: "Silakan buat cabang terlebih dahulu",
+          variant: "destructive",
+        });
+        navigate('/branches');
+        return;
       }
 
       console.log("Data cabang:", cabangData);
