@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation, Outlet } from "react-router-dom";
-import { Building, Home, ShoppingCart, History } from "lucide-react";
+import { Building, Home, ShoppingCart, History, Settings } from "lucide-react";
 
 const Layout = () => {
   const location = useLocation();
@@ -14,6 +14,7 @@ const Layout = () => {
     { icon: Building, label: "Cabang", path: "/branches" },
     { icon: ShoppingCart, label: "Kasir", path: "/pos" },
     { icon: History, label: "Riwayat", path: "/history" },
+    { icon: Settings, label: "Pengaturan", path: "/settings" },
   ];
 
   return (
