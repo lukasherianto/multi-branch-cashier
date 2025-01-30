@@ -149,6 +149,16 @@ const POS = () => {
         if (error) throw error;
       }
 
+      // Navigate to print preview with transaction data
+      navigate('/print-preview', {
+        state: {
+          items: cartItems,
+          total,
+          businessName: pelakuUsaha.business_name,
+          branchName: cabang.branch_name
+        }
+      });
+      
       // Clear cart after successful transaction
       setCartItems([]);
       
