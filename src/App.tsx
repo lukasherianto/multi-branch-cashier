@@ -7,6 +7,7 @@ import Layout from "./components/Layout";
 import Index from "./pages/Index";
 import Branches from "./pages/Branches";
 import POS from "./pages/POS";
+import Auth from "./pages/Auth";
 
 const queryClient = new QueryClient();
 
@@ -16,14 +17,15 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Layout>
-          <Routes>
+        <Routes>
+          <Route path="/auth" element={<Auth />} />
+          <Route element={<Layout />}>
             <Route path="/" element={<Index />} />
             <Route path="/branches" element={<Branches />} />
             <Route path="/pos" element={<POS />} />
             <Route path="/history" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Layout>
+          </Route>
+        </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

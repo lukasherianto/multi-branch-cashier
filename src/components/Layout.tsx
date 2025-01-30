@@ -1,8 +1,8 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, Outlet } from "react-router-dom";
 import { Building, Home, ShoppingCart, History } from "lucide-react";
 
-const Layout = ({ children }: { children: React.ReactNode }) => {
+const Layout = () => {
   const location = useLocation();
   
   const isActive = (path: string) => {
@@ -71,7 +71,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         {/* Main Content */}
         <main className="flex-1 overflow-auto p-8 pb-20 md:pb-8">
           <div className="animate-fadeIn">
-            {children}
+            <Outlet />
           </div>
         </main>
       </div>
