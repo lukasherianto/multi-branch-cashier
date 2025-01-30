@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -11,87 +11,82 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    console.log("Attempting login with:", email); // Debug log
+    console.log(`Attempting ${isSignUp ? 'signup' : 'login'} with:`, email);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        console.error("Login error:", error); // Debug log
-        if (error.message === "Invalid login credentials") {
-          toast({
-            variant: "destructive",
-            title: "Login gagal",
-            description: "Email atau kata sandi salah. Silakan coba lagi atau daftar jika belum memiliki akun.",
-          });
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Login gagal",
-            description: error.message,
-          });
-        }
-        return;
-      }
-
-      toast({
-        title: "Login berhasil",
-        description: "Anda akan diarahkan ke halaman utama",
-      });
-
-      navigate("/");
-    } catch (error: any) {
-      console.error("Unexpected error:", error); // Debug log
-      toast({
-        variant: "destructive",
-        title: "Login gagal",
-        description: "Terjadi kesalahan yang tidak diharapkan",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    console.log("Attempting signup with:", email); // Debug log
-
-    try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: window.location.origin,
-        }
-      });
-
-      if (error) {
-        console.error("Signup error:", error); // Debug log
-        toast({
-          variant: "destructive",
-          title: "Pendaftaran gagal",
-          description: error.message,
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: window.location.origin,
+          }
         });
-        return;
-      }
 
-      toast({
-        title: "Pendaftaran berhasil",
-        description: "Silakan cek email Anda untuk verifikasi",
-      });
+        if (error) {
+          console.error("Signup error:", error);
+          if (error.message.includes("already registered")) {
+            toast({
+              variant: "destructive",
+              title: "Pendaftaran gagal",
+              description: "Email sudah terdaftar. Silakan login.",
+            });
+            setIsSignUp(false);
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Pendaftaran gagal",
+              description: error.message,
+            });
+          }
+          return;
+        }
+
+        toast({
+          title: "Pendaftaran berhasil",
+          description: "Silakan login dengan akun yang baru dibuat",
+        });
+        setIsSignUp(false);
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
+          console.error("Login error:", error);
+          if (error.message === "Invalid login credentials") {
+            toast({
+              variant: "destructive",
+              title: "Login gagal",
+              description: "Email atau kata sandi salah. Silakan coba lagi atau daftar jika belum memiliki akun.",
+            });
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Login gagal",
+              description: error.message,
+            });
+          }
+          return;
+        }
+
+        toast({
+          title: "Login berhasil",
+          description: "Anda akan diarahkan ke halaman utama",
+        });
+        navigate("/");
+      }
     } catch (error: any) {
-      console.error("Unexpected signup error:", error); // Debug log
+      console.error("Unexpected error:", error);
       toast({
         variant: "destructive",
-        title: "Pendaftaran gagal",
+        title: isSignUp ? "Pendaftaran gagal" : "Login gagal",
         description: "Terjadi kesalahan yang tidak diharapkan",
       });
     } finally {
@@ -107,10 +102,10 @@ const Auth = () => {
             KasirBengkulu
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Masuk atau daftar untuk melanjutkan
+            {isSignUp ? 'Daftar akun baru' : 'Masuk ke akun Anda'}
           </p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleLogin}>
+        <form className="mt-8 space-y-6" onSubmit={handleAuth}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <Input
@@ -130,7 +125,7 @@ const Auth = () => {
                 id="password"
                 name="password"
                 type="password"
-                autoComplete="current-password"
+                autoComplete={isSignUp ? 'new-password' : 'current-password'}
                 required
                 placeholder="Kata Sandi"
                 value={password}
@@ -145,16 +140,16 @@ const Auth = () => {
               className="w-full"
               disabled={isLoading}
             >
-              {isLoading ? "Memproses..." : "Masuk"}
+              {isLoading ? "Memproses..." : (isSignUp ? "Daftar" : "Masuk")}
             </Button>
             <Button
               type="button"
               variant="outline"
               className="w-full"
-              onClick={handleSignUp}
+              onClick={() => setIsSignUp(!isSignUp)}
               disabled={isLoading}
             >
-              Daftar
+              {isSignUp ? "Sudah punya akun? Masuk" : "Belum punya akun? Daftar"}
             </Button>
           </div>
         </form>
