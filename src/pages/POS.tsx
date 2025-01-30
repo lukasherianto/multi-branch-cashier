@@ -15,8 +15,9 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Search, ShoppingCart, Plus, Minus, Trash2, User, Phone, CalendarIcon } from "lucide-react";
+import { Search, ShoppingCart, Plus, Minus, Trash2, User, CalendarIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { WhatsAppInput } from "@/components/settings/WhatsAppInput";
 
 interface CartItem {
   id: number;
@@ -54,46 +55,49 @@ const POS = () => {
     checkAuth();
   }, []);
 
-  // Fetch customer data when WhatsApp number changes
-  useEffect(() => {
-    const fetchCustomerData = async () => {
-      if (whatsappNumber.length >= 10) {
-        try {
-          const { data, error } = await supabase
-            .from('pelanggan')
-            .select('nama, tanggal_lahir')
-            .eq('whatsapp', whatsappNumber)
-            .maybeSingle();
+  const handleCheckCustomer = async () => {
+    if (whatsappNumber.length < 10) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Nomor WhatsApp tidak valid",
+      });
+      return;
+    }
 
-          if (error) throw error;
+    try {
+      const { data, error } = await supabase
+        .from('pelanggan')
+        .select('nama, tanggal_lahir')
+        .eq('whatsapp', whatsappNumber)
+        .maybeSingle();
 
-          if (data) {
-            setCustomerName(data.nama);
-            setBirthDate(data.tanggal_lahir ? new Date(data.tanggal_lahir) : null);
-            toast({
-              title: "Data Pelanggan Ditemukan",
-              description: `Selamat datang kembali, ${data.nama}!`,
-            });
-          } else {
-            setCustomerName("");
-            setBirthDate(null);
-          }
-        } catch (error: any) {
-          console.error('Error fetching customer data:', error);
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Gagal mengambil data pelanggan",
-          });
-        }
+      if (error) throw error;
+
+      if (data) {
+        setCustomerName(data.nama);
+        setBirthDate(data.tanggal_lahir ? new Date(data.tanggal_lahir) : null);
+        toast({
+          title: "Data Pelanggan Ditemukan",
+          description: `Selamat datang kembali, ${data.nama}!`,
+        });
       } else {
         setCustomerName("");
         setBirthDate(null);
+        toast({
+          title: "Pelanggan Baru",
+          description: "Silakan lengkapi data pelanggan",
+        });
       }
-    };
-
-    fetchCustomerData();
-  }, [whatsappNumber]);
+    } catch (error: any) {
+      console.error('Error fetching customer data:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Gagal mengambil data pelanggan",
+      });
+    }
+  };
 
   const checkAuth = async () => {
     try {
@@ -221,7 +225,6 @@ const POS = () => {
 
   return (
     <div className="h-[calc(100vh-2rem)] flex gap-6">
-      {/* Product Search and Table Section */}
       <div className="flex-1 space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold text-gray-800">Kasir</h2>
@@ -229,15 +232,11 @@ const POS = () => {
 
         {/* Customer Information Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="relative">
-            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
-            <Input
-              placeholder="Nomor WhatsApp"
-              value={whatsappNumber}
-              onChange={(e) => setWhatsappNumber(e.target.value)}
-              className="pl-10 text-sm"
-            />
-          </div>
+          <WhatsAppInput
+            value={whatsappNumber}
+            onChange={setWhatsappNumber}
+            onCheck={handleCheckCustomer}
+          />
           <div className="relative">
             <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
             <Input
@@ -248,17 +247,14 @@ const POS = () => {
             />
           </div>
           <div className="relative">
-            <CalendarIcon 
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4 cursor-pointer" 
+            <Button
+              variant="outline"
+              className="w-full justify-start text-left font-normal pl-10 relative"
               onClick={() => setShowCalendar(!showCalendar)}
-            />
-            <Input
-              placeholder="Tanggal Lahir"
-              value={birthDate ? format(birthDate, 'dd MMMM yyyy', { locale: id }) : ''}
-              className="pl-10 text-sm cursor-pointer"
-              onClick={() => setShowCalendar(!showCalendar)}
-              readOnly
-            />
+            >
+              <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
+              {birthDate ? format(birthDate, 'dd MMMM yyyy', { locale: id }) : 'Pilih Tanggal Lahir'}
+            </Button>
             {showCalendar && (
               <div className="absolute z-10 bg-white border rounded-md shadow-lg mt-1">
                 <Calendar
@@ -269,6 +265,7 @@ const POS = () => {
                     setShowCalendar(false);
                   }}
                   locale={id}
+                  initialFocus
                 />
               </div>
             )}
