@@ -49,15 +49,15 @@ const POS = () => {
   return (
     <div className="h-[calc(100vh-2rem)] flex gap-6">
       {/* Product Search and Table Section */}
-      <div className="flex-1 space-y-6">
+      <div className="flex-1 space-y-4">
         <div className="flex justify-between items-center">
-          <h2 className="text-3xl font-bold text-gray-800">Kasir</h2>
+          <h2 className="text-2xl font-bold text-gray-800">Kasir</h2>
         </div>
 
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
           <Input
-            className="pl-10"
+            className="pl-10 text-sm"
             placeholder="Cari produk..."
           />
         </div>
@@ -66,26 +66,27 @@ const POS = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nama Produk</TableHead>
-                <TableHead>Kategori</TableHead>
-                <TableHead className="text-right">Harga</TableHead>
-                <TableHead className="text-right">Stok</TableHead>
-                <TableHead className="text-right">Aksi</TableHead>
+                <TableHead className="text-xs">Nama Produk</TableHead>
+                <TableHead className="text-xs">Kategori</TableHead>
+                <TableHead className="text-xs text-right">Harga</TableHead>
+                <TableHead className="text-xs text-right">Stok</TableHead>
+                <TableHead className="text-xs text-right">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {sampleProducts.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell className="font-medium">{product.name}</TableCell>
-                  <TableCell>{product.category}</TableCell>
-                  <TableCell className="text-right">
+                <TableRow key={product.id} className="text-sm">
+                  <TableCell className="py-2 text-xs">{product.name}</TableCell>
+                  <TableCell className="py-2 text-xs">{product.category}</TableCell>
+                  <TableCell className="py-2 text-xs text-right">
                     Rp {product.price.toLocaleString('id-ID')}
                   </TableCell>
-                  <TableCell className="text-right">{product.stock}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="py-2 text-xs text-right">{product.stock}</TableCell>
+                  <TableCell className="py-2 text-xs text-right">
                     <Button 
                       variant="outline" 
                       size="sm"
+                      className="text-xs px-2 py-1 h-7"
                       onClick={() => {
                         setCartItems(items => {
                           const existingItem = items.find(item => item.id === product.id);
@@ -112,44 +113,44 @@ const POS = () => {
 
       {/* Cart Section */}
       <Card className="w-[320px] flex flex-col">
-        <div className="p-4 border-b">
-          <div className="flex items-center space-x-3">
-            <ShoppingCart className="h-5 w-5 text-mint-600" />
-            <h3 className="font-semibold text-lg">Keranjang</h3>
+        <div className="p-3 border-b">
+          <div className="flex items-center space-x-2">
+            <ShoppingCart className="h-4 w-4 text-mint-600" />
+            <h3 className="font-semibold text-sm">Keranjang</h3>
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto p-4">
+        <div className="flex-1 overflow-auto p-3">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Produk</TableHead>
-                <TableHead className="text-right">Total</TableHead>
+                <TableHead className="text-xs">Produk</TableHead>
+                <TableHead className="text-xs text-right">Total</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {cartItems.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell>
+                  <TableCell className="py-2">
                     <div>
-                      <div className="font-medium">{item.name}</div>
-                      <div className="text-sm text-gray-500">
+                      <div className="font-medium text-xs">{item.name}</div>
+                      <div className="text-xs text-gray-500">
                         Rp {item.price.toLocaleString('id-ID')}
                       </div>
-                      <div className="flex items-center space-x-2 mt-2">
+                      <div className="flex items-center space-x-1 mt-1">
                         <Button
                           variant="outline"
                           size="icon"
-                          className="h-7 w-7"
+                          className="h-6 w-6"
                           onClick={() => updateQuantity(item.id, -1)}
                         >
                           <Minus className="h-3 w-3" />
                         </Button>
-                        <span className="w-8 text-center">{item.quantity}</span>
+                        <span className="w-6 text-center text-xs">{item.quantity}</span>
                         <Button
                           variant="outline"
                           size="icon"
-                          className="h-7 w-7"
+                          className="h-6 w-6"
                           onClick={() => updateQuantity(item.id, 1)}
                         >
                           <Plus className="h-3 w-3" />
@@ -157,7 +158,7 @@ const POS = () => {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 text-red-500"
+                          className="h-6 w-6 text-red-500"
                           onClick={() => removeItem(item.id)}
                         >
                           <Trash2 className="h-3 w-3" />
@@ -165,7 +166,7 @@ const POS = () => {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-xs text-right">
                     Rp {(item.price * item.quantity).toLocaleString('id-ID')}
                   </TableCell>
                 </TableRow>
@@ -174,12 +175,12 @@ const POS = () => {
           </Table>
         </div>
 
-        <div className="border-t p-4 space-y-4">
-          <div className="flex justify-between text-lg font-semibold">
+        <div className="border-t p-3 space-y-3">
+          <div className="flex justify-between text-sm font-semibold">
             <span>Total</span>
             <span>Rp {total.toLocaleString('id-ID')}</span>
           </div>
-          <Button className="w-full" size="lg">
+          <Button className="w-full text-sm" size="sm">
             Proses Pembayaran
           </Button>
         </div>
