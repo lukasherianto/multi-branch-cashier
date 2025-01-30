@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
 import Index from "./pages/Index";
+import Branches from "./pages/Branches";
 
 const queryClient = new QueryClient();
 
@@ -17,7 +18,7 @@ const App = () => (
         <Layout>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/branches" element={<Navigate to="/" replace />} />
+            <Route path="/branches" element={<Branches />} />
             <Route path="/pos" element={<Navigate to="/" replace />} />
             <Route path="/history" element={<Navigate to="/" replace />} />
           </Routes>
