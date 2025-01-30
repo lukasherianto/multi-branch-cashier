@@ -20,6 +20,8 @@ const POS = () => {
   const navigate = useNavigate();
   const [pelakuUsaha, setPelakuUsaha] = useState<any>(null);
   const [cabang, setCabang] = useState<any>(null);
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [customerName, setCustomerName] = useState("");
   const [cartItems, setCartItems] = useState([
     {
       id: 1,
@@ -32,6 +34,44 @@ const POS = () => {
   useEffect(() => {
     checkAuth();
   }, []);
+
+  // Fetch customer data when WhatsApp number changes
+  useEffect(() => {
+    const fetchCustomerData = async () => {
+      if (whatsappNumber.length >= 10) {
+        try {
+          const { data, error } = await supabase
+            .from('member')
+            .select('name')
+            .eq('whatsapp_contact', whatsappNumber)
+            .maybeSingle();
+
+          if (error) throw error;
+
+          if (data) {
+            setCustomerName(data.name);
+            toast({
+              title: "Data Pelanggan Ditemukan",
+              description: `Selamat datang kembali, ${data.name}!`,
+            });
+          } else {
+            setCustomerName("");
+          }
+        } catch (error: any) {
+          console.error('Error fetching customer data:', error);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Gagal mengambil data pelanggan",
+          });
+        }
+      } else {
+        setCustomerName("");
+      }
+    };
+
+    fetchCustomerData();
+  }, [whatsappNumber]);
 
   const checkAuth = async () => {
     try {
@@ -107,83 +147,6 @@ const POS = () => {
     }
   };
 
-  const updateQuantity = (id: number, change: number) => {
-    setCartItems(items =>
-      items.map(item =>
-        item.id === id
-          ? { ...item, quantity: Math.max(1, item.quantity + change) }
-          : item
-      )
-    );
-  };
-
-  const removeItem = (id: number) => {
-    setCartItems(items => items.filter(item => item.id !== id));
-  };
-
-  const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-  const handlePayment = async () => {
-    if (!pelakuUsaha || !cabang) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Data pelaku usaha atau cabang tidak tersedia.",
-      });
-      return;
-    }
-
-    try {
-      // Process each item in the cart
-      for (const item of cartItems) {
-        const { error } = await supabase
-          .from('transaksi')
-          .insert({
-            cabang_id: cabang.cabang_id,
-            produk_id: item.id,
-            quantity: item.quantity,
-            total_price: item.price * item.quantity,
-            transaction_date: new Date().toISOString()
-          });
-
-        if (error) throw error;
-      }
-
-      // Navigate to print preview with transaction data
-      navigate('/print-preview', {
-        state: {
-          items: cartItems,
-          total,
-          businessName: pelakuUsaha.business_name,
-          branchName: cabang.branch_name
-        }
-      });
-      
-      // Clear cart after successful transaction
-      setCartItems([]);
-      
-      toast({
-        title: "Pembayaran Berhasil",
-        description: `Total pembayaran: Rp ${total.toLocaleString('id-ID')}`,
-      });
-    } catch (error: any) {
-      console.error('Error processing payment:', error);
-      toast({
-        variant: "destructive",
-        title: "Gagal Memproses Pembayaran",
-        description: error.message || "Terjadi kesalahan saat memproses pembayaran.",
-      });
-    }
-  };
-
-  const sampleProducts = [
-    { id: 1, name: "Produk 1", price: 25000, stock: 100, category: "Kategori A" },
-    { id: 2, name: "Produk 2", price: 30000, stock: 75, category: "Kategori B" },
-    { id: 3, name: "Produk 3", price: 15000, stock: 50, category: "Kategori A" },
-    { id: 4, name: "Produk 4", price: 40000, stock: 25, category: "Kategori C" },
-    { id: 5, name: "Produk 5", price: 35000, stock: 60, category: "Kategori B" },
-  ];
-
   const addToCart = (product: any, quantity: number) => {
     if (quantity <= 0) return;
     
@@ -208,6 +171,23 @@ const POS = () => {
           <h2 className="text-2xl font-bold text-gray-800">Kasir</h2>
         </div>
 
+        {/* Customer Information Section */}
+        <div className="grid grid-cols-2 gap-4">
+          <Input
+            placeholder="Nomor WhatsApp"
+            value={whatsappNumber}
+            onChange={(e) => setWhatsappNumber(e.target.value)}
+            className="text-sm"
+          />
+          <Input
+            placeholder="Nama Pelanggan"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+            className="text-sm"
+            readOnly
+          />
+        </div>
+
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
           <Input
@@ -228,7 +208,7 @@ const POS = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sampleProducts.map((product) => (
+              {cartItems.map((product) => (
                 <TableRow key={product.id} className="text-sm">
                   <TableCell className="py-2 text-xs">{product.name}</TableCell>
                   <TableCell className="py-2 text-xs">{product.category}</TableCell>
