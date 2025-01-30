@@ -15,6 +15,15 @@ import {
 import { Search, ShoppingCart, Plus, Minus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
+interface CartItem {
+  id: number;
+  name: string;
+  price: number;
+  quantity: number;
+  category?: string;
+  stock?: number;
+}
+
 const POS = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -22,14 +31,19 @@ const POS = () => {
   const [cabang, setCabang] = useState<any>(null);
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [customerName, setCustomerName] = useState("");
-  const [cartItems, setCartItems] = useState([
+  const [cartItems, setCartItems] = useState<CartItem[]>([
     {
       id: 1,
       name: "Produk Contoh",
       price: 25000,
-      quantity: 1
+      quantity: 1,
+      category: "Umum",
+      stock: 100
     }
   ]);
+
+  // Calculate total
+  const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   useEffect(() => {
     checkAuth();
@@ -147,7 +161,41 @@ const POS = () => {
     }
   };
 
-  const addToCart = (product: any, quantity: number) => {
+  const updateQuantity = (itemId: number, change: number) => {
+    setCartItems(items =>
+      items.map(item =>
+        item.id === itemId
+          ? { ...item, quantity: Math.max(1, item.quantity + change) }
+          : item
+      )
+    );
+  };
+
+  const removeItem = (itemId: number) => {
+    setCartItems(items => items.filter(item => item.id !== itemId));
+  };
+
+  const handlePayment = () => {
+    if (cartItems.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Keranjang Kosong",
+        description: "Tambahkan produk ke keranjang terlebih dahulu",
+      });
+      return;
+    }
+
+    navigate('/print-preview', {
+      state: {
+        items: cartItems,
+        total,
+        businessName: pelakuUsaha?.business_name,
+        branchName: cabang?.branch_name
+      }
+    });
+  };
+
+  const addToCart = (product: CartItem, quantity: number) => {
     if (quantity <= 0) return;
     
     setCartItems(items => {
