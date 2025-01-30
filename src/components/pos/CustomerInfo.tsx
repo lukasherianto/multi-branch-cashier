@@ -137,31 +137,33 @@ export const CustomerInfo = ({
         onCheck={handleCheckCustomer}
         onSave={handleSaveCustomer}
       />
-      <div className="space-y-2">
-        <Label htmlFor="customerName" className="flex items-center gap-2">
-          <User className="h-4 w-4" />
-          Nama Pelanggan
-        </Label>
-        <Input
-          id="customerName"
-          placeholder="Nama Pelanggan"
-          value={customerName}
-          onChange={(e) => setCustomerName(e.target.value)}
-          className="text-sm"
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="birthDate" className="flex items-center gap-2">
-          <CalendarIcon className="h-4 w-4" />
-          Tanggal Lahir
-        </Label>
-        <Input
-          id="birthDate"
-          type="date"
-          value={birthDate ? format(birthDate, 'yyyy-MM-dd') : ''}
-          onChange={(e) => setBirthDate(e.target.value ? new Date(e.target.value) : null)}
-          className="text-sm"
-        />
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="customerName" className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            Nama Pelanggan
+          </Label>
+          <Input
+            id="customerName"
+            placeholder="Nama Pelanggan"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+            className="text-sm"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="birthDate" className="flex items-center gap-2">
+            <CalendarIcon className="h-4 w-4" />
+            Tanggal Lahir
+          </Label>
+          <Input
+            id="birthDate"
+            type="date"
+            value={birthDate ? format(birthDate, 'yyyy-MM-dd') : ''}
+            onChange={(e) => setBirthDate(e.target.value ? new Date(e.target.value) : null)}
+            className="text-sm"
+          />
+        </div>
       </div>
     </div>
   );
