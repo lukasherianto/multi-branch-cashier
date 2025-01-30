@@ -31,13 +31,29 @@ const Branches = () => {
         return;
       }
 
+      console.log("User ID before conversion:", user.id);
+      const userId = parseInt(user.id);
+      console.log("User ID after conversion:", userId);
+
+      if (isNaN(userId)) {
+        toast({
+          title: "Error",
+          description: "ID pengguna tidak valid",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { error } = await supabase.from("pelaku_usaha").insert({
         business_name: businessName,
         contact_whatsapp: whatsapp,
-        user_id: user.id,
+        user_id: userId,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
+      }
 
       toast({
         title: "Berhasil",

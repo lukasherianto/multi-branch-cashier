@@ -44,12 +44,23 @@ const POS = () => {
       }
 
       console.log("User ditemukan:", user.id);
+      const userId = parseInt(user.id);
+      
+      if (isNaN(userId)) {
+        console.error("ID pengguna tidak valid setelah konversi");
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "ID pengguna tidak valid",
+        });
+        return;
+      }
 
       // Get pelaku_usaha data
       const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
         .from('pelaku_usaha')
         .select('*')
-        .eq('user_id', user.id) // Gunakan user.id langsung tanpa konversi
+        .eq('user_id', userId)
         .single();
 
       if (pelakuUsahaError) {
