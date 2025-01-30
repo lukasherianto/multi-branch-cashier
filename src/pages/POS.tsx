@@ -42,11 +42,11 @@ const POS = () => {
         return;
       }
 
-      // Get pelaku_usaha data
+      // Get pelaku_usaha data - convert user.id to number
       const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
         .from('pelaku_usaha')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', parseInt(user.id))
         .single();
 
       if (pelakuUsahaError) throw pelakuUsahaError;
