@@ -25,7 +25,6 @@ const Settings = () => {
       
       if (user) {
         console.log("Loading user profile:", user);
-        // Convert string ID to number
         const numericUserId = parseInt(user.id);
         
         const { data: userData, error } = await supabase

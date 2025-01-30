@@ -28,10 +28,8 @@ export const ProfileForm = ({ userId, initialName, initialEmail }: ProfileFormPr
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
-      // Convert string ID to number
       const numericUserId = parseInt(user.id);
 
-      // Update user data in the users table
       const { error: updateError } = await supabase
         .from('users')
         .update({
@@ -43,7 +41,6 @@ export const ProfileForm = ({ userId, initialName, initialEmail }: ProfileFormPr
 
       if (updateError) throw updateError;
 
-      // If password was changed, update it in auth
       if (password) {
         const { error: passwordError } = await supabase.auth.updateUser({
           password: password
