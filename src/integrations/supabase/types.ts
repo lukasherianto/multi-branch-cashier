@@ -221,7 +221,7 @@ export type Database = {
           created_at: string
           pelaku_usaha_id: number
           updated_at: string
-          user_id: number
+          user_id: string
         }
         Insert: {
           business_name: string
@@ -229,7 +229,7 @@ export type Database = {
           created_at?: string
           pelaku_usaha_id?: never
           updated_at?: string
-          user_id: number
+          user_id: string
         }
         Update: {
           business_name?: string
@@ -237,17 +237,9 @@ export type Database = {
           created_at?: string
           pelaku_usaha_id?: never
           updated_at?: string
-          user_id?: number
+          user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "pelaku_usaha_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["user_id"]
-          },
-        ]
+        Relationships: []
       }
       produk: {
         Row: {
