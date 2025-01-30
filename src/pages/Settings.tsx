@@ -40,35 +40,11 @@ const Settings = () => {
 
       console.log("Authenticated user:", user);
       
-      // Get user data from the users table
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (userError) {
-        console.error("Error fetching user data:", userError);
-        toast({
-          title: "Error",
-          description: "Gagal memuat data pengguna",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (userData) {
-        console.log("User data loaded:", userData);
-        setUserId(user.id);
-        setName(userData.name || '');
-        setEmail(userData.email || '');
-      } else {
-        console.log("No user data found");
-        toast({
-          title: "Info",
-          description: "Data pengguna tidak ditemukan",
-        });
-      }
+      // Get user data directly from auth user object
+      setUserId(user.id);
+      setName(user.user_metadata.name || user.email?.split('@')[0] || '');
+      setEmail(user.email || '');
+      
     } catch (error) {
       console.error("Error in loadUserProfile:", error);
       toast({
