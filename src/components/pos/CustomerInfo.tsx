@@ -1,13 +1,11 @@
 import { useState } from "react";
 import { User, CalendarIcon, Save } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
-import { id } from "date-fns/locale";
+import { Label } from "@/components/ui/label";
 import { WhatsAppInput } from "@/components/settings/WhatsAppInput";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 
 interface CustomerInfoProps {
   whatsappNumber: string;
@@ -27,7 +25,6 @@ export const CustomerInfo = ({
   setBirthDate,
 }: CustomerInfoProps) => {
   const { toast } = useToast();
-  const [showCalendar, setShowCalendar] = useState(false);
 
   const handleCheckCustomer = async () => {
     if (whatsappNumber.length < 10) {
@@ -113,7 +110,7 @@ export const CustomerInfo = ({
           pelaku_usaha_id: pelakuUsaha.pelaku_usaha_id,
           nama: customerName,
           whatsapp: whatsappNumber,
-          tanggal_lahir: birthDate,
+          tanggal_lahir: birthDate?.toISOString().split('T')[0],
         });
 
       if (error) throw error;
@@ -133,45 +130,38 @@ export const CustomerInfo = ({
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="space-y-4">
       <WhatsAppInput
         value={whatsappNumber}
         onChange={setWhatsappNumber}
         onCheck={handleCheckCustomer}
         onSave={handleSaveCustomer}
       />
-      <div className="relative">
-        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
+      <div className="space-y-2">
+        <Label htmlFor="customerName" className="flex items-center gap-2">
+          <User className="h-4 w-4" />
+          Nama Pelanggan
+        </Label>
         <Input
+          id="customerName"
           placeholder="Nama Pelanggan"
           value={customerName}
           onChange={(e) => setCustomerName(e.target.value)}
-          className="pl-10 text-sm"
+          className="text-sm"
         />
       </div>
-      <div className="relative">
-        <Button
-          variant="outline"
-          className="w-full justify-start text-left font-normal pl-10 relative"
-          onClick={() => setShowCalendar(!showCalendar)}
-        >
-          <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
-          {birthDate ? format(birthDate, 'dd MMMM yyyy', { locale: id }) : 'Pilih Tanggal Lahir'}
-        </Button>
-        {showCalendar && (
-          <div className="absolute z-10 bg-white border rounded-md shadow-lg mt-1">
-            <Calendar
-              mode="single"
-              selected={birthDate}
-              onSelect={(date) => {
-                setBirthDate(date);
-                setShowCalendar(false);
-              }}
-              locale={id}
-              initialFocus
-            />
-          </div>
-        )}
+      <div className="space-y-2">
+        <Label htmlFor="birthDate" className="flex items-center gap-2">
+          <CalendarIcon className="h-4 w-4" />
+          Tanggal Lahir
+        </Label>
+        <Input
+          id="birthDate"
+          type="date"
+          value={birthDate ? format(birthDate, 'yyyy-MM-dd') : ''}
+          onChange={(e) => setBirthDate(e.target.value ? new Date(e.target.value) : null)}
+          className="text-sm"
+        />
       </div>
     </div>
   );
