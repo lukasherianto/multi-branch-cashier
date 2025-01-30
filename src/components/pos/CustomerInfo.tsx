@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, CalendarIcon } from "lucide-react";
+import { User, CalendarIcon, Save } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -73,12 +73,72 @@ export const CustomerInfo = ({
     }
   };
 
+  const handleSaveCustomer = async () => {
+    if (whatsappNumber.length < 10) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Nomor WhatsApp tidak valid",
+      });
+      return;
+    }
+
+    if (!customerName) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Nama pelanggan harus diisi",
+      });
+      return;
+    }
+
+    try {
+      const { data: pelakuUsaha } = await supabase
+        .from('pelaku_usaha')
+        .select('pelaku_usaha_id')
+        .single();
+
+      if (!pelakuUsaha) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Data pelaku usaha tidak ditemukan",
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('pelanggan')
+        .insert({
+          pelaku_usaha_id: pelakuUsaha.pelaku_usaha_id,
+          nama: customerName,
+          whatsapp: whatsappNumber,
+          tanggal_lahir: birthDate,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Sukses",
+        description: "Data pelanggan berhasil disimpan",
+      });
+    } catch (error: any) {
+      console.error('Error saving customer data:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Gagal menyimpan data pelanggan",
+      });
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <WhatsAppInput
         value={whatsappNumber}
         onChange={setWhatsappNumber}
         onCheck={handleCheckCustomer}
+        onSave={handleSaveCustomer}
       />
       <div className="relative">
         <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />

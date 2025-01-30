@@ -1,4 +1,4 @@
-import { Phone, Check } from "lucide-react";
+import { Phone, Check, Save } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -7,9 +7,10 @@ interface WhatsAppInputProps {
   value: string;
   onChange: (value: string) => void;
   onCheck?: () => void;
+  onSave?: () => void;
 }
 
-export const WhatsAppInput = ({ value, onChange, onCheck }: WhatsAppInputProps) => {
+export const WhatsAppInput = ({ value, onChange, onCheck, onSave }: WhatsAppInputProps) => {
   return (
     <div className="space-y-2">
       <Label htmlFor="whatsapp" className="flex items-center gap-2">
@@ -31,6 +32,14 @@ export const WhatsAppInput = ({ value, onChange, onCheck }: WhatsAppInputProps) 
           className="shrink-0"
         >
           <Check className="h-4 w-4" />
+        </Button>
+        <Button 
+          variant="outline" 
+          size="icon"
+          onClick={onSave}
+          className="shrink-0"
+        >
+          <Save className="h-4 w-4" />
         </Button>
       </div>
       <p className="text-sm text-gray-500">
