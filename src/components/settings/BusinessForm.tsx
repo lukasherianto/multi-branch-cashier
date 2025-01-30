@@ -124,7 +124,6 @@ export const BusinessForm = () => {
         description: "Data usaha berhasil diperbarui",
       });
       
-      // Reload data to get the new pelaku_usaha_id if it was just created
       loadBusinessData();
     } catch (error) {
       console.error("Error saving business data:", error);
