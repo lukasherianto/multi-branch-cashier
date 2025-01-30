@@ -4,6 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { id } from "date-fns/locale";
 import { 
   Table, 
   TableBody, 
@@ -12,7 +15,7 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Search, ShoppingCart, Plus, Minus, Trash2 } from "lucide-react";
+import { Search, ShoppingCart, Plus, Minus, Trash2, User, Phone, CalendarIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface CartItem {
@@ -31,6 +34,8 @@ const POS = () => {
   const [cabang, setCabang] = useState<any>(null);
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [customerName, setCustomerName] = useState("");
+  const [birthDate, setBirthDate] = useState<Date | null>(null);
+  const [showCalendar, setShowCalendar] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([
     {
       id: 1,
@@ -55,21 +60,23 @@ const POS = () => {
       if (whatsappNumber.length >= 10) {
         try {
           const { data, error } = await supabase
-            .from('member')
-            .select('name')
-            .eq('whatsapp_contact', whatsappNumber)
+            .from('pelanggan')
+            .select('nama, tanggal_lahir')
+            .eq('whatsapp', whatsappNumber)
             .maybeSingle();
 
           if (error) throw error;
 
           if (data) {
-            setCustomerName(data.name);
+            setCustomerName(data.nama);
+            setBirthDate(data.tanggal_lahir ? new Date(data.tanggal_lahir) : null);
             toast({
               title: "Data Pelanggan Ditemukan",
-              description: `Selamat datang kembali, ${data.name}!`,
+              description: `Selamat datang kembali, ${data.nama}!`,
             });
           } else {
             setCustomerName("");
+            setBirthDate(null);
           }
         } catch (error: any) {
           console.error('Error fetching customer data:', error);
@@ -81,6 +88,7 @@ const POS = () => {
         }
       } else {
         setCustomerName("");
+        setBirthDate(null);
       }
     };
 
@@ -220,20 +228,51 @@ const POS = () => {
         </div>
 
         {/* Customer Information Section */}
-        <div className="grid grid-cols-2 gap-4">
-          <Input
-            placeholder="Nomor WhatsApp"
-            value={whatsappNumber}
-            onChange={(e) => setWhatsappNumber(e.target.value)}
-            className="text-sm"
-          />
-          <Input
-            placeholder="Nama Pelanggan"
-            value={customerName}
-            onChange={(e) => setCustomerName(e.target.value)}
-            className="text-sm"
-            readOnly
-          />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="relative">
+            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
+            <Input
+              placeholder="Nomor WhatsApp"
+              value={whatsappNumber}
+              onChange={(e) => setWhatsappNumber(e.target.value)}
+              className="pl-10 text-sm"
+            />
+          </div>
+          <div className="relative">
+            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
+            <Input
+              placeholder="Nama Pelanggan"
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+              className="pl-10 text-sm"
+            />
+          </div>
+          <div className="relative">
+            <CalendarIcon 
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4 cursor-pointer" 
+              onClick={() => setShowCalendar(!showCalendar)}
+            />
+            <Input
+              placeholder="Tanggal Lahir"
+              value={birthDate ? format(birthDate, 'dd MMMM yyyy', { locale: id }) : ''}
+              className="pl-10 text-sm cursor-pointer"
+              onClick={() => setShowCalendar(!showCalendar)}
+              readOnly
+            />
+            {showCalendar && (
+              <div className="absolute z-10 bg-white border rounded-md shadow-lg mt-1">
+                <Calendar
+                  mode="single"
+                  selected={birthDate}
+                  onSelect={(date) => {
+                    setBirthDate(date);
+                    setShowCalendar(false);
+                  }}
+                  locale={id}
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="relative">

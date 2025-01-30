@@ -254,6 +254,44 @@ export type Database = {
         }
         Relationships: []
       }
+      pelanggan: {
+        Row: {
+          created_at: string
+          nama: string
+          pelaku_usaha_id: number
+          pelanggan_id: number
+          tanggal_lahir: string | null
+          updated_at: string
+          whatsapp: string | null
+        }
+        Insert: {
+          created_at?: string
+          nama: string
+          pelaku_usaha_id: number
+          pelanggan_id?: number
+          tanggal_lahir?: string | null
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Update: {
+          created_at?: string
+          nama?: string
+          pelaku_usaha_id?: number
+          pelanggan_id?: number
+          tanggal_lahir?: string | null
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pelanggan_pelaku_usaha_id_fkey"
+            columns: ["pelaku_usaha_id"]
+            isOneToOne: false
+            referencedRelation: "pelaku_usaha"
+            referencedColumns: ["pelaku_usaha_id"]
+          },
+        ]
+      }
       produk: {
         Row: {
           cost_price: number
