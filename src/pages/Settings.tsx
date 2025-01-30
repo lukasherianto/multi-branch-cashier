@@ -2,9 +2,10 @@ import { Card } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserRound, Store, Loader2 } from "lucide-react";
+import { UserRound, Store, GitBranch, Loader2 } from "lucide-react";
 import { ProfileForm } from "@/components/settings/ProfileForm";
 import { BusinessForm } from "@/components/settings/BusinessForm";
+import { BranchForm } from "@/components/settings/BranchForm";
 import { useToast } from "@/hooks/use-toast";
 
 const Settings = () => {
@@ -85,6 +86,10 @@ const Settings = () => {
             <Store className="w-4 h-4" />
             <span>Data Usaha</span>
           </TabsTrigger>
+          <TabsTrigger value="branches" className="space-x-2 data-[state=active]:bg-mint-50 data-[state=active]:text-mint-600">
+            <GitBranch className="w-4 h-4" />
+            <span>Cabang</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -101,6 +106,10 @@ const Settings = () => {
 
         <TabsContent value="business">
           <BusinessForm />
+        </TabsContent>
+
+        <TabsContent value="branches">
+          <BranchForm />
         </TabsContent>
       </Tabs>
     </div>
