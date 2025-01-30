@@ -110,7 +110,7 @@ export const CustomerInfo = ({
           pelaku_usaha_id: pelakuUsaha.pelaku_usaha_id,
           nama: customerName,
           whatsapp: whatsappNumber,
-          tanggal_lahir: birthDate?.toISOString().split('T')[0],
+          tanggal_lahir: birthDate ? format(birthDate, 'yyyy-MM-dd') : null,
         });
 
       if (error) throw error;
