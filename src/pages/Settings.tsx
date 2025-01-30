@@ -31,10 +31,13 @@ const Settings = () => {
       
       if (user) {
         console.log("Loading user profile:", user);
+        // Convert string ID to number
+        const numericUserId = parseInt(user.id);
+        
         const { data: userData, error } = await supabase
           .from('users')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('user_id', numericUserId)
           .single();
 
         if (error) throw error;
@@ -66,6 +69,9 @@ const Settings = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
+      // Convert string ID to number
+      const numericUserId = parseInt(user.id);
+
       // Update user data in the users table
       const { error: updateError } = await supabase
         .from('users')
@@ -74,7 +80,7 @@ const Settings = () => {
           email,
           updated_at: new Date().toISOString(),
         })
-        .eq('user_id', user.id);
+        .eq('user_id', numericUserId);
 
       if (updateError) throw updateError;
 
