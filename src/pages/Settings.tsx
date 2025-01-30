@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserRound, Store } from "lucide-react";
+import { UserRound, Store, Loader2 } from "lucide-react";
 import { ProfileForm } from "@/components/settings/ProfileForm";
 import { BusinessForm } from "@/components/settings/BusinessForm";
 import { useToast } from "@/hooks/use-toast";
@@ -31,7 +31,7 @@ const Settings = () => {
           .from('users')
           .select('*')
           .eq('user_id', numericUserId)
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
 
@@ -40,6 +40,12 @@ const Settings = () => {
           setUserId(userData.user_id.toString());
           setName(userData.name || '');
           setEmail(userData.email || '');
+        } else {
+          console.log("No user data found");
+          toast({
+            title: "Info",
+            description: "Data pengguna tidak ditemukan",
+          });
         }
       }
     } catch (error) {
@@ -54,6 +60,14 @@ const Settings = () => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-mint-600" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -62,12 +76,12 @@ const Settings = () => {
       </div>
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="profile" className="space-x-2">
+        <TabsList className="bg-white border">
+          <TabsTrigger value="profile" className="space-x-2 data-[state=active]:bg-mint-50 data-[state=active]:text-mint-600">
             <UserRound className="w-4 h-4" />
             <span>Profil</span>
           </TabsTrigger>
-          <TabsTrigger value="business" className="space-x-2">
+          <TabsTrigger value="business" className="space-x-2 data-[state=active]:bg-mint-50 data-[state=active]:text-mint-600">
             <Store className="w-4 h-4" />
             <span>Data Usaha</span>
           </TabsTrigger>
