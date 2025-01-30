@@ -7,32 +7,32 @@ const Dashboard = () => {
       title: "Total Penjualan Hari Ini",
       value: "Rp 2.500.000",
       icon: DollarSign,
-      trend: "+12.5%",
+      trend: "+12,5%",
     },
     {
-      title: "Transaksi",
+      title: "Total Transaksi",
       value: "48",
       icon: ShoppingBag,
-      trend: "+8.2%",
+      trend: "+8,2%",
     },
     {
-      title: "Cabang Aktif",
+      title: "Jumlah Cabang",
       value: "3",
       icon: Building,
       trend: "0%",
     },
     {
       title: "Pertumbuhan",
-      value: "15.2%",
+      value: "15,2%",
       icon: TrendingUp,
-      trend: "+2.3%",
+      trend: "+2,3%",
     },
   ];
 
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-bold text-gray-800">Dashboard</h2>
+        <h2 className="text-3xl font-bold text-gray-800">Dasbor</h2>
         <p className="text-gray-600 mt-2">Ringkasan aktivitas bisnis Anda</p>
       </div>
 

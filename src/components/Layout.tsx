@@ -10,7 +10,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   };
 
   const navItems = [
-    { icon: Home, label: "Dashboard", path: "/" },
+    { icon: Home, label: "Dasbor", path: "/" },
     { icon: Building, label: "Cabang", path: "/branches" },
     { icon: ShoppingCart, label: "Kasir", path: "/pos" },
     { icon: History, label: "Riwayat", path: "/history" },
