@@ -1,23 +1,11 @@
 import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
-import { id } from "date-fns/locale";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { Search, ShoppingCart, Plus, Minus, Trash2, User, CalendarIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { WhatsAppInput } from "@/components/settings/WhatsAppInput";
+import { CustomerInfo } from "@/components/pos/CustomerInfo";
+import { ProductSearch } from "@/components/pos/ProductSearch";
+import { ProductList } from "@/components/pos/ProductList";
+import { ShoppingCart } from "@/components/pos/ShoppingCart";
 
 interface CartItem {
   id: number;
@@ -36,7 +24,6 @@ const POS = () => {
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [birthDate, setBirthDate] = useState<Date | null>(null);
-  const [showCalendar, setShowCalendar] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([
     {
       id: 1,
@@ -48,56 +35,9 @@ const POS = () => {
     }
   ]);
 
-  // Calculate total
-  const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
   useEffect(() => {
     checkAuth();
   }, []);
-
-  const handleCheckCustomer = async () => {
-    if (whatsappNumber.length < 10) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Nomor WhatsApp tidak valid",
-      });
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from('pelanggan')
-        .select('nama, tanggal_lahir')
-        .eq('whatsapp', whatsappNumber)
-        .maybeSingle();
-
-      if (error) throw error;
-
-      if (data) {
-        setCustomerName(data.nama);
-        setBirthDate(data.tanggal_lahir ? new Date(data.tanggal_lahir) : null);
-        toast({
-          title: "Data Pelanggan Ditemukan",
-          description: `Selamat datang kembali, ${data.nama}!`,
-        });
-      } else {
-        setCustomerName("");
-        setBirthDate(null);
-        toast({
-          title: "Pelanggan Baru",
-          description: "Silakan lengkapi data pelanggan",
-        });
-      }
-    } catch (error: any) {
-      console.error('Error fetching customer data:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Gagal mengambil data pelanggan",
-      });
-    }
-  };
 
   const checkAuth = async () => {
     try {
@@ -111,7 +51,6 @@ const POS = () => {
 
       console.log("User ditemukan:", user.id);
       
-      // Get pelaku_usaha data
       const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
         .from('pelaku_usaha')
         .select('*')
@@ -137,7 +76,6 @@ const POS = () => {
       console.log("Data pelaku usaha:", pelakuUsahaData);
       setPelakuUsaha(pelakuUsahaData);
 
-      // Get first cabang for this pelaku_usaha
       const { data: cabangData, error: cabangError } = await supabase
         .from('cabang')
         .select('*')
@@ -200,7 +138,7 @@ const POS = () => {
     navigate('/print-preview', {
       state: {
         items: cartItems,
-        total,
+        total: cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
         businessName: pelakuUsaha?.business_name,
         branchName: cabang?.branch_name
       }
@@ -223,6 +161,11 @@ const POS = () => {
     });
   };
 
+  const handleSearch = (searchTerm: string) => {
+    // Implement product search logic here
+    console.log("Searching for:", searchTerm);
+  };
+
   return (
     <div className="h-[calc(100vh-2rem)] flex gap-6">
       <div className="flex-1 space-y-4">
@@ -230,195 +173,29 @@ const POS = () => {
           <h2 className="text-2xl font-bold text-gray-800">Kasir</h2>
         </div>
 
-        {/* Customer Information Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <WhatsAppInput
-            value={whatsappNumber}
-            onChange={setWhatsappNumber}
-            onCheck={handleCheckCustomer}
-          />
-          <div className="relative">
-            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
-            <Input
-              placeholder="Nama Pelanggan"
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-              className="pl-10 text-sm"
-            />
-          </div>
-          <div className="relative">
-            <Button
-              variant="outline"
-              className="w-full justify-start text-left font-normal pl-10 relative"
-              onClick={() => setShowCalendar(!showCalendar)}
-            >
-              <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
-              {birthDate ? format(birthDate, 'dd MMMM yyyy', { locale: id }) : 'Pilih Tanggal Lahir'}
-            </Button>
-            {showCalendar && (
-              <div className="absolute z-10 bg-white border rounded-md shadow-lg mt-1">
-                <Calendar
-                  mode="single"
-                  selected={birthDate}
-                  onSelect={(date) => {
-                    setBirthDate(date);
-                    setShowCalendar(false);
-                  }}
-                  locale={id}
-                  initialFocus
-                />
-              </div>
-            )}
-          </div>
-        </div>
+        <CustomerInfo
+          whatsappNumber={whatsappNumber}
+          setWhatsappNumber={setWhatsappNumber}
+          customerName={customerName}
+          setCustomerName={setCustomerName}
+          birthDate={birthDate}
+          setBirthDate={setBirthDate}
+        />
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
-          <Input
-            className="pl-10 text-sm"
-            placeholder="Cari produk..."
-          />
-        </div>
+        <ProductSearch onSearch={handleSearch} />
 
-        <Card className="flex-1">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-xs">Nama Produk</TableHead>
-                <TableHead className="text-xs">Kategori</TableHead>
-                <TableHead className="text-xs text-right">Harga</TableHead>
-                <TableHead className="text-xs text-right">Stok</TableHead>
-                <TableHead className="text-xs text-right">Aksi</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {cartItems.map((product) => (
-                <TableRow key={product.id} className="text-sm">
-                  <TableCell className="py-2 text-xs">{product.name}</TableCell>
-                  <TableCell className="py-2 text-xs">{product.category}</TableCell>
-                  <TableCell className="py-2 text-xs text-right">
-                    Rp {product.price.toLocaleString('id-ID')}
-                  </TableCell>
-                  <TableCell className="py-2 text-xs text-right">{product.stock}</TableCell>
-                  <TableCell className="py-2 text-xs text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Input
-                        type="number"
-                        className="w-16 h-7 text-xs"
-                        min="1"
-                        defaultValue="1"
-                        onChange={(e) => {
-                          const input = e.target as HTMLInputElement;
-                          input.value = Math.max(1, parseInt(input.value) || 1).toString();
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            const input = e.target as HTMLInputElement;
-                            addToCart(product, parseInt(input.value) || 1);
-                            input.value = "1";
-                          }
-                        }}
-                      />
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="text-xs px-2 py-1 h-7"
-                        onClick={(e) => {
-                          const input = e.currentTarget.previousSibling as HTMLInputElement;
-                          addToCart(product, parseInt(input.value) || 1);
-                          input.value = "1";
-                        }}
-                      >
-                        Add
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
+        <ProductList
+          products={cartItems}
+          onAddToCart={addToCart}
+        />
       </div>
 
-      {/* Cart Section */}
-      <Card className="w-[320px] flex flex-col">
-        <div className="p-3 border-b">
-          <div className="flex items-center space-x-2">
-            <ShoppingCart className="h-4 w-4 text-mint-600" />
-            <h3 className="font-semibold text-sm">Keranjang</h3>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-auto p-3">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-xs">Produk</TableHead>
-                <TableHead className="text-xs text-right">Total</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {cartItems.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="py-2">
-                    <div>
-                      <div className="font-medium text-xs">{item.name}</div>
-                      <div className="text-xs text-gray-500">
-                        Rp {item.price.toLocaleString('id-ID')}
-                      </div>
-                      <div className="flex items-center space-x-1 mt-1">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => updateQuantity(item.id, -1)}
-                        >
-                          <Minus className="h-3 w-3" />
-                        </Button>
-                        <span className="w-6 text-center text-xs">{item.quantity}</span>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => updateQuantity(item.id, 1)}
-                        >
-                          <Plus className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-red-500"
-                          onClick={() => removeItem(item.id)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-xs text-right">
-                    Rp {(item.price * item.quantity).toLocaleString('id-ID')}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-
-        <div className="border-t p-3 space-y-3">
-          <div className="flex justify-between text-sm font-semibold">
-            <span>Total</span>
-            <span>Rp {total.toLocaleString('id-ID')}</span>
-          </div>
-          <Button 
-            className="w-full text-sm" 
-            size="sm"
-            onClick={handlePayment}
-            disabled={cartItems.length === 0}
-          >
-            Proses Pembayaran
-          </Button>
-        </div>
-      </Card>
+      <ShoppingCart
+        items={cartItems}
+        onUpdateQuantity={updateQuantity}
+        onRemoveItem={removeItem}
+        onCheckout={handlePayment}
+      />
     </div>
   );
 };
