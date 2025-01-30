@@ -7,10 +7,12 @@ import { ProfileForm } from "@/components/settings/ProfileForm";
 import { BusinessForm } from "@/components/settings/BusinessForm";
 import { BranchForm } from "@/components/settings/BranchForm";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 const Settings = () => {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -22,38 +24,56 @@ const Settings = () => {
   const loadUserProfile = async () => {
     try {
       setIsLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
       
-      if (user) {
-        console.log("Loading user profile:", user);
-        const numericUserId = parseInt(user.id);
-        
-        const { data: userData, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('user_id', numericUserId)
-          .maybeSingle();
+      if (authError) {
+        console.error("Auth error:", authError);
+        navigate('/auth');
+        return;
+      }
 
-        if (error) throw error;
+      if (!user) {
+        console.log("No authenticated user found");
+        navigate('/auth');
+        return;
+      }
 
-        if (userData) {
-          console.log("User data loaded:", userData);
-          setUserId(userData.user_id.toString());
-          setName(userData.name || '');
-          setEmail(userData.email || '');
-        } else {
-          console.log("No user data found");
-          toast({
-            title: "Info",
-            description: "Data pengguna tidak ditemukan",
-          });
-        }
+      console.log("Authenticated user:", user);
+      
+      // Get user data from the users table
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (userError) {
+        console.error("Error fetching user data:", userError);
+        toast({
+          title: "Error",
+          description: "Gagal memuat data pengguna",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (userData) {
+        console.log("User data loaded:", userData);
+        setUserId(user.id);
+        setName(userData.name || '');
+        setEmail(userData.email || '');
+      } else {
+        console.log("No user data found");
+        toast({
+          title: "Info",
+          description: "Data pengguna tidak ditemukan",
+        });
       }
     } catch (error) {
-      console.error("Error loading user profile:", error);
+      console.error("Error in loadUserProfile:", error);
       toast({
         title: "Error",
-        description: "Gagal memuat profil pengguna",
+        description: "Terjadi kesalahan saat memuat profil",
         variant: "destructive",
       });
     } finally {
@@ -94,13 +114,11 @@ const Settings = () => {
 
         <TabsContent value="profile">
           <Card className="p-6">
-            {!isLoading && (
-              <ProfileForm
-                userId={userId}
-                initialName={name}
-                initialEmail={email}
-              />
-            )}
+            <ProfileForm
+              userId={userId}
+              initialName={name}
+              initialEmail={email}
+            />
           </Card>
         </TabsContent>
 
