@@ -2,16 +2,53 @@ import { Card } from "@/components/ui/card";
 import { DollarSign, TrendingUp, Building, ShoppingBag, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Dashboard = () => {
+  const { toast } = useToast();
+
   // Fetch data dari Supabase
   const { data: branchCount } = useQuery({
     queryKey: ['branchCount'],
     queryFn: async () => {
-      const { count } = await supabase
-        .from('cabang')
-        .select('*', { count: 'exact', head: true });
-      return count || 0;
+      try {
+        // First get pelaku_usaha_id
+        const { data: pelakuUsaha, error: pelakuUsahaError } = await supabase
+          .from('pelaku_usaha')
+          .select('pelaku_usaha_id')
+          .maybeSingle();
+
+        if (pelakuUsahaError) {
+          console.error('Error fetching pelaku_usaha:', pelakuUsahaError);
+          throw pelakuUsahaError;
+        }
+
+        if (!pelakuUsaha) {
+          console.log('No pelaku_usaha found');
+          return 0;
+        }
+
+        // Then get branch count for this pelaku_usaha
+        const { count, error: branchError } = await supabase
+          .from('cabang')
+          .select('*', { count: 'exact', head: true })
+          .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id);
+
+        if (branchError) {
+          console.error('Error fetching branch count:', branchError);
+          throw branchError;
+        }
+
+        return count || 0;
+      } catch (error) {
+        console.error('Error in branchCount query:', error);
+        toast({
+          title: "Error",
+          description: "Gagal memuat data cabang",
+          variant: "destructive",
+        });
+        return 0;
+      }
     }
   });
 
