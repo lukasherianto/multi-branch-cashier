@@ -5,6 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserRound, Store } from "lucide-react";
 
 const Settings = () => {
   const { toast } = useToast();
@@ -81,34 +84,76 @@ const Settings = () => {
         <p className="text-gray-600 mt-2">Kelola pengaturan aplikasi Anda</p>
       </div>
 
-      {/* Form Pelaku Usaha */}
-      <Card className="p-6">
-        <h3 className="text-xl font-semibold mb-4">Data Pelaku Usaha</h3>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="businessName">Nama Usaha</Label>
-            <Input
-              id="businessName"
-              value={businessName}
-              onChange={(e) => setBusinessName(e.target.value)}
-              placeholder="Masukkan nama usaha"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="whatsapp">Nomor WhatsApp</Label>
-            <Input
-              id="whatsapp"
-              value={whatsapp}
-              onChange={(e) => setWhatsapp(e.target.value)}
-              placeholder="Contoh: 08123456789"
-            />
-          </div>
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Menyimpan..." : "Simpan"}
-          </Button>
-        </form>
-      </Card>
+      <Tabs defaultValue="profile" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="profile" className="space-x-2">
+            <UserRound className="w-4 h-4" />
+            <span>Profil</span>
+          </TabsTrigger>
+          <TabsTrigger value="business" className="space-x-2">
+            <Store className="w-4 h-4" />
+            <span>Data Usaha</span>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="profile" className="space-y-6">
+          <Card className="p-6">
+            <div className="flex items-center space-x-4">
+              <Avatar className="h-20 w-20">
+                <AvatarImage src="/placeholder.svg" />
+                <AvatarFallback>U</AvatarFallback>
+              </Avatar>
+              <div>
+                <h3 className="text-xl font-semibold">Profil Pengguna</h3>
+                <p className="text-sm text-gray-500">
+                  Kelola informasi profil Anda
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nama Lengkap</Label>
+                <Input id="name" placeholder="Masukkan nama lengkap" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" placeholder="Masukkan email" />
+              </div>
+              <Button>Simpan Perubahan</Button>
+            </div>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="business">
+          <Card className="p-6">
+            <h3 className="text-xl font-semibold mb-4">Data Pelaku Usaha</h3>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="businessName">Nama Usaha</Label>
+                <Input
+                  id="businessName"
+                  value={businessName}
+                  onChange={(e) => setBusinessName(e.target.value)}
+                  placeholder="Masukkan nama usaha"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="whatsapp">Nomor WhatsApp</Label>
+                <Input
+                  id="whatsapp"
+                  value={whatsapp}
+                  onChange={(e) => setWhatsapp(e.target.value)}
+                  placeholder="Contoh: 08123456789"
+                />
+              </div>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? "Menyimpan..." : "Simpan"}
+              </Button>
+            </form>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
