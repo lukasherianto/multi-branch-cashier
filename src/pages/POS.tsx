@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { useNavigate } from "react-router-dom";
 import { 
   Table, 
   TableBody, 
@@ -16,6 +17,9 @@ import { supabase } from "@/integrations/supabase/client";
 
 const POS = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [pelakuUsaha, setPelakuUsaha] = useState<any>(null);
+  const [cabang, setCabang] = useState<any>(null);
   const [cartItems, setCartItems] = useState([
     {
       id: 1,
@@ -24,6 +28,49 @@ const POS = () => {
       quantity: 1
     }
   ]);
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        navigate('/auth');
+        return;
+      }
+
+      // Get pelaku_usaha data
+      const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
+        .from('pelaku_usaha')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (pelakuUsahaError) throw pelakuUsahaError;
+      setPelakuUsaha(pelakuUsahaData);
+
+      // Get first cabang for this pelaku_usaha
+      const { data: cabangData, error: cabangError } = await supabase
+        .from('cabang')
+        .select('*')
+        .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id)
+        .single();
+
+      if (cabangError) throw cabangError;
+      setCabang(cabangData);
+
+    } catch (error: any) {
+      console.error('Error checking auth:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Terjadi kesalahan saat memuat data. Silakan coba lagi.",
+      });
+    }
+  };
 
   const updateQuantity = (id: number, change: number) => {
     setCartItems(items =>
@@ -42,13 +89,22 @@ const POS = () => {
   const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   const handlePayment = async () => {
+    if (!pelakuUsaha || !cabang) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Data pelaku usaha atau cabang tidak tersedia.",
+      });
+      return;
+    }
+
     try {
       // Process each item in the cart
       for (const item of cartItems) {
         const { error } = await supabase
           .from('transaksi')
           .insert({
-            cabang_id: 1, // You might want to make this dynamic based on user's branch
+            cabang_id: cabang.cabang_id,
             produk_id: item.id,
             quantity: item.quantity,
             total_price: item.price * item.quantity,
@@ -65,12 +121,12 @@ const POS = () => {
         title: "Pembayaran Berhasil",
         description: `Total pembayaran: Rp ${total.toLocaleString('id-ID')}`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error processing payment:', error);
       toast({
         variant: "destructive",
         title: "Gagal Memproses Pembayaran",
-        description: "Terjadi kesalahan saat memproses pembayaran.",
+        description: error.message || "Terjadi kesalahan saat memproses pembayaran.",
       });
     }
   };
