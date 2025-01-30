@@ -15,6 +15,7 @@ const Auth = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    console.log("Attempting login with:", email); // Debug log
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
@@ -22,7 +23,23 @@ const Auth = () => {
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Login error:", error); // Debug log
+        if (error.message === "Invalid login credentials") {
+          toast({
+            variant: "destructive",
+            title: "Login gagal",
+            description: "Email atau kata sandi salah. Silakan coba lagi atau daftar jika belum memiliki akun.",
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Login gagal",
+            description: error.message,
+          });
+        }
+        return;
+      }
 
       toast({
         title: "Login berhasil",
@@ -31,10 +48,11 @@ const Auth = () => {
 
       navigate("/");
     } catch (error: any) {
+      console.error("Unexpected error:", error); // Debug log
       toast({
         variant: "destructive",
         title: "Login gagal",
-        description: error.message,
+        description: "Terjadi kesalahan yang tidak diharapkan",
       });
     } finally {
       setIsLoading(false);
@@ -44,24 +62,37 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    console.log("Attempting signup with:", email); // Debug log
 
     try {
       const { error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: window.location.origin,
+        }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Signup error:", error); // Debug log
+        toast({
+          variant: "destructive",
+          title: "Pendaftaran gagal",
+          description: error.message,
+        });
+        return;
+      }
 
       toast({
         title: "Pendaftaran berhasil",
         description: "Silakan cek email Anda untuk verifikasi",
       });
     } catch (error: any) {
+      console.error("Unexpected signup error:", error); // Debug log
       toast({
         variant: "destructive",
         title: "Pendaftaran gagal",
-        description: error.message,
+        description: "Terjadi kesalahan yang tidak diharapkan",
       });
     } finally {
       setIsLoading(false);
