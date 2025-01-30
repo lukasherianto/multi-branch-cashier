@@ -52,6 +52,7 @@ export function EmployeeForm() {
 
   const loadBranches = async () => {
     try {
+      console.log("Loading branches...");
       const { data: pelakuUsaha } = await supabase
         .from("pelaku_usaha")
         .select("pelaku_usaha_id")
@@ -68,6 +69,7 @@ export function EmployeeForm() {
         .eq("pelaku_usaha_id", pelakuUsaha.pelaku_usaha_id);
 
       if (error) throw error;
+      console.log("Branches loaded:", branchesData);
       setBranches(branchesData || []);
     } catch (error) {
       console.error("Error loading branches:", error);
@@ -81,6 +83,7 @@ export function EmployeeForm() {
 
   const loadEmployees = async () => {
     try {
+      console.log("Loading employees...");
       const { data: pelakuUsaha } = await supabase
         .from("pelaku_usaha")
         .select("pelaku_usaha_id")
@@ -97,6 +100,7 @@ export function EmployeeForm() {
         .eq("pelaku_usaha_id", pelakuUsaha.pelaku_usaha_id);
 
       if (error) throw error;
+      console.log("Employees loaded:", employeesData);
       setEmployees(employeesData || []);
     } catch (error) {
       console.error("Error loading employees:", error);
@@ -111,6 +115,7 @@ export function EmployeeForm() {
   const onSubmit = async (data: EmployeeFormData) => {
     try {
       setIsLoading(true);
+      console.log("Submitting employee data:", data);
       
       const { data: pelakuUsaha } = await supabase
         .from("pelaku_usaha")
@@ -156,6 +161,7 @@ export function EmployeeForm() {
   const deleteEmployee = async (karyawanId: number) => {
     try {
       setIsLoading(true);
+      console.log("Deleting employee:", karyawanId);
       const { error } = await supabase
         .from("karyawan")
         .delete()
