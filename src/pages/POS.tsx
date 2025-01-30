@@ -38,18 +38,26 @@ const POS = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
+        console.log("User tidak ditemukan, mengarahkan ke halaman auth");
         navigate('/auth');
         return;
       }
 
-      // Get pelaku_usaha data - convert user.id to number
+      console.log("User ditemukan:", user.id);
+
+      // Get pelaku_usaha data
       const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
         .from('pelaku_usaha')
         .select('*')
-        .eq('user_id', parseInt(user.id))
+        .eq('user_id', user.id) // Gunakan user.id langsung tanpa konversi
         .single();
 
-      if (pelakuUsahaError) throw pelakuUsahaError;
+      if (pelakuUsahaError) {
+        console.error("Error mengambil data pelaku usaha:", pelakuUsahaError);
+        throw pelakuUsahaError;
+      }
+
+      console.log("Data pelaku usaha:", pelakuUsahaData);
       setPelakuUsaha(pelakuUsahaData);
 
       // Get first cabang for this pelaku_usaha
@@ -59,7 +67,12 @@ const POS = () => {
         .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id)
         .single();
 
-      if (cabangError) throw cabangError;
+      if (cabangError) {
+        console.error("Error mengambil data cabang:", cabangError);
+        throw cabangError;
+      }
+
+      console.log("Data cabang:", cabangData);
       setCabang(cabangData);
 
     } catch (error: any) {
