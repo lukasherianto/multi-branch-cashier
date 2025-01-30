@@ -16,7 +16,7 @@ const Auth = () => {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    console.log(`Attempting ${isSignUp ? 'signup' : 'login'} with:`, email);
+    console.log(`Mencoba ${isSignUp ? 'mendaftar' : 'masuk'} dengan:`, email);
 
     try {
       if (isSignUp) {
@@ -29,12 +29,12 @@ const Auth = () => {
         });
 
         if (error) {
-          console.error("Signup error:", error);
+          console.error("Error pendaftaran:", error);
           if (error.message.includes("already registered")) {
             toast({
               variant: "destructive",
               title: "Pendaftaran gagal",
-              description: "Email sudah terdaftar. Silakan login.",
+              description: "Email sudah terdaftar. Silakan masuk dengan email tersebut.",
             });
             setIsSignUp(false);
           } else {
@@ -49,7 +49,7 @@ const Auth = () => {
 
         toast({
           title: "Pendaftaran berhasil",
-          description: "Silakan login dengan akun yang baru dibuat",
+          description: "Silakan masuk dengan akun yang baru dibuat",
         });
         setIsSignUp(false);
       } else {
@@ -59,17 +59,17 @@ const Auth = () => {
         });
 
         if (error) {
-          console.error("Login error:", error);
+          console.error("Error masuk:", error);
           if (error.message === "Invalid login credentials") {
             toast({
               variant: "destructive",
-              title: "Login gagal",
+              title: "Gagal masuk",
               description: "Email atau kata sandi salah. Silakan coba lagi atau daftar jika belum memiliki akun.",
             });
           } else {
             toast({
               variant: "destructive",
-              title: "Login gagal",
+              title: "Gagal masuk",
               description: error.message,
             });
           }
@@ -77,17 +77,17 @@ const Auth = () => {
         }
 
         toast({
-          title: "Login berhasil",
+          title: "Berhasil masuk",
           description: "Anda akan diarahkan ke halaman utama",
         });
         navigate("/");
       }
     } catch (error: any) {
-      console.error("Unexpected error:", error);
+      console.error("Error tidak terduga:", error);
       toast({
         variant: "destructive",
-        title: isSignUp ? "Pendaftaran gagal" : "Login gagal",
-        description: "Terjadi kesalahan yang tidak diharapkan",
+        title: isSignUp ? "Pendaftaran gagal" : "Gagal masuk",
+        description: "Terjadi kesalahan yang tidak terduga",
       });
     } finally {
       setIsLoading(false);
