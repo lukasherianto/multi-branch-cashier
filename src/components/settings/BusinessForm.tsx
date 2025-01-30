@@ -4,8 +4,11 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Store, Phone } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { BusinessFormHeader } from "./BusinessFormHeader";
+import { BusinessFormSkeleton } from "./BusinessFormSkeleton";
+import { WhatsAppInput } from "./WhatsAppInput";
 
 export const BusinessForm = () => {
   const { toast } = useToast();
@@ -56,19 +59,9 @@ export const BusinessForm = () => {
   };
 
   const validateWhatsappNumber = (number: string) => {
-    // Remove any non-digit characters
     const cleanNumber = number.replace(/\D/g, '');
-    
-    // Check if it starts with '08' or '628' or '+628'
-    if (!cleanNumber.match(/^(08|628)/)) {
-      return false;
-    }
-    
-    // Check length (Indonesian numbers are typically 10-13 digits)
-    if (cleanNumber.length < 10 || cleanNumber.length > 13) {
-      return false;
-    }
-    
+    if (!cleanNumber.match(/^(08|628)/)) return false;
+    if (cleanNumber.length < 10 || cleanNumber.length > 13) return false;
     return true;
   };
 
@@ -102,7 +95,6 @@ export const BusinessForm = () => {
       const numericUserId = parseInt(user.id);
 
       if (pelakuUsahaId) {
-        // Update existing business
         const { error: updateError } = await supabase
           .from('pelaku_usaha')
           .update({
@@ -114,7 +106,6 @@ export const BusinessForm = () => {
 
         if (updateError) throw updateError;
       } else {
-        // Create new business
         const { error: insertError } = await supabase
           .from('pelaku_usaha')
           .insert({
@@ -143,26 +134,12 @@ export const BusinessForm = () => {
   };
 
   if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center p-6">
-          <Loader2 className="h-6 w-6 animate-spin" />
-        </CardContent>
-      </Card>
-    );
+    return <BusinessFormSkeleton />;
   }
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Store className="h-5 w-5" />
-          Data Pelaku Usaha
-        </CardTitle>
-        <CardDescription>
-          Kelola informasi usaha Anda
-        </CardDescription>
-      </CardHeader>
+      <BusinessFormHeader />
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -175,22 +152,10 @@ export const BusinessForm = () => {
               required
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="whatsapp" className="flex items-center gap-2">
-              <Phone className="h-4 w-4" />
-              Nomor WhatsApp
-            </Label>
-            <Input
-              id="whatsapp"
-              value={whatsapp}
-              onChange={(e) => setWhatsapp(e.target.value)}
-              placeholder="Contoh: 08123456789"
-              type="tel"
-            />
-            <p className="text-sm text-gray-500">
-              Format: 08xx atau 628xx (opsional)
-            </p>
-          </div>
+          <WhatsAppInput 
+            value={whatsapp}
+            onChange={setWhatsapp}
+          />
           <Button type="submit" disabled={isSaving} className="w-full">
             {isSaving ? (
               <>
