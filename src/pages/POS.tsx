@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 import { 
   Table, 
   TableBody, 
@@ -11,8 +12,10 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Search, ShoppingCart, Plus, Minus, Trash2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const POS = () => {
+  const { toast } = useToast();
   const [cartItems, setCartItems] = useState([
     {
       id: 1,
@@ -37,6 +40,40 @@ const POS = () => {
   };
 
   const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+  const handlePayment = async () => {
+    try {
+      // Process each item in the cart
+      for (const item of cartItems) {
+        const { error } = await supabase
+          .from('transaksi')
+          .insert({
+            cabang_id: 1, // You might want to make this dynamic based on user's branch
+            produk_id: item.id,
+            quantity: item.quantity,
+            total_price: item.price * item.quantity,
+            transaction_date: new Date().toISOString()
+          });
+
+        if (error) throw error;
+      }
+
+      // Clear cart after successful transaction
+      setCartItems([]);
+      
+      toast({
+        title: "Pembayaran Berhasil",
+        description: `Total pembayaran: Rp ${total.toLocaleString('id-ID')}`,
+      });
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      toast({
+        variant: "destructive",
+        title: "Gagal Memproses Pembayaran",
+        description: "Terjadi kesalahan saat memproses pembayaran.",
+      });
+    }
+  };
 
   const sampleProducts = [
     { id: 1, name: "Produk 1", price: 25000, stock: 100, category: "Kategori A" },
@@ -180,7 +217,12 @@ const POS = () => {
             <span>Total</span>
             <span>Rp {total.toLocaleString('id-ID')}</span>
           </div>
-          <Button className="w-full text-sm" size="sm">
+          <Button 
+            className="w-full text-sm" 
+            size="sm"
+            onClick={handlePayment}
+            disabled={cartItems.length === 0}
+          >
             Proses Pembayaran
           </Button>
         </div>
