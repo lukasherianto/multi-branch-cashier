@@ -29,12 +29,11 @@ export const BusinessForm = () => {
       
       if (user) {
         console.log("Loading business data for user:", user);
-        const numericUserId = parseInt(user.id);
         
         const { data: businessData, error } = await supabase
           .from('pelaku_usaha')
           .select('*')
-          .eq('user_id', numericUserId)
+          .eq('user_id', user.id)
           .single();
 
         if (error) throw error;
@@ -92,8 +91,6 @@ export const BusinessForm = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
-      const numericUserId = parseInt(user.id);
-
       if (pelakuUsahaId) {
         const { error: updateError } = await supabase
           .from('pelaku_usaha')
@@ -109,7 +106,7 @@ export const BusinessForm = () => {
         const { error: insertError } = await supabase
           .from('pelaku_usaha')
           .insert({
-            user_id: numericUserId,
+            user_id: user.id,
             business_name: businessName,
             contact_whatsapp: whatsapp,
           });

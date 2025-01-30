@@ -53,7 +53,7 @@ export const BranchForm = () => {
       const { data: pelakuUsaha, error: pelakuUsahaError } = await supabase
         .from('pelaku_usaha')
         .select('pelaku_usaha_id')
-        .eq('user_id', parseInt(user.id))
+        .eq('user_id', user.id)
         .single();
 
       if (pelakuUsahaError) throw pelakuUsahaError;
