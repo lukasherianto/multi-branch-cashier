@@ -40,7 +40,7 @@ const POS = () => {
 
   return (
     <div className="h-[calc(100vh-2rem)] flex gap-6">
-      {/* Product Search Section */}
+      {/* Product Search Section - Now wider */}
       <div className="flex-1 space-y-6">
         <div className="flex justify-between items-center">
           <h2 className="text-3xl font-bold text-gray-800">Kasir</h2>
@@ -54,8 +54,8 @@ const POS = () => {
           />
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4, 5, 6].map((_, index) => (
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((_, index) => (
             <Card
               key={index}
               className="p-4 cursor-pointer hover:shadow-lg transition-shadow"
@@ -68,16 +68,16 @@ const POS = () => {
         </div>
       </div>
 
-      {/* Cart Section */}
-      <Card className="w-[400px] flex flex-col">
-        <div className="p-6 border-b">
+      {/* Cart Section - Now narrower */}
+      <Card className="w-[320px] flex flex-col">
+        <div className="p-4 border-b">
           <div className="flex items-center space-x-3">
             <ShoppingCart className="h-5 w-5 text-mint-600" />
             <h3 className="font-semibold text-lg">Keranjang</h3>
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto p-4">
           <Table>
             <TableHeader>
               <TableRow>
@@ -98,27 +98,27 @@ const POS = () => {
                         <Button
                           variant="outline"
                           size="icon"
-                          className="h-8 w-8"
+                          className="h-7 w-7"
                           onClick={() => updateQuantity(item.id, -1)}
                         >
-                          <Minus className="h-4 w-4" />
+                          <Minus className="h-3 w-3" />
                         </Button>
                         <span className="w-8 text-center">{item.quantity}</span>
                         <Button
                           variant="outline"
                           size="icon"
-                          className="h-8 w-8"
+                          className="h-7 w-7"
                           onClick={() => updateQuantity(item.id, 1)}
                         >
-                          <Plus className="h-4 w-4" />
+                          <Plus className="h-3 w-3" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-red-500"
+                          className="h-7 w-7 text-red-500"
                           onClick={() => removeItem(item.id)}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3 w-3" />
                         </Button>
                       </div>
                     </div>
@@ -132,7 +132,7 @@ const POS = () => {
           </Table>
         </div>
 
-        <div className="border-t p-6 space-y-4">
+        <div className="border-t p-4 space-y-4">
           <div className="flex justify-between text-lg font-semibold">
             <span>Total</span>
             <span>Rp {total.toLocaleString('id-ID')}</span>
