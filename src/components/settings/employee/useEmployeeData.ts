@@ -12,13 +12,25 @@ export const useEmployeeData = () => {
   const loadBranches = async () => {
     try {
       console.log("Loading branches...");
-      const { data: pelakuUsaha } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.error("No authenticated user");
+        return;
+      }
+
+      const { data: pelakuUsaha, error: pelakuUsahaError } = await supabase
         .from("pelaku_usaha")
         .select("pelaku_usaha_id")
-        .single();
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (pelakuUsahaError) {
+        console.error("Error fetching pelaku usaha:", pelakuUsahaError);
+        return;
+      }
 
       if (!pelakuUsaha) {
-        console.error("No pelaku usaha found");
+        console.log("No pelaku usaha found, user needs to create business profile first");
         return;
       }
 
@@ -43,13 +55,25 @@ export const useEmployeeData = () => {
   const loadEmployees = async () => {
     try {
       console.log("Loading employees...");
-      const { data: pelakuUsaha } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.error("No authenticated user");
+        return;
+      }
+
+      const { data: pelakuUsaha, error: pelakuUsahaError } = await supabase
         .from("pelaku_usaha")
         .select("pelaku_usaha_id")
-        .single();
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (pelakuUsahaError) {
+        console.error("Error fetching pelaku usaha:", pelakuUsahaError);
+        return;
+      }
 
       if (!pelakuUsaha) {
-        console.error("No pelaku usaha found");
+        console.log("No pelaku usaha found, user needs to create business profile first");
         return;
       }
 

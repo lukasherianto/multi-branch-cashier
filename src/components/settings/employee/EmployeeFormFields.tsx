@@ -81,7 +81,7 @@ export const EmployeeFormFields = ({ form, branches }: EmployeeFormFieldsProps) 
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="">Pusat</SelectItem>
+                <SelectItem value="0">Pusat</SelectItem>
                 {branches.map((branch) => (
                   <SelectItem
                     key={branch.cabang_id}
