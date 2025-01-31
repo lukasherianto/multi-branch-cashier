@@ -31,6 +31,18 @@ export const ProductList = ({
   showStockAction,
   onRefresh 
 }: ProductListProps) => {
+  const handleAddToCart = (product: any) => {
+    // If customer is registered and member price exists, use member price
+    const priceToUse = isRegisteredCustomer && product.member_price 
+      ? product.member_price 
+      : product.price;
+
+    onAddToCart({
+      ...product,
+      price: priceToUse
+    });
+  };
+
   return (
     <div className="w-full">
       <Table>
@@ -66,7 +78,7 @@ export const ProductList = ({
                   />
                 ) : (
                   <button
-                    onClick={() => onAddToCart(product)}
+                    onClick={() => handleAddToCart(product)}
                     className="bg-mint-500 text-white px-4 py-2 rounded hover:bg-mint-600 transition-colors"
                   >
                     Add

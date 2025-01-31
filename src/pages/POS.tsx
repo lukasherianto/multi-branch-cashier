@@ -14,7 +14,7 @@ interface CartItem {
   member_price?: number | null;
   quantity: number;
   category?: string;
-  stock: number; // Make stock required to match ProductList's expected type
+  stock: number;
 }
 
 const POS = () => {
@@ -139,7 +139,7 @@ const POS = () => {
             member_price: product.member_price,
             quantity: 1,
             category: product.kategori_produk?.kategori_name,
-            stock: product.stock || 0 // Ensure stock is always a number
+            stock: product.stock || 0
           })));
         }
       }
