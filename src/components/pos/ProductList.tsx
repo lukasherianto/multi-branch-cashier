@@ -7,6 +7,7 @@ interface Product {
   id: number;
   name: string;
   price: number;
+  member_price?: number | null;
   quantity: number;
   category?: string;
   stock?: number;
@@ -15,9 +16,10 @@ interface Product {
 interface ProductListProps {
   products: Product[];
   onAddToCart: (product: Product, quantity: number) => void;
+  isRegisteredCustomer?: boolean;
 }
 
-export const ProductList = ({ products, onAddToCart }: ProductListProps) => {
+export const ProductList = ({ products, onAddToCart, isRegisteredCustomer }: ProductListProps) => {
   return (
     <Card className="flex-1">
       <Table>
@@ -31,49 +33,66 @@ export const ProductList = ({ products, onAddToCart }: ProductListProps) => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {products.map((product) => (
-            <TableRow key={product.id} className="text-sm">
-              <TableCell className="py-2 text-xs">{product.name}</TableCell>
-              <TableCell className="py-2 text-xs">{product.category}</TableCell>
-              <TableCell className="py-2 text-xs text-right">
-                Rp {product.price.toLocaleString('id-ID')}
-              </TableCell>
-              <TableCell className="py-2 text-xs text-right">{product.stock}</TableCell>
-              <TableCell className="py-2 text-xs text-right">
-                <div className="flex items-center justify-end gap-2">
-                  <Input
-                    type="number"
-                    className="w-16 h-7 text-xs"
-                    min="1"
-                    defaultValue="1"
-                    onChange={(e) => {
-                      const input = e.target as HTMLInputElement;
-                      input.value = Math.max(1, parseInt(input.value) || 1).toString();
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
+          {products.map((product) => {
+            const displayPrice = isRegisteredCustomer && product.member_price 
+              ? product.member_price 
+              : product.price;
+
+            return (
+              <TableRow key={product.id} className="text-sm">
+                <TableCell className="py-2 text-xs">{product.name}</TableCell>
+                <TableCell className="py-2 text-xs">{product.category}</TableCell>
+                <TableCell className="py-2 text-xs text-right">
+                  Rp {displayPrice.toLocaleString('id-ID')}
+                  {isRegisteredCustomer && product.member_price && (
+                    <span className="text-green-600 ml-1 text-[10px]">(Harga Member)</span>
+                  )}
+                </TableCell>
+                <TableCell className="py-2 text-xs text-right">{product.stock}</TableCell>
+                <TableCell className="py-2 text-xs text-right">
+                  <div className="flex items-center justify-end gap-2">
+                    <Input
+                      type="number"
+                      className="w-16 h-7 text-xs"
+                      min="1"
+                      defaultValue="1"
+                      onChange={(e) => {
                         const input = e.target as HTMLInputElement;
-                        onAddToCart(product, parseInt(input.value) || 1);
+                        input.value = Math.max(1, parseInt(input.value) || 1).toString();
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          const input = e.target as HTMLInputElement;
+                          const quantity = parseInt(input.value) || 1;
+                          onAddToCart({
+                            ...product,
+                            price: displayPrice // Use the member price if applicable
+                          }, quantity);
+                          input.value = "1";
+                        }
+                      }}
+                    />
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="text-xs px-2 py-1 h-7"
+                      onClick={(e) => {
+                        const input = e.currentTarget.previousSibling as HTMLInputElement;
+                        const quantity = parseInt(input.value) || 1;
+                        onAddToCart({
+                          ...product,
+                          price: displayPrice // Use the member price if applicable
+                        }, quantity);
                         input.value = "1";
-                      }
-                    }}
-                  />
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="text-xs px-2 py-1 h-7"
-                    onClick={(e) => {
-                      const input = e.currentTarget.previousSibling as HTMLInputElement;
-                      onAddToCart(product, parseInt(input.value) || 1);
-                      input.value = "1";
-                    }}
-                  >
-                    Add
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+                      }}
+                    >
+                      Add
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </Card>

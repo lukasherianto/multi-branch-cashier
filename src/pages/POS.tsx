@@ -24,6 +24,7 @@ const POS = () => {
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [birthDate, setBirthDate] = useState<Date | null>(null);
+  const [isRegisteredCustomer, setIsRegisteredCustomer] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([
     {
       id: 1,
@@ -180,6 +181,8 @@ const POS = () => {
           setCustomerName={setCustomerName}
           birthDate={birthDate}
           setBirthDate={setBirthDate}
+          onCustomerFound={() => setIsRegisteredCustomer(true)}
+          onNewCustomer={() => setIsRegisteredCustomer(false)}
         />
 
         <ProductSearch onSearch={handleSearch} />
@@ -187,6 +190,7 @@ const POS = () => {
         <ProductList
           products={cartItems}
           onAddToCart={addToCart}
+          isRegisteredCustomer={isRegisteredCustomer}
         />
       </div>
 

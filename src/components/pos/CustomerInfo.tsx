@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, CalendarIcon, Save } from "lucide-react";
+import { User, CalendarIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { WhatsAppInput } from "@/components/settings/WhatsAppInput";
@@ -14,6 +14,8 @@ interface CustomerInfoProps {
   setCustomerName: (value: string) => void;
   birthDate: Date | null;
   setBirthDate: (value: Date | null) => void;
+  onCustomerFound?: () => void;
+  onNewCustomer?: () => void;
 }
 
 export const CustomerInfo = ({
@@ -23,6 +25,8 @@ export const CustomerInfo = ({
   setCustomerName,
   birthDate,
   setBirthDate,
+  onCustomerFound,
+  onNewCustomer,
 }: CustomerInfoProps) => {
   const { toast } = useToast();
 
@@ -48,6 +52,7 @@ export const CustomerInfo = ({
       if (data) {
         setCustomerName(data.nama);
         setBirthDate(data.tanggal_lahir ? new Date(data.tanggal_lahir) : null);
+        onCustomerFound?.();
         toast({
           title: "Data Pelanggan Ditemukan",
           description: `Selamat datang kembali, ${data.nama}!`,
@@ -55,6 +60,7 @@ export const CustomerInfo = ({
       } else {
         setCustomerName("");
         setBirthDate(null);
+        onNewCustomer?.();
         toast({
           title: "Pelanggan Baru",
           description: "Silakan lengkapi data pelanggan",
@@ -115,6 +121,7 @@ export const CustomerInfo = ({
 
       if (error) throw error;
 
+      onCustomerFound?.();
       toast({
         title: "Sukses",
         description: "Data pelanggan berhasil disimpan",
