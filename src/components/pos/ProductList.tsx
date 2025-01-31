@@ -38,8 +38,8 @@ export const ProductList = ({
           <TableRow>
             <TableHead>Nama Produk</TableHead>
             <TableHead>Kategori</TableHead>
-            <TableHead>Harga</TableHead>
-            {isRegisteredCustomer && <TableHead>Harga Member</TableHead>}
+            <TableHead>Harga Retail</TableHead>
+            <TableHead>Harga Member</TableHead>
             <TableHead>Stok</TableHead>
             <TableHead>Aksi</TableHead>
           </TableRow>
@@ -50,14 +50,12 @@ export const ProductList = ({
               <TableCell className="font-medium">{product.name}</TableCell>
               <TableCell>{product.category || '-'}</TableCell>
               <TableCell>Rp {product.price.toLocaleString('id-ID')}</TableCell>
-              {isRegisteredCustomer && (
-                <TableCell>
-                  {product.member_price 
-                    ? `Rp ${product.member_price.toLocaleString('id-ID')}`
-                    : '-'
-                  }
-                </TableCell>
-              )}
+              <TableCell>
+                {product.member_price 
+                  ? `Rp ${product.member_price.toLocaleString('id-ID')}`
+                  : '-'
+                }
+              </TableCell>
               <TableCell>{product.stock}</TableCell>
               <TableCell>
                 {showStockAction && onRefresh ? (
@@ -71,7 +69,7 @@ export const ProductList = ({
                     onClick={() => onAddToCart(product)}
                     className="bg-mint-500 text-white px-4 py-2 rounded hover:bg-mint-600 transition-colors"
                   >
-                    Tambah
+                    Add
                   </button>
                 )}
               </TableCell>
