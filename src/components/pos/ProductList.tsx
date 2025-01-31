@@ -27,7 +27,8 @@ export const ProductList = ({ products, onAddToCart, isRegisteredCustomer }: Pro
           <TableRow>
             <TableHead className="text-xs">Nama Produk</TableHead>
             <TableHead className="text-xs">Kategori</TableHead>
-            <TableHead className="text-xs text-right">Harga</TableHead>
+            <TableHead className="text-xs text-right">Harga Retail</TableHead>
+            <TableHead className="text-xs text-right">Harga Member</TableHead>
             <TableHead className="text-xs text-right">Stok</TableHead>
             <TableHead className="text-xs text-right">Aksi</TableHead>
           </TableRow>
@@ -43,9 +44,18 @@ export const ProductList = ({ products, onAddToCart, isRegisteredCustomer }: Pro
                 <TableCell className="py-2 text-xs">{product.name}</TableCell>
                 <TableCell className="py-2 text-xs">{product.category}</TableCell>
                 <TableCell className="py-2 text-xs text-right">
-                  Rp {displayPrice.toLocaleString('id-ID')}
-                  {isRegisteredCustomer && product.member_price && (
-                    <span className="text-green-600 ml-1 text-[10px]">(Harga Member)</span>
+                  Rp {product.price.toLocaleString('id-ID')}
+                </TableCell>
+                <TableCell className="py-2 text-xs text-right">
+                  {product.member_price ? (
+                    <>
+                      Rp {product.member_price.toLocaleString('id-ID')}
+                      {isRegisteredCustomer && (
+                        <span className="text-green-600 ml-1 text-[10px]">(Aktif)</span>
+                      )}
+                    </>
+                  ) : (
+                    "-"
                   )}
                 </TableCell>
                 <TableCell className="py-2 text-xs text-right">{product.stock}</TableCell>
@@ -66,7 +76,7 @@ export const ProductList = ({ products, onAddToCart, isRegisteredCustomer }: Pro
                           const quantity = parseInt(input.value) || 1;
                           onAddToCart({
                             ...product,
-                            price: displayPrice // Use the member price if applicable
+                            price: displayPrice
                           }, quantity);
                           input.value = "1";
                         }
@@ -81,7 +91,7 @@ export const ProductList = ({ products, onAddToCart, isRegisteredCustomer }: Pro
                         const quantity = parseInt(input.value) || 1;
                         onAddToCart({
                           ...product,
-                          price: displayPrice // Use the member price if applicable
+                          price: displayPrice
                         }, quantity);
                         input.value = "1";
                       }}
