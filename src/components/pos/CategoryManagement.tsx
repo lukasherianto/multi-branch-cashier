@@ -8,16 +8,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { CategoryForm } from "./forms/CategoryForm";
+import { CategoryList } from "./CategoryList";
 
 export const CategoryManagement = () => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
-  const [categoryName, setCategoryName] = useState("");
-  const [description, setDescription] = useState("");
   const [categories, setCategories] = useState<Array<{ kategori_name: string; description: string | null }>>([]);
 
   useEffect(() => {
@@ -46,9 +44,7 @@ export const CategoryManagement = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleSubmit = async ({ categoryName, description }: { categoryName: string; description: string }) => {
     try {
       const { data: pelakuUsahaData } = await supabase
         .from('pelaku_usaha')
@@ -80,8 +76,7 @@ export const CategoryManagement = () => {
       });
 
       setIsOpen(false);
-      resetForm();
-      fetchCategories(); // Refresh daftar kategori
+      fetchCategories();
     } catch (error) {
       console.error('Error adding category:', error);
       toast({
@@ -90,11 +85,6 @@ export const CategoryManagement = () => {
         variant: "destructive",
       });
     }
-  };
-
-  const resetForm = () => {
-    setCategoryName("");
-    setDescription("");
   };
 
   return (
@@ -110,47 +100,11 @@ export const CategoryManagement = () => {
           <DialogHeader>
             <DialogTitle>Tambah Kategori Baru</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="categoryName">Nama Kategori</Label>
-              <Input
-                id="categoryName"
-                value={categoryName}
-                onChange={(e) => setCategoryName(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Deskripsi</Label>
-              <Input
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
-            <Button type="submit" className="w-full">
-              Simpan
-            </Button>
-          </form>
+          <CategoryForm onSubmit={handleSubmit} />
         </DialogContent>
       </Dialog>
 
-      <div className="mt-4">
-        <h3 className="text-lg font-semibold mb-2">Daftar Kategori</h3>
-        <div className="border rounded-lg divide-y">
-          {categories.map((category, index) => (
-            <div key={index} className="p-3">
-              <h4 className="font-medium">{category.kategori_name}</h4>
-              {category.description && (
-                <p className="text-sm text-gray-600">{category.description}</p>
-              )}
-            </div>
-          ))}
-          {categories.length === 0 && (
-            <p className="p-3 text-gray-500">Belum ada kategori</p>
-          )}
-        </div>
-      </div>
+      <CategoryList categories={categories} />
     </div>
   );
 };
