@@ -5,6 +5,8 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Attendance = () => {
   const { toast } = useToast();
@@ -12,6 +14,7 @@ const Attendance = () => {
   const [attendanceHistory, setAttendanceHistory] = useState<any[]>([]);
   const [todayAttendance, setTodayAttendance] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEmployee, setIsEmployee] = useState<boolean | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -28,40 +31,64 @@ const Attendance = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      console.log("Loading employee data for user:", user.id);
+      
       // Get employee data
-      const { data: employeeData } = await supabase
+      const { data: employeeData, error: employeeError } = await supabase
         .from("karyawan")
         .select("karyawan_id")
         .eq("auth_id", user.id)
-        .single();
+        .maybeSingle();
+
+      if (employeeError) {
+        console.error("Error fetching employee data:", employeeError);
+        throw employeeError;
+      }
 
       if (!employeeData) {
-        console.error("Employee data not found");
+        console.log("No employee data found for user");
+        setIsEmployee(false);
         return;
       }
+
+      setIsEmployee(true);
+      console.log("Employee data found:", employeeData);
 
       // Get today's attendance
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const { data: todayData } = await supabase
+      const { data: todayData, error: todayError } = await supabase
         .from("absensi")
         .select("*")
         .eq("karyawan_id", employeeData.karyawan_id)
         .eq("tanggal", format(today, "yyyy-MM-dd"))
-        .single();
+        .maybeSingle();
+
+      if (todayError) {
+        console.error("Error fetching today's attendance:", todayError);
+        throw todayError;
+      }
 
       setTodayAttendance(todayData);
+      console.log("Today's attendance:", todayData);
 
       // Get attendance history
-      const { data: historyData } = await supabase
+      const { data: historyData, error: historyError } = await supabase
         .from("absensi")
         .select("*")
         .eq("karyawan_id", employeeData.karyawan_id)
         .order("tanggal", { ascending: false })
         .limit(10);
 
+      if (historyError) {
+        console.error("Error fetching attendance history:", historyError);
+        throw historyError;
+      }
+
       setAttendanceHistory(historyData || []);
+      console.log("Attendance history loaded:", historyData);
+
     } catch (error) {
       console.error("Error loading attendance data:", error);
       toast({
@@ -79,11 +106,13 @@ const Attendance = () => {
       if (!user) return;
 
       // Get employee data
-      const { data: employeeData } = await supabase
+      const { data: employeeData, error: employeeError } = await supabase
         .from("karyawan")
         .select("karyawan_id")
         .eq("auth_id", user.id)
-        .single();
+        .maybeSingle();
+
+      if (employeeError) throw employeeError;
 
       if (!employeeData) {
         toast({
@@ -145,6 +174,19 @@ const Attendance = () => {
       setIsLoading(false);
     }
   };
+
+  if (isEmployee === false) {
+    return (
+      <div className="p-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Anda tidak terdaftar sebagai karyawan. Silakan hubungi admin untuk mendaftarkan Anda sebagai karyawan.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
