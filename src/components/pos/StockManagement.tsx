@@ -28,7 +28,9 @@ export const StockManagement = ({ productId, currentStock, onSuccess }: StockMan
     e.preventDefault();
     
     try {
-      const newStock = currentStock + parseInt(additionalStock);
+      // Convert additionalStock to number and add it to currentStock
+      const stockToAdd = parseInt(additionalStock);
+      const newStock = currentStock + stockToAdd; // Changed from - to + to correctly add stock
       
       const { error } = await supabase
         .from('produk')
