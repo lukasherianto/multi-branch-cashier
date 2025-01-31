@@ -18,6 +18,7 @@ interface ProductListProps {
     category?: string;
     stock: number;
     barcode?: string;
+    unit: string;
   }>;
   onAddToCart: (product: any) => void;
   isRegisteredCustomer: boolean;
@@ -55,6 +56,7 @@ export const ProductList = ({
             <TableHead>Harga Retail</TableHead>
             <TableHead>Harga Member</TableHead>
             <TableHead>Stok</TableHead>
+            <TableHead>Satuan</TableHead>
             <TableHead>Aksi</TableHead>
           </TableRow>
         </TableHeader>
@@ -72,6 +74,7 @@ export const ProductList = ({
                 }
               </TableCell>
               <TableCell>{product.stock}</TableCell>
+              <TableCell>{product.unit}</TableCell>
               <TableCell>
                 {showStockAction && onRefresh ? (
                   <StockManagement

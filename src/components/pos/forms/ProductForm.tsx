@@ -20,6 +20,7 @@ interface ProductFormProps {
     memberPrice: string;
     stock: string;
     barcode: string;
+    unit: string;
   }) => void;
   isSubmitting: boolean;
 }
@@ -32,6 +33,9 @@ export const ProductForm = ({ categories, onSubmit, isSubmitting }: ProductFormP
   const [stock, setStock] = useState("");
   const [selectedKategori, setSelectedKategori] = useState("");
   const [barcode, setBarcode] = useState("");
+  const [unit, setUnit] = useState("Pcs");
+
+  const units = ["Pcs", "Buah", "Unit", "Kg", "Gram", "Meter", "Liter"];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +47,7 @@ export const ProductForm = ({ categories, onSubmit, isSubmitting }: ProductFormP
       memberPrice,
       stock,
       barcode,
+      unit,
     });
   };
 
@@ -80,6 +85,21 @@ export const ProductForm = ({ categories, onSubmit, isSubmitting }: ProductFormP
                 value={category.kategori_id.toString()}
               >
                 {category.kategori_name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="unit">Satuan</Label>
+        <Select value={unit} onValueChange={setUnit} required>
+          <SelectTrigger>
+            <SelectValue placeholder="Pilih satuan produk" />
+          </SelectTrigger>
+          <SelectContent>
+            {units.map((unitOption) => (
+              <SelectItem key={unitOption} value={unitOption}>
+                {unitOption}
               </SelectItem>
             ))}
           </SelectContent>

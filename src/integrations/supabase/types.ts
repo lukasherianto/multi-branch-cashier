@@ -304,6 +304,7 @@ export type Database = {
           produk_id: number
           retail_price: number
           stock: number
+          unit: string
           updated_at: string
         }
         Insert: {
@@ -317,6 +318,7 @@ export type Database = {
           produk_id?: never
           retail_price: number
           stock: number
+          unit?: string
           updated_at?: string
         }
         Update: {
@@ -330,6 +332,7 @@ export type Database = {
           produk_id?: never
           retail_price?: number
           stock?: number
+          unit?: string
           updated_at?: string
         }
         Relationships: [

@@ -7,6 +7,7 @@ export interface CartItem {
   category?: string;
   stock: number;
   barcode?: string;
+  unit: string;
 }
 
 export interface Customer {
