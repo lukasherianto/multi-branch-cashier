@@ -188,6 +188,11 @@ const POS = () => {
   };
 
   const addToCart = (product: CartItem) => {
+    console.log("Adding to cart:", product);
+    console.log("Is registered customer:", isRegisteredCustomer);
+    console.log("Member price:", product.member_price);
+    console.log("Price to use:", product.price);
+
     setCartItems(items => {
       const existingItem = items.find(item => item.id === product.id);
       if (existingItem) {
