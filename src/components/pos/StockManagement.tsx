@@ -30,7 +30,10 @@ export const StockManagement = ({ productId, currentStock, onSuccess }: StockMan
     try {
       // Convert additionalStock to number and add it to currentStock
       const stockToAdd = parseInt(additionalStock);
-      const newStock = currentStock + stockToAdd; // Changed from - to + to correctly add stock
+      console.log('Current stock:', currentStock);
+      console.log('Stock to add:', stockToAdd);
+      const newStock = currentStock + stockToAdd;
+      console.log('New stock calculated:', newStock);
       
       const { error } = await supabase
         .from('produk')
