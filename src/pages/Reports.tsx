@@ -1,108 +1,86 @@
 import { Card } from "@/components/ui/card";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
-import { id } from "date-fns/locale";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  ChartBar,
+  Database,
+  Users,
+  DollarSign,
+  User,
+  Percent,
+  ArrowReturnLeft,
+} from "lucide-react";
+import SalesReport from "@/components/reports/SalesReport";
+import InventoryReport from "@/components/reports/InventoryReport";
+import CustomerReport from "@/components/reports/CustomerReport";
+import FinancialReport from "@/components/reports/FinancialReport";
+import EmployeeReport from "@/components/reports/EmployeeReport";
+import DiscountReport from "@/components/reports/DiscountReport";
+import ReturnReport from "@/components/reports/ReturnReport";
 
 const Reports = () => {
-  // Fetch daily sales data
-  const { data: dailySales } = useQuery({
-    queryKey: ["dailySales"],
-    queryFn: async () => {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      const { data, error } = await supabase
-        .from("transaksi")
-        .select(`
-          transaksi_id,
-          quantity,
-          total_price,
-          transaction_date,
-          produk:produk_id (product_name),
-          cabang:cabang_id (branch_name)
-        `)
-        .gte("transaction_date", today.toISOString())
-        .order("transaction_date", { ascending: false });
-
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  // Calculate total sales
-  const totalSales = dailySales?.reduce((sum, sale) => sum + Number(sale.total_price), 0) || 0;
-  const totalTransactions = dailySales?.length || 0;
-
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-3xl font-bold text-gray-800">Laporan</h2>
-        <p className="text-gray-600 mt-2">Ringkasan penjualan dan transaksi</p>
+        <p className="text-gray-600 mt-2">Analisis komprehensif bisnis Anda</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-2">Total Penjualan Hari Ini</h3>
-          <p className="text-3xl font-bold text-mint-600">
-            Rp {totalSales.toLocaleString("id-ID")}
-          </p>
-        </Card>
+      <Tabs defaultValue="sales" className="space-y-4">
+        <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
+          <TabsTrigger value="sales" className="space-x-2">
+            <ChartBar className="w-4 h-4" />
+            <span>Penjualan</span>
+          </TabsTrigger>
+          <TabsTrigger value="inventory" className="space-x-2">
+            <Database className="w-4 h-4" />
+            <span>Inventaris</span>
+          </TabsTrigger>
+          <TabsTrigger value="customers" className="space-x-2">
+            <Users className="w-4 h-4" />
+            <span>Pelanggan</span>
+          </TabsTrigger>
+          <TabsTrigger value="financial" className="space-x-2">
+            <DollarSign className="w-4 h-4" />
+            <span>Keuangan</span>
+          </TabsTrigger>
+          <TabsTrigger value="employees" className="space-x-2">
+            <User className="w-4 h-4" />
+            <span>Karyawan</span>
+          </TabsTrigger>
+          <TabsTrigger value="discounts" className="space-x-2">
+            <Percent className="w-4 h-4" />
+            <span>Diskon</span>
+          </TabsTrigger>
+          <TabsTrigger value="returns" className="space-x-2">
+            <ArrowReturnLeft className="w-4 h-4" />
+            <span>Retur</span>
+          </TabsTrigger>
+        </TabsList>
 
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-2">Jumlah Transaksi Hari Ini</h3>
-          <p className="text-3xl font-bold text-mint-600">
-            {totalTransactions}
-          </p>
-        </Card>
-      </div>
-
-      <Card className="p-6">
-        <h3 className="text-xl font-semibold mb-4">Transaksi Hari Ini</h3>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Waktu</TableHead>
-                <TableHead>Cabang</TableHead>
-                <TableHead>Produk</TableHead>
-                <TableHead>Jumlah</TableHead>
-                <TableHead>Total</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {dailySales?.map((sale) => (
-                <TableRow key={sale.transaksi_id}>
-                  <TableCell>
-                    {format(new Date(sale.transaction_date), "HH:mm", { locale: id })}
-                  </TableCell>
-                  <TableCell>{sale.cabang.branch_name}</TableCell>
-                  <TableCell>{sale.produk.product_name}</TableCell>
-                  <TableCell>{sale.quantity}</TableCell>
-                  <TableCell>
-                    Rp {Number(sale.total_price).toLocaleString("id-ID")}
-                  </TableCell>
-                </TableRow>
-              ))}
-              {!dailySales?.length && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-4">
-                    Belum ada transaksi hari ini
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+        <div className="mt-6">
+          <TabsContent value="sales">
+            <SalesReport />
+          </TabsContent>
+          <TabsContent value="inventory">
+            <InventoryReport />
+          </TabsContent>
+          <TabsContent value="customers">
+            <CustomerReport />
+          </TabsContent>
+          <TabsContent value="financial">
+            <FinancialReport />
+          </TabsContent>
+          <TabsContent value="employees">
+            <EmployeeReport />
+          </TabsContent>
+          <TabsContent value="discounts">
+            <DiscountReport />
+          </TabsContent>
+          <TabsContent value="returns">
+            <ReturnReport />
+          </TabsContent>
         </div>
-      </Card>
+      </Tabs>
     </div>
   );
 };
