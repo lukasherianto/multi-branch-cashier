@@ -1,211 +1,25 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { CustomerInfo } from "@/components/pos/CustomerInfo";
 import { ProductSearch } from "@/components/pos/ProductSearch";
 import { ProductList } from "@/components/pos/ProductList";
 import { ShoppingCart } from "@/components/pos/ShoppingCart";
-
-interface CartItem {
-  id: number;
-  name: string;
-  price: number;
-  member_price?: number | null;
-  quantity: number;
-  category?: string;
-  stock: number;
-  barcode?: string;  // Menambahkan properti barcode sebagai opsional
-}
+import { useAuth } from "@/hooks/useAuth";
+import { useProducts } from "@/hooks/useProducts";
+import { useCart } from "@/hooks/useCart";
 
 const POS = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [pelakuUsaha, setPelakuUsaha] = useState<any>(null);
-  const [cabang, setCabang] = useState<any>(null);
+  const { pelakuUsaha, cabang } = useAuth();
+  const { filteredProducts, handleSearch } = useProducts();
+  const { cartItems, addToCart, updateQuantity, removeItem } = useCart();
+  
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [birthDate, setBirthDate] = useState<Date | null>(null);
   const [isRegisteredCustomer, setIsRegisteredCustomer] = useState(false);
-  const [products, setProducts] = useState<CartItem[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<CartItem[]>([]);
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-
-  useEffect(() => {
-    checkAuth();
-    fetchProducts();
-  }, []);
-
-  useEffect(() => {
-    setFilteredProducts(products);
-  }, [products]);
-
-  const checkAuth = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        console.log("User tidak ditemukan, mengarahkan ke halaman auth");
-        navigate('/auth');
-        return;
-      }
-
-      console.log("User ditemukan:", user.id);
-      
-      const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
-        .from('pelaku_usaha')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (pelakuUsahaError) {
-        console.error("Error mengambil data pelaku usaha:", pelakuUsahaError);
-        throw pelakuUsahaError;
-      }
-
-      if (!pelakuUsahaData) {
-        console.log("Profil usaha belum dibuat");
-        toast({
-          title: "Profil Usaha Belum Dibuat",
-          description: "Silakan buat profil usaha Anda terlebih dahulu",
-          variant: "destructive",
-        });
-        navigate('/settings');
-        return;
-      }
-
-      console.log("Data pelaku usaha:", pelakuUsahaData);
-      setPelakuUsaha(pelakuUsahaData);
-
-      const { data: cabangData, error: cabangError } = await supabase
-        .from('cabang')
-        .select('*')
-        .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id)
-        .maybeSingle();
-
-      if (cabangError) {
-        console.error("Error mengambil data cabang:", cabangError);
-        throw cabangError;
-      }
-
-      if (!cabangData) {
-        console.log("Belum ada cabang yang dibuat");
-        toast({
-          title: "Cabang Belum Dibuat",
-          description: "Silakan buat cabang terlebih dahulu",
-          variant: "destructive",
-        });
-        navigate('/branches');
-        return;
-      }
-
-      console.log("Data cabang:", cabangData);
-      setCabang(cabangData);
-
-    } catch (error: any) {
-      console.error('Error checking auth:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Terjadi kesalahan saat memuat data. Silakan coba lagi.",
-      });
-    }
-  };
-
-  const fetchProducts = async () => {
-    try {
-      const { data: pelakuUsahaData } = await supabase
-        .from('pelaku_usaha')
-        .select('*')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
-
-      if (pelakuUsahaData) {
-        const { data: productsData, error } = await supabase
-          .from('produk')
-          .select(`
-            produk_id,
-            product_name,
-            retail_price,
-            member_price,
-            stock,
-            barcode,
-            kategori_produk (
-              kategori_name
-            )
-          `)
-          .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id);
-
-        if (error) throw error;
-
-        if (productsData) {
-          setProducts(productsData.map(product => ({
-            id: product.produk_id,
-            name: product.product_name,
-            price: product.retail_price,
-            member_price: product.member_price,
-            quantity: 1,
-            category: product.kategori_produk?.kategori_name,
-            stock: product.stock,
-            barcode: product.barcode
-          })));
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Gagal mengambil data produk",
-      });
-    }
-  };
-
-  const handleSearch = (searchTerm: string) => {
-    console.log("Searching for:", searchTerm);
-    if (!searchTerm.trim()) {
-      setFilteredProducts(products);
-      return;
-    }
-
-    const filtered = products.filter(product => 
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (product.barcode && product.barcode.includes(searchTerm)) ||
-      (product.category && product.category.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-    setFilteredProducts(filtered);
-
-    // Jika pencarian menggunakan barcode dan tidak ada hasil
-    if (searchTerm.length > 5 && filtered.length === 0) {
-      toast({
-        title: "Produk Tidak Ditemukan",
-        description: "Tidak ada produk dengan barcode tersebut",
-        variant: "destructive",
-      });
-    }
-
-    // Jika menemukan produk dengan barcode yang cocok, langsung tambahkan ke keranjang
-    if (searchTerm.length > 5 && filtered.length === 1) {
-      const product = filtered[0];
-      addToCart(product);
-      // Reset filtered products setelah menambahkan ke keranjang
-      setFilteredProducts(products);
-    }
-  };
-
-  const updateQuantity = (itemId: number, change: number) => {
-    setCartItems(items =>
-      items.map(item =>
-        item.id === itemId
-          ? { ...item, quantity: Math.max(1, item.quantity + change) }
-          : item
-      )
-    );
-  };
-
-  const removeItem = (itemId: number) => {
-    setCartItems(items => items.filter(item => item.id !== itemId));
-  };
 
   const handlePayment = () => {
     if (cartItems.length === 0) {
@@ -224,20 +38,6 @@ const POS = () => {
         businessName: pelakuUsaha?.business_name,
         branchName: cabang?.branch_name
       }
-    });
-  };
-
-  const addToCart = (product: CartItem) => {
-    setCartItems(items => {
-      const existingItem = items.find(item => item.id === product.id);
-      if (existingItem) {
-        return items.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      }
-      return [...items, { ...product, quantity: 1 }];
     });
   };
 
