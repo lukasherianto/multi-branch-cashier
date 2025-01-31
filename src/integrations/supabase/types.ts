@@ -352,6 +352,54 @@ export type Database = {
           },
         ]
       }
+      retur: {
+        Row: {
+          created_at: string
+          produk_id: number
+          quantity: number
+          reason: string | null
+          retur_date: string
+          retur_id: number
+          transaksi_id: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          produk_id: number
+          quantity: number
+          reason?: string | null
+          retur_date?: string
+          retur_id?: number
+          transaksi_id: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          produk_id?: number
+          quantity?: number
+          reason?: string | null
+          retur_date?: string
+          retur_id?: number
+          transaksi_id?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "retur_produk_id_fkey"
+            columns: ["produk_id"]
+            isOneToOne: false
+            referencedRelation: "produk"
+            referencedColumns: ["produk_id"]
+          },
+          {
+            foreignKeyName: "retur_transaksi_id_fkey"
+            columns: ["transaksi_id"]
+            isOneToOne: false
+            referencedRelation: "transaksi"
+            referencedColumns: ["transaksi_id"]
+          },
+        ]
+      }
       transaksi: {
         Row: {
           cabang_id: number
