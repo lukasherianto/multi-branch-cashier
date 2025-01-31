@@ -5,9 +5,10 @@ import { Label } from "@/components/ui/label";
 
 interface CategoryFormProps {
   onSubmit: (formData: { categoryName: string; description: string }) => void;
+  isSubmitting?: boolean; // Added this prop
 }
 
-export const CategoryForm = ({ onSubmit }: CategoryFormProps) => {
+export const CategoryForm = ({ onSubmit, isSubmitting = false }: CategoryFormProps) => {
   const [categoryName, setCategoryName] = useState("");
   const [description, setDescription] = useState("");
 
@@ -37,8 +38,8 @@ export const CategoryForm = ({ onSubmit }: CategoryFormProps) => {
           onChange={(e) => setDescription(e.target.value)}
         />
       </div>
-      <Button type="submit" className="w-full">
-        Simpan
+      <Button type="submit" className="w-full" disabled={isSubmitting}>
+        {isSubmitting ? "Menyimpan..." : "Simpan"}
       </Button>
     </form>
   );
