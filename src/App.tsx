@@ -10,6 +10,7 @@ import Products from "./pages/Products";
 import Settings from "./pages/Settings";
 import PrintPreview from "./pages/PrintPreview";
 import History from "./pages/History";
+import Returns from "./pages/Returns";
 
 // Create a client with configuration
 const queryClient = new QueryClient({
@@ -74,6 +75,14 @@ function App() {
             element={
               <Layout>
                 <History />
+              </Layout>
+            }
+          />
+          <Route
+            path="/returns"
+            element={
+              <Layout>
+                <Returns />
               </Layout>
             }
           />
