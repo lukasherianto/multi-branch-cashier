@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,11 +26,14 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
   const [retailPrice, setRetailPrice] = useState("");
   const [memberPrice, setMemberPrice] = useState("");
   const [stock, setStock] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     
     try {
+      console.log('Submitting product data...');
       const { data: pelakuUsahaData } = await supabase
         .from('pelaku_usaha')
         .select('pelaku_usaha_id')
@@ -58,6 +62,16 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
         });
         return;
       }
+
+      console.log('Creating new product with data:', {
+        pelaku_usaha_id: pelakuUsahaData.pelaku_usaha_id,
+        kategori_id: kategoriData.kategori_id,
+        product_name: productName,
+        cost_price: parseFloat(costPrice),
+        retail_price: parseFloat(retailPrice),
+        member_price: memberPrice ? parseFloat(memberPrice) : null,
+        stock: parseInt(stock),
+      });
 
       const { error } = await supabase
         .from('produk')
@@ -88,6 +102,8 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
         description: "Gagal menambahkan produk",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -110,6 +126,9 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Tambah Produk Baru</DialogTitle>
+          <DialogDescription>
+            Isi informasi produk dengan lengkap
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -119,6 +138,7 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
               value={productName}
               onChange={(e) => setProductName(e.target.value)}
               required
+              placeholder="Masukkan nama produk"
             />
           </div>
           <div className="space-y-2">
@@ -126,9 +146,11 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
             <Input
               id="costPrice"
               type="number"
+              min="0"
               value={costPrice}
               onChange={(e) => setCostPrice(e.target.value)}
               required
+              placeholder="Masukkan harga modal"
             />
           </div>
           <div className="space-y-2">
@@ -136,9 +158,11 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
             <Input
               id="retailPrice"
               type="number"
+              min="0"
               value={retailPrice}
               onChange={(e) => setRetailPrice(e.target.value)}
               required
+              placeholder="Masukkan harga jual"
             />
           </div>
           <div className="space-y-2">
@@ -146,8 +170,10 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
             <Input
               id="memberPrice"
               type="number"
+              min="0"
               value={memberPrice}
               onChange={(e) => setMemberPrice(e.target.value)}
+              placeholder="Masukkan harga member (opsional)"
             />
           </div>
           <div className="space-y-2">
@@ -155,13 +181,19 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
             <Input
               id="stock"
               type="number"
+              min="0"
               value={stock}
               onChange={(e) => setStock(e.target.value)}
               required
+              placeholder="Masukkan jumlah stok"
             />
           </div>
-          <Button type="submit" className="w-full">
-            Simpan
+          <Button 
+            type="submit" 
+            className="w-full"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Menyimpan..." : "Simpan"}
           </Button>
         </form>
       </DialogContent>
