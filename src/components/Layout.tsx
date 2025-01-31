@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Building, Home, ShoppingCart, History, Settings, Package, FileText, Clock } from "lucide-react";
+import { Building, Home, ShoppingCart, History, Settings, Package, FileText, Clock, DollarSign } from "lucide-react";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -21,6 +21,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { icon: Clock, label: "Absensi", path: "/attendance" },
     { icon: History, label: "Riwayat", path: "/history" },
     { icon: FileText, label: "Laporan", path: "/reports" },
+    { icon: DollarSign, label: "Kas", path: "/kas" },
     { icon: Settings, label: "Pengaturan", path: "/settings" },
   ];
 

@@ -10,6 +10,7 @@ import Settings from "./pages/Settings";
 import Branches from "./pages/Branches";
 import PrintPreview from "./pages/PrintPreview";
 import Attendance from "./pages/Attendance";
+import Kas from "./pages/Kas";
 
 function App() {
   return (
@@ -78,6 +79,14 @@ function App() {
           element={
             <Layout>
               <Attendance />
+            </Layout>
+          }
+        />
+        <Route
+          path="/kas"
+          element={
+            <Layout>
+              <Kas />
             </Layout>
           }
         />
