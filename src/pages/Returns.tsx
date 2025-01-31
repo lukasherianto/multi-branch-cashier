@@ -37,7 +37,7 @@ const Returns = () => {
             product_name
           )
         `)
-        .eq("transaksi_id", transactionId)
+        .eq("transaksi_id", parseInt(transactionId)) // Convert string to number
         .single();
 
       if (error) throw error;
@@ -69,7 +69,7 @@ const Returns = () => {
 
     try {
       const { error } = await supabase.from("retur").insert({
-        transaksi_id: Number(transactionId),
+        transaksi_id: parseInt(transactionId),
         produk_id: selectedProduct,
         quantity,
         reason,
