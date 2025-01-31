@@ -15,6 +15,7 @@ interface CartItem {
   quantity: number;
   category?: string;
   stock: number;
+  barcode?: string;  // Menambahkan properti barcode sebagai opsional
 }
 
 const POS = () => {
