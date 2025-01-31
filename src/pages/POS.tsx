@@ -11,6 +11,7 @@ interface CartItem {
   id: number;
   name: string;
   price: number;
+  member_price?: number | null;
   quantity: number;
   category?: string;
   stock?: number;
@@ -25,19 +26,12 @@ const POS = () => {
   const [customerName, setCustomerName] = useState("");
   const [birthDate, setBirthDate] = useState<Date | null>(null);
   const [isRegisteredCustomer, setIsRegisteredCustomer] = useState(false);
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: 1,
-      name: "Produk Contoh",
-      price: 25000,
-      quantity: 1,
-      category: "Umum",
-      stock: 100
-    }
-  ]);
+  const [products, setProducts] = useState<CartItem[]>([]);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
   useEffect(() => {
     checkAuth();
+    fetchProducts();
   }, []);
 
   const checkAuth = async () => {
@@ -108,6 +102,53 @@ const POS = () => {
         variant: "destructive",
         title: "Error",
         description: "Terjadi kesalahan saat memuat data. Silakan coba lagi.",
+      });
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const { data: pelakuUsahaData } = await supabase
+        .from('pelaku_usaha')
+        .select('*')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      if (pelakuUsahaData) {
+        const { data: productsData, error } = await supabase
+          .from('produk')
+          .select(`
+            produk_id,
+            product_name,
+            retail_price,
+            member_price,
+            stock,
+            kategori_produk (
+              kategori_name
+            )
+          `)
+          .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id);
+
+        if (error) throw error;
+
+        if (productsData) {
+          setProducts(productsData.map(product => ({
+            id: product.produk_id,
+            name: product.product_name,
+            price: product.retail_price,
+            member_price: product.member_price,
+            quantity: 1,
+            category: product.kategori_produk?.kategori_name,
+            stock: product.stock
+          })));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Gagal mengambil data produk",
       });
     }
   };
@@ -188,7 +229,7 @@ const POS = () => {
         <ProductSearch onSearch={handleSearch} />
 
         <ProductList
-          products={cartItems}
+          products={products}
           onAddToCart={addToCart}
           isRegisteredCustomer={isRegisteredCustomer}
         />
