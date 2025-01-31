@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +11,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -26,7 +33,35 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
   const [retailPrice, setRetailPrice] = useState("");
   const [memberPrice, setMemberPrice] = useState("");
   const [stock, setStock] = useState("");
+  const [selectedKategori, setSelectedKategori] = useState("");
+  const [categories, setCategories] = useState<Array<{ kategori_id: number; kategori_name: string }>>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const { data: pelakuUsahaData } = await supabase
+        .from('pelaku_usaha')
+        .select('pelaku_usaha_id')
+        .single();
+
+      if (pelakuUsahaData) {
+        const { data: categoriesData } = await supabase
+          .from('kategori_produk')
+          .select('kategori_id, kategori_name')
+          .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id);
+
+        if (categoriesData) {
+          setCategories(categoriesData);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,16 +83,10 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
         return;
       }
 
-      const { data: kategoriData } = await supabase
-        .from('kategori_produk')
-        .select('kategori_id')
-        .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id)
-        .single();
-
-      if (!kategoriData) {
+      if (!selectedKategori) {
         toast({
           title: "Error",
-          description: "Kategori produk belum dibuat",
+          description: "Silakan pilih kategori produk",
           variant: "destructive",
         });
         return;
@@ -65,7 +94,7 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
 
       console.log('Creating new product with data:', {
         pelaku_usaha_id: pelakuUsahaData.pelaku_usaha_id,
-        kategori_id: kategoriData.kategori_id,
+        kategori_id: parseInt(selectedKategori),
         product_name: productName,
         cost_price: parseFloat(costPrice),
         retail_price: parseFloat(retailPrice),
@@ -77,7 +106,7 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
         .from('produk')
         .insert({
           pelaku_usaha_id: pelakuUsahaData.pelaku_usaha_id,
-          kategori_id: kategoriData.kategori_id,
+          kategori_id: parseInt(selectedKategori),
           product_name: productName,
           cost_price: parseFloat(costPrice),
           retail_price: parseFloat(retailPrice),
@@ -113,6 +142,7 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
     setRetailPrice("");
     setMemberPrice("");
     setStock("");
+    setSelectedKategori("");
   };
 
   return (
@@ -140,6 +170,24 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
               required
               placeholder="Masukkan nama produk"
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="category">Kategori</Label>
+            <Select value={selectedKategori} onValueChange={setSelectedKategori} required>
+              <SelectTrigger>
+                <SelectValue placeholder="Pilih kategori produk" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem 
+                    key={category.kategori_id} 
+                    value={category.kategori_id.toString()}
+                  >
+                    {category.kategori_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="costPrice">Harga Modal</Label>
