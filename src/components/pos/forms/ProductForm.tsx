@@ -19,6 +19,7 @@ interface ProductFormProps {
     retailPrice: string;
     memberPrice: string;
     stock: string;
+    barcode: string;
   }) => void;
   isSubmitting: boolean;
 }
@@ -30,6 +31,7 @@ export const ProductForm = ({ categories, onSubmit, isSubmitting }: ProductFormP
   const [memberPrice, setMemberPrice] = useState("");
   const [stock, setStock] = useState("");
   const [selectedKategori, setSelectedKategori] = useState("");
+  const [barcode, setBarcode] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,6 +42,7 @@ export const ProductForm = ({ categories, onSubmit, isSubmitting }: ProductFormP
       retailPrice,
       memberPrice,
       stock,
+      barcode,
     });
   };
 
@@ -53,6 +56,15 @@ export const ProductForm = ({ categories, onSubmit, isSubmitting }: ProductFormP
           onChange={(e) => setProductName(e.target.value)}
           required
           placeholder="Masukkan nama produk"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="barcode">Kode Barcode</Label>
+        <Input
+          id="barcode"
+          value={barcode}
+          onChange={(e) => setBarcode(e.target.value)}
+          placeholder="Masukkan kode barcode (opsional)"
         />
       </div>
       <div className="space-y-2">

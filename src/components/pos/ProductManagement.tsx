@@ -56,6 +56,7 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
     retailPrice: string;
     memberPrice: string;
     stock: string;
+    barcode: string;
   }) => {
     setIsSubmitting(true);
     
@@ -94,6 +95,7 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
           retail_price: parseFloat(formData.retailPrice),
           member_price: formData.memberPrice ? parseFloat(formData.memberPrice) : null,
           stock: parseInt(formData.stock),
+          barcode: formData.barcode || null,
         });
 
       if (error) throw error;

@@ -17,6 +17,7 @@ interface ProductListProps {
     quantity: number;
     category?: string;
     stock: number;
+    barcode?: string;
   }>;
   onAddToCart: (product: any) => void;
   isRegisteredCustomer: boolean;
@@ -49,6 +50,7 @@ export const ProductList = ({
         <TableHeader>
           <TableRow>
             <TableHead>Nama Produk</TableHead>
+            <TableHead>Barcode</TableHead>
             <TableHead>Kategori</TableHead>
             <TableHead>Harga Retail</TableHead>
             <TableHead>Harga Member</TableHead>
@@ -60,6 +62,7 @@ export const ProductList = ({
           {products.map((product) => (
             <TableRow key={product.id}>
               <TableCell className="font-medium">{product.name}</TableCell>
+              <TableCell>{product.barcode || '-'}</TableCell>
               <TableCell>{product.category || '-'}</TableCell>
               <TableCell>Rp {product.price.toLocaleString('id-ID')}</TableCell>
               <TableCell>

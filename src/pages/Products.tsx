@@ -32,6 +32,7 @@ const Products = () => {
             retail_price,
             member_price,
             stock,
+            barcode,
             kategori_produk (
               kategori_name
             )
@@ -49,7 +50,8 @@ const Products = () => {
             member_price: product.member_price,
             quantity: 1,
             category: product.kategori_produk?.kategori_name,
-            stock: product.stock
+            stock: product.stock,
+            barcode: product.barcode
           })));
         }
       }
