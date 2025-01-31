@@ -13,7 +13,11 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-export const ProductManagement = () => {
+interface ProductManagementProps {
+  onSuccess?: () => void;
+}
+
+export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [productName, setProductName] = useState("");
@@ -76,6 +80,7 @@ export const ProductManagement = () => {
 
       setIsOpen(false);
       resetForm();
+      onSuccess?.();
     } catch (error) {
       console.error('Error adding product:', error);
       toast({

@@ -1,8 +1,12 @@
 import { useState, useEffect } from "react";
+import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductSearch } from "@/components/pos/ProductSearch";
 import { ProductList } from "@/components/pos/ProductList";
+import { Button } from "@/components/ui/button";
+import { ProductManagement } from "@/components/pos/ProductManagement";
+import { CategoryManagement } from "@/components/pos/CategoryManagement";
 
 const Products = () => {
   const { toast } = useToast();
@@ -68,6 +72,10 @@ const Products = () => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800">Produk</h2>
+        <div className="flex gap-2">
+          <CategoryManagement />
+          <ProductManagement onSuccess={fetchProducts} />
+        </div>
       </div>
 
       <ProductSearch onSearch={handleSearch} />
@@ -76,6 +84,8 @@ const Products = () => {
         products={products}
         onAddToCart={() => {}}
         isRegisteredCustomer={false}
+        showStockAction={true}
+        onRefresh={fetchProducts}
       />
     </div>
   );
