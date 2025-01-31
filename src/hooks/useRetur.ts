@@ -27,7 +27,7 @@ export const useRetur = ({ transactionId, onSuccess }: UseReturProps) => {
     }
 
     try {
-      // Start a Supabase transaction
+      // Get current transaction data
       const { data: transaction, error: fetchError } = await supabase
         .from("transaksi")
         .select("quantity, total_price")
@@ -36,12 +36,28 @@ export const useRetur = ({ transactionId, onSuccess }: UseReturProps) => {
 
       if (fetchError) throw fetchError;
 
+      // Get current product stock
+      const { data: product, error: productError } = await supabase
+        .from("produk")
+        .select("stock")
+        .eq("produk_id", selectedProduct)
+        .single();
+
+      if (productError) throw productError;
+
+      console.log('Current product stock:', product.stock);
+      console.log('Return quantity:', quantity);
+      
       // Calculate new values
       const newQuantity = transaction.quantity - quantity;
       const pricePerUnit = transaction.total_price / transaction.quantity;
       const newTotalPrice = newQuantity * pricePerUnit;
+      const newStock = product.stock + quantity;
 
-      // Insert retur record
+      console.log('New stock after return:', newStock);
+
+      // Start transaction operations
+      // 1. Insert retur record
       const { error: returError } = await supabase.from("retur").insert({
         transaksi_id: transactionId,
         produk_id: selectedProduct,
@@ -51,8 +67,8 @@ export const useRetur = ({ transactionId, onSuccess }: UseReturProps) => {
 
       if (returError) throw returError;
 
-      // Update transaction record
-      const { error: updateError } = await supabase
+      // 2. Update transaction record
+      const { error: updateTransactionError } = await supabase
         .from("transaksi")
         .update({
           quantity: newQuantity,
@@ -60,11 +76,21 @@ export const useRetur = ({ transactionId, onSuccess }: UseReturProps) => {
         })
         .eq("transaksi_id", transactionId);
 
-      if (updateError) throw updateError;
+      if (updateTransactionError) throw updateTransactionError;
+
+      // 3. Update product stock
+      const { error: updateStockError } = await supabase
+        .from("produk")
+        .update({
+          stock: newStock
+        })
+        .eq("produk_id", selectedProduct);
+
+      if (updateStockError) throw updateStockError;
 
       toast({
         title: "Sukses",
-        description: "Retur berhasil dicatat",
+        description: "Retur berhasil dicatat dan stok diperbarui",
       });
 
       setIsOpen(false);
