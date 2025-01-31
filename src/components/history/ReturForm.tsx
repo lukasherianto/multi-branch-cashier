@@ -55,14 +55,40 @@ export const ReturForm = ({ transactionId, products, onSuccess }: ReturFormProps
     }
 
     try {
-      const { error } = await supabase.from("retur").insert({
+      // Start a Supabase transaction
+      const { data: transaction, error: fetchError } = await supabase
+        .from("transaksi")
+        .select("quantity, total_price")
+        .eq("transaksi_id", transactionId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Calculate new values
+      const newQuantity = transaction.quantity - quantity;
+      const pricePerUnit = transaction.total_price / transaction.quantity;
+      const newTotalPrice = newQuantity * pricePerUnit;
+
+      // Insert retur record
+      const { error: returError } = await supabase.from("retur").insert({
         transaksi_id: transactionId,
         produk_id: selectedProduct,
         quantity,
         reason,
       });
 
-      if (error) throw error;
+      if (returError) throw returError;
+
+      // Update transaction record
+      const { error: updateError } = await supabase
+        .from("transaksi")
+        .update({
+          quantity: newQuantity,
+          total_price: newTotalPrice,
+        })
+        .eq("transaksi_id", transactionId);
+
+      if (updateError) throw updateError;
 
       toast({
         title: "Sukses",
