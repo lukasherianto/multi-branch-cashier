@@ -76,9 +76,9 @@ const History = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Riwayat Transaksi</h1>
+        <h1 className="text-xl font-bold">Riwayat Transaksi</h1>
         <Calendar
           mode="single"
           selected={selectedDate}
@@ -92,22 +92,22 @@ const History = () => {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Tanggal
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Produk
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Jumlah
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Total
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Cabang
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Aksi
                 </th>
               </tr>
@@ -115,32 +115,34 @@ const History = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {transactions?.map((transaction) => (
                 <tr key={transaction.transaksi_id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-3 py-2 whitespace-nowrap text-xs">
                     {format(new Date(transaction.transaction_date), 'dd MMM yyyy HH:mm', { locale: id })}
                   </td>
-                  <td className="px-6 py-4">{transaction.produk.product_name}</td>
-                  <td className="px-6 py-4">{transaction.quantity}</td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 py-2 text-xs">{transaction.produk.product_name}</td>
+                  <td className="px-3 py-2 text-xs">{transaction.quantity}</td>
+                  <td className="px-3 py-2 text-xs">
                     Rp {transaction.total_price.toLocaleString('id-ID')}
                   </td>
-                  <td className="px-6 py-4">{transaction.cabang.branch_name}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex space-x-2">
+                  <td className="px-3 py-2 text-xs">{transaction.cabang.branch_name}</td>
+                  <td className="px-3 py-2">
+                    <div className="flex space-x-1">
                       <Button
                         variant="outline"
                         size="sm"
+                        className="h-7 text-xs px-2"
                         onClick={() => handlePrint(transaction)}
                       >
-                        <Printer className="w-4 h-4 mr-2" />
+                        <Printer className="w-3 h-3 mr-1" />
                         Cetak
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
+                        className="h-7 text-xs px-2"
                         onClick={() => handleWhatsApp(transaction)}
                       >
-                        <MessageSquare className="w-4 h-4 mr-2" />
-                        WhatsApp
+                        <MessageSquare className="w-3 h-3 mr-1" />
+                        WA
                       </Button>
                       <ReturForm
                         transactionId={transaction.transaksi_id}
