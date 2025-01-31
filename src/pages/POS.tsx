@@ -27,12 +27,17 @@ const POS = () => {
   const [birthDate, setBirthDate] = useState<Date | null>(null);
   const [isRegisteredCustomer, setIsRegisteredCustomer] = useState(false);
   const [products, setProducts] = useState<CartItem[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<CartItem[]>([]);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
   useEffect(() => {
     checkAuth();
     fetchProducts();
   }, []);
+
+  useEffect(() => {
+    setFilteredProducts(products);
+  }, [products]);
 
   const checkAuth = async () => {
     try {
@@ -123,6 +128,7 @@ const POS = () => {
             retail_price,
             member_price,
             stock,
+            barcode,
             kategori_produk (
               kategori_name
             )
@@ -139,7 +145,8 @@ const POS = () => {
             member_price: product.member_price,
             quantity: 1,
             category: product.kategori_produk?.kategori_name,
-            stock: product.stock || 0
+            stock: product.stock,
+            barcode: product.barcode
           })));
         }
       }
@@ -150,6 +157,38 @@ const POS = () => {
         title: "Error",
         description: "Gagal mengambil data produk",
       });
+    }
+  };
+
+  const handleSearch = (searchTerm: string) => {
+    console.log("Searching for:", searchTerm);
+    if (!searchTerm.trim()) {
+      setFilteredProducts(products);
+      return;
+    }
+
+    const filtered = products.filter(product => 
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product.barcode && product.barcode.includes(searchTerm)) ||
+      (product.category && product.category.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+    setFilteredProducts(filtered);
+
+    // Jika pencarian menggunakan barcode dan tidak ada hasil
+    if (searchTerm.length > 5 && filtered.length === 0) {
+      toast({
+        title: "Produk Tidak Ditemukan",
+        description: "Tidak ada produk dengan barcode tersebut",
+        variant: "destructive",
+      });
+    }
+
+    // Jika menemukan produk dengan barcode yang cocok, langsung tambahkan ke keranjang
+    if (searchTerm.length > 5 && filtered.length === 1) {
+      const product = filtered[0];
+      addToCart(product);
+      // Reset filtered products setelah menambahkan ke keranjang
+      setFilteredProducts(products);
     }
   };
 
@@ -188,11 +227,6 @@ const POS = () => {
   };
 
   const addToCart = (product: CartItem) => {
-    console.log("Adding to cart:", product);
-    console.log("Is registered customer:", isRegisteredCustomer);
-    console.log("Member price:", product.member_price);
-    console.log("Price to use:", product.price);
-
     setCartItems(items => {
       const existingItem = items.find(item => item.id === product.id);
       if (existingItem) {
@@ -204,11 +238,6 @@ const POS = () => {
       }
       return [...items, { ...product, quantity: 1 }];
     });
-  };
-
-  const handleSearch = (searchTerm: string) => {
-    // Implement product search logic here
-    console.log("Searching for:", searchTerm);
   };
 
   return (
@@ -232,7 +261,7 @@ const POS = () => {
         <ProductSearch onSearch={handleSearch} />
 
         <ProductList
-          products={products}
+          products={filteredProducts}
           onAddToCart={addToCart}
           isRegisteredCustomer={isRegisteredCustomer}
         />

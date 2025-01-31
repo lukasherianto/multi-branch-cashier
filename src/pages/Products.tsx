@@ -9,10 +9,15 @@ import { CategoryManagement } from "@/components/pos/CategoryManagement";
 const Products = () => {
   const { toast } = useToast();
   const [products, setProducts] = useState<any[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
 
   useEffect(() => {
     fetchProducts();
   }, []);
+
+  useEffect(() => {
+    setFilteredProducts(products);
+  }, [products]);
 
   const fetchProducts = async () => {
     try {
@@ -43,7 +48,7 @@ const Products = () => {
 
         if (productsData) {
           console.log('Products fetched:', productsData);
-          setProducts(productsData.map(product => ({
+          const mappedProducts = productsData.map(product => ({
             id: product.produk_id,
             name: product.product_name,
             price: product.retail_price,
@@ -52,7 +57,8 @@ const Products = () => {
             category: product.kategori_produk?.kategori_name,
             stock: product.stock,
             barcode: product.barcode
-          })));
+          }));
+          setProducts(mappedProducts);
         }
       }
     } catch (error) {
@@ -66,8 +72,27 @@ const Products = () => {
   };
 
   const handleSearch = (searchTerm: string) => {
-    // Implement product search logic here
     console.log("Searching for:", searchTerm);
+    if (!searchTerm.trim()) {
+      setFilteredProducts(products);
+      return;
+    }
+
+    const filtered = products.filter(product => 
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product.barcode && product.barcode.includes(searchTerm)) ||
+      (product.category && product.category.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+    setFilteredProducts(filtered);
+
+    // Jika pencarian menggunakan barcode dan tidak ada hasil
+    if (searchTerm.length > 5 && filtered.length === 0) {
+      toast({
+        title: "Produk Tidak Ditemukan",
+        description: "Tidak ada produk dengan barcode tersebut",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -83,7 +108,7 @@ const Products = () => {
       <ProductSearch onSearch={handleSearch} />
 
       <ProductList
-        products={products}
+        products={filteredProducts}
         onAddToCart={() => {}}
         isRegisteredCustomer={false}
         showStockAction={true}
