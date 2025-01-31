@@ -9,6 +9,7 @@ import POS from "./pages/POS";
 import Products from "./pages/Products";
 import Settings from "./pages/Settings";
 import PrintPreview from "./pages/PrintPreview";
+import History from "./pages/History";
 
 // Create a client with configuration
 const queryClient = new QueryClient({
@@ -68,6 +69,14 @@ function App() {
             }
           />
           <Route path="/print-preview" element={<PrintPreview />} />
+          <Route
+            path="/history"
+            element={
+              <Layout>
+                <History />
+              </Layout>
+            }
+          />
         </Routes>
       </Router>
       <ReactQueryDevtools initialIsOpen={false} />
