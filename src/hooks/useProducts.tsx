@@ -26,6 +26,7 @@ export const useProducts = () => {
             member_price,
             stock,
             barcode,
+            unit,
             kategori_produk (
               kategori_name
             )
@@ -43,7 +44,8 @@ export const useProducts = () => {
             quantity: 1,
             category: product.kategori_produk?.kategori_name,
             stock: product.stock,
-            barcode: product.barcode
+            barcode: product.barcode,
+            unit: product.unit
           }));
           setProducts(mappedProducts);
           setFilteredProducts(mappedProducts);
