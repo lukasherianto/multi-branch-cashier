@@ -7,7 +7,7 @@ import {
   DollarSign,
   User,
   Percent,
-  ArrowReturnLeft,
+  RotateCcw,
 } from "lucide-react";
 import SalesReport from "@/components/reports/SalesReport";
 import InventoryReport from "@/components/reports/InventoryReport";
@@ -52,7 +52,7 @@ const Reports = () => {
             <span>Diskon</span>
           </TabsTrigger>
           <TabsTrigger value="returns" className="space-x-2">
-            <ArrowReturnLeft className="w-4 h-4" />
+            <RotateCcw className="w-4 h-4" />
             <span>Retur</span>
           </TabsTrigger>
         </TabsList>
