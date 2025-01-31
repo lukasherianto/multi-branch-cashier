@@ -9,6 +9,50 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      absensi: {
+        Row: {
+          absensi_id: number
+          created_at: string
+          jam_keluar: string | null
+          jam_masuk: string
+          karyawan_id: number | null
+          keterangan: string | null
+          status: string
+          tanggal: string
+          updated_at: string
+        }
+        Insert: {
+          absensi_id?: number
+          created_at?: string
+          jam_keluar?: string | null
+          jam_masuk?: string
+          karyawan_id?: number | null
+          keterangan?: string | null
+          status: string
+          tanggal?: string
+          updated_at?: string
+        }
+        Update: {
+          absensi_id?: number
+          created_at?: string
+          jam_keluar?: string | null
+          jam_masuk?: string
+          karyawan_id?: number | null
+          keterangan?: string | null
+          status?: string
+          tanggal?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "absensi_karyawan_id_fkey"
+            columns: ["karyawan_id"]
+            isOneToOne: false
+            referencedRelation: "karyawan"
+            referencedColumns: ["karyawan_id"]
+          },
+        ]
+      }
       cabang: {
         Row: {
           address: string | null
