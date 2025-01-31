@@ -24,11 +24,11 @@ export const ProductList = ({
   onRefresh 
 }: ProductListProps) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div className="flex flex-col space-y-4 max-w-2xl mx-auto">
       {products.map((product) => (
         <div
           key={product.id}
-          className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
+          className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
         >
           <div className="flex justify-between items-start mb-2">
             <div>
@@ -58,6 +58,14 @@ export const ProductList = ({
               Stok: {product.stock}
             </p>
           </div>
+          {!showStockAction && (
+            <button
+              onClick={() => onAddToCart(product)}
+              className="mt-3 w-full bg-mint-500 text-white px-4 py-2 rounded hover:bg-mint-600 transition-colors"
+            >
+              Tambah ke Keranjang
+            </button>
+          )}
         </div>
       ))}
     </div>
