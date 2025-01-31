@@ -60,7 +60,7 @@ export const StockManagement = ({ productId, currentStock, onSuccess }: StockMan
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Plus className="h-4 w-4 mr-2" />
-          Tambah Stok
+          Add
         </Button>
       </DialogTrigger>
       <DialogContent>
