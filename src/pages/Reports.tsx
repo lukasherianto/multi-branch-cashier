@@ -27,34 +27,48 @@ const Reports = () => {
 
       <Tabs defaultValue="sales" className="space-y-6">
         <Card className="p-4">
-          <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-            <TabsTrigger value="sales" className="space-x-2">
-              <ChartBar className="w-4 h-4" />
-              <span>Penjualan</span>
+          <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2">
+            <TabsTrigger value="sales" className="w-full">
+              <div className="flex items-center space-x-2">
+                <ChartBar className="w-4 h-4" />
+                <span>Penjualan</span>
+              </div>
             </TabsTrigger>
-            <TabsTrigger value="inventory" className="space-x-2">
-              <Database className="w-4 h-4" />
-              <span>Inventaris</span>
+            <TabsTrigger value="inventory" className="w-full">
+              <div className="flex items-center space-x-2">
+                <Database className="w-4 h-4" />
+                <span>Inventaris</span>
+              </div>
             </TabsTrigger>
-            <TabsTrigger value="customers" className="space-x-2">
-              <Users className="w-4 h-4" />
-              <span>Pelanggan</span>
+            <TabsTrigger value="customers" className="w-full">
+              <div className="flex items-center space-x-2">
+                <Users className="w-4 h-4" />
+                <span>Pelanggan</span>
+              </div>
             </TabsTrigger>
-            <TabsTrigger value="financial" className="space-x-2">
-              <DollarSign className="w-4 h-4" />
-              <span>Keuangan</span>
+            <TabsTrigger value="financial" className="w-full">
+              <div className="flex items-center space-x-2">
+                <DollarSign className="w-4 h-4" />
+                <span>Keuangan</span>
+              </div>
             </TabsTrigger>
-            <TabsTrigger value="employees" className="space-x-2">
-              <User className="w-4 h-4" />
-              <span>Karyawan</span>
+            <TabsTrigger value="employees" className="w-full">
+              <div className="flex items-center space-x-2">
+                <User className="w-4 h-4" />
+                <span>Karyawan</span>
+              </div>
             </TabsTrigger>
-            <TabsTrigger value="discounts" className="space-x-2">
-              <Percent className="w-4 h-4" />
-              <span>Diskon</span>
+            <TabsTrigger value="discounts" className="w-full">
+              <div className="flex items-center space-x-2">
+                <Percent className="w-4 h-4" />
+                <span>Diskon</span>
+              </div>
             </TabsTrigger>
-            <TabsTrigger value="returns" className="space-x-2">
-              <RotateCcw className="w-4 h-4" />
-              <span>Retur</span>
+            <TabsTrigger value="returns" className="w-full">
+              <div className="flex items-center space-x-2">
+                <RotateCcw className="w-4 h-4" />
+                <span>Retur</span>
+              </div>
             </TabsTrigger>
           </TabsList>
         </Card>
