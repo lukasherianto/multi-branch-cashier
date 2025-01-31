@@ -14,7 +14,7 @@ interface CartItem {
   member_price?: number | null;
   quantity: number;
   category?: string;
-  stock?: number;
+  stock: number; // Make stock required to match ProductList's expected type
 }
 
 const POS = () => {
@@ -139,7 +139,7 @@ const POS = () => {
             member_price: product.member_price,
             quantity: 1,
             category: product.kategori_produk?.kategori_name,
-            stock: product.stock
+            stock: product.stock || 0 // Ensure stock is always a number
           })));
         }
       }
@@ -187,19 +187,17 @@ const POS = () => {
     });
   };
 
-  const addToCart = (product: CartItem, quantity: number) => {
-    if (quantity <= 0) return;
-    
+  const addToCart = (product: CartItem) => {
     setCartItems(items => {
       const existingItem = items.find(item => item.id === product.id);
       if (existingItem) {
         return items.map(item =>
           item.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       }
-      return [...items, { ...product, quantity }];
+      return [...items, { ...product, quantity: 1 }];
     });
   };
 
