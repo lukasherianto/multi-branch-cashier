@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ReturForm } from "@/components/history/ReturForm";
 import { Printer, MessageSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -75,15 +75,22 @@ const History = () => {
     window.open(whatsappUrl, '_blank');
   };
 
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const date = new Date(e.target.value);
+    if (!isNaN(date.getTime())) {
+      setSelectedDate(date);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h1 className="text-xl font-bold">Riwayat Transaksi</h1>
-        <Calendar
-          mode="single"
-          selected={selectedDate}
-          onSelect={(date) => date && setSelectedDate(date)}
-          className="rounded-md border"
+        <Input
+          type="date"
+          value={format(selectedDate, 'yyyy-MM-dd')}
+          onChange={handleDateChange}
+          className="w-auto"
         />
       </div>
 
