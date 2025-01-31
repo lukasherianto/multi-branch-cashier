@@ -1,10 +1,8 @@
 import { useState, useEffect } from "react";
-import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductSearch } from "@/components/pos/ProductSearch";
 import { ProductList } from "@/components/pos/ProductList";
-import { Button } from "@/components/ui/button";
 import { ProductManagement } from "@/components/pos/ProductManagement";
 import { CategoryManagement } from "@/components/pos/CategoryManagement";
 
@@ -18,6 +16,7 @@ const Products = () => {
 
   const fetchProducts = async () => {
     try {
+      console.log('Fetching products...');
       const { data: pelakuUsahaData } = await supabase
         .from('pelaku_usaha')
         .select('*')
@@ -42,6 +41,7 @@ const Products = () => {
         if (error) throw error;
 
         if (productsData) {
+          console.log('Products fetched:', productsData);
           setProducts(productsData.map(product => ({
             id: product.produk_id,
             name: product.product_name,

@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,15 @@ export const StockManagement = ({ productId, currentStock, onSuccess }: StockMan
     try {
       // Convert additionalStock to number and add it to currentStock
       const stockToAdd = parseInt(additionalStock);
+      if (isNaN(stockToAdd) || stockToAdd < 0) {
+        toast({
+          title: "Error",
+          description: "Jumlah stok harus berupa angka positif",
+          variant: "destructive",
+        });
+        return;
+      }
+
       console.log('Current stock:', currentStock);
       console.log('Stock to add:', stockToAdd);
       const newStock = currentStock + stockToAdd;
@@ -40,11 +50,14 @@ export const StockManagement = ({ productId, currentStock, onSuccess }: StockMan
         .update({ stock: newStock })
         .eq('produk_id', productId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating stock:', error);
+        throw error;
+      }
 
       toast({
         title: "Sukses",
-        description: "Stok berhasil ditambahkan",
+        description: `Stok berhasil ditambahkan. Stok baru: ${newStock}`,
       });
 
       setIsOpen(false);
@@ -65,19 +78,23 @@ export const StockManagement = ({ productId, currentStock, onSuccess }: StockMan
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Plus className="h-4 w-4 mr-2" />
-          Add
+          Add Stock
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Tambah Stok</DialogTitle>
+          <DialogDescription>
+            Stok saat ini: {currentStock}
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="additionalStock">Jumlah Stok</Label>
+            <Label htmlFor="additionalStock">Jumlah Stok yang Ditambahkan</Label>
             <Input
               id="additionalStock"
               type="number"
+              min="1"
               value={additionalStock}
               onChange={(e) => setAdditionalStock(e.target.value)}
               required
