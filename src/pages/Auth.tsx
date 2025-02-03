@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -12,10 +13,12 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
     console.log(`Mencoba ${isSignUp ? 'mendaftar' : 'masuk'} dengan:`, email);
 
     try {
@@ -31,18 +34,10 @@ const Auth = () => {
         if (error) {
           console.error("Error pendaftaran:", error);
           if (error.message.includes("already registered")) {
-            toast({
-              variant: "destructive",
-              title: "Pendaftaran gagal",
-              description: "Email sudah terdaftar. Silakan masuk dengan email tersebut.",
-            });
+            setError("Email sudah terdaftar. Silakan masuk dengan email tersebut.");
             setIsSignUp(false);
           } else {
-            toast({
-              variant: "destructive",
-              title: "Pendaftaran gagal",
-              description: error.message,
-            });
+            setError(error.message);
           }
           return;
         }
@@ -61,17 +56,9 @@ const Auth = () => {
         if (error) {
           console.error("Error masuk:", error);
           if (error.message === "Invalid login credentials") {
-            toast({
-              variant: "destructive",
-              title: "Gagal masuk",
-              description: "Email atau kata sandi salah. Silakan coba lagi atau daftar jika belum memiliki akun.",
-            });
+            setError("Email atau kata sandi salah. Silakan coba lagi atau daftar jika belum memiliki akun.");
           } else {
-            toast({
-              variant: "destructive",
-              title: "Gagal masuk",
-              description: error.message,
-            });
+            setError(error.message);
           }
           return;
         }
@@ -84,11 +71,7 @@ const Auth = () => {
       }
     } catch (error: any) {
       console.error("Error tidak terduga:", error);
-      toast({
-        variant: "destructive",
-        title: isSignUp ? "Pendaftaran gagal" : "Gagal masuk",
-        description: "Terjadi kesalahan yang tidak terduga",
-      });
+      setError("Terjadi kesalahan yang tidak terduga");
     } finally {
       setIsLoading(false);
     }
@@ -105,6 +88,11 @@ const Auth = () => {
             {isSignUp ? 'Daftar akun baru' : 'Masuk ke akun Anda'}
           </p>
         </div>
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
         <form className="mt-8 space-y-6" onSubmit={handleAuth}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
@@ -146,7 +134,10 @@ const Auth = () => {
               type="button"
               variant="outline"
               className="w-full"
-              onClick={() => setIsSignUp(!isSignUp)}
+              onClick={() => {
+                setError(null);
+                setIsSignUp(!isSignUp);
+              }}
               disabled={isLoading}
             >
               {isSignUp ? "Sudah punya akun? Masuk" : "Belum punya akun? Daftar"}
