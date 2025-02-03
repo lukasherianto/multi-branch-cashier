@@ -29,23 +29,44 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
 
   const fetchCategories = async () => {
     try {
-      const { data: pelakuUsahaData } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        console.error('User not authenticated');
+        return;
+      }
+
+      const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
         .from('pelaku_usaha')
         .select('pelaku_usaha_id')
-        .single();
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      if (pelakuUsahaData) {
-        const { data: categoriesData } = await supabase
-          .from('kategori_produk')
-          .select('kategori_id, kategori_name')
-          .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id);
+      if (pelakuUsahaError) {
+        console.error('Error fetching pelaku usaha:', pelakuUsahaError);
+        return;
+      }
 
-        if (categoriesData) {
-          setCategories(categoriesData);
-        }
+      if (!pelakuUsahaData) {
+        console.log('No pelaku_usaha found');
+        return;
+      }
+
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('kategori_produk')
+        .select('kategori_id, kategori_name')
+        .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id);
+
+      if (categoriesError) {
+        console.error('Error fetching categories:', categoriesError);
+        return;
+      }
+
+      if (categoriesData) {
+        setCategories(categoriesData);
       }
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      console.error('Error in fetchCategories:', error);
     }
   };
 
@@ -62,11 +83,26 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
     setIsSubmitting(true);
     
     try {
-      console.log('Submitting product data...');
-      const { data: pelakuUsahaData } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "Anda belum login",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
         .from('pelaku_usaha')
         .select('pelaku_usaha_id')
-        .single();
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (pelakuUsahaError) {
+        throw pelakuUsahaError;
+      }
 
       if (!pelakuUsahaData) {
         toast({
@@ -129,7 +165,7 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
           Tambah Produk
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-hidden">
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Tambah Produk Baru</DialogTitle>
           <DialogDescription>
