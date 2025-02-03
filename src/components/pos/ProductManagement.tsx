@@ -26,39 +26,35 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    const checkAuthAndFetchCategories = async () => {
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError || !user) {
+          console.error('Auth error or no user:', authError);
+          navigate('/auth');
+          return;
+        }
+
+        console.log('Authenticated user:', user.id);
+        await fetchCategories(user.id);
+      } catch (error) {
+        console.error('Error in checkAuthAndFetchCategories:', error);
+        toast({
+          title: "Error",
+          description: "Terjadi kesalahan saat memuat data",
+          variant: "destructive",
+        });
+        navigate('/auth');
+      }
+    };
+
     checkAuthAndFetchCategories();
-  }, []);
-
-  const checkAuthAndFetchCategories = async () => {
-    try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
-      if (authError) {
-        console.error('Auth error:', authError);
-        navigate('/auth');
-        return;
-      }
-
-      if (!user) {
-        console.error('No authenticated user found');
-        navigate('/auth');
-        return;
-      }
-
-      await fetchCategories(user.id);
-    } catch (error) {
-      console.error('Error in checkAuthAndFetchCategories:', error);
-      toast({
-        title: "Error",
-        description: "Terjadi kesalahan saat memuat data",
-        variant: "destructive",
-      });
-    }
-  };
+  }, [navigate, toast]);
 
   const fetchCategories = async (userId: string) => {
     try {
-      console.log('Fetching categories for user:', userId);
+      console.log('Fetching pelaku usaha data for user:', userId);
       
       const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
         .from('pelaku_usaha')
@@ -82,6 +78,7 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
         return;
       }
 
+      console.log('Fetching categories for pelaku usaha:', pelakuUsahaData.pelaku_usaha_id);
       const { data: categoriesData, error: categoriesError } = await supabase
         .from('kategori_produk')
         .select('kategori_id, kategori_name')
