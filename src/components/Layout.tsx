@@ -77,8 +77,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </div>
 
-        {/* Main Content */}
-        <main className="flex-1 overflow-auto p-8 pb-20 md:pb-8">
+        {/* Main Content - Updated with overflow-y-auto */}
+        <main className="flex-1 overflow-y-auto p-8 pb-20 md:pb-8">
           <div className="animate-fadeIn">
             {children}
           </div>

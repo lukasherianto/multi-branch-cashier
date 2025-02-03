@@ -129,7 +129,7 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
           Tambah Produk
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle>Tambah Produk Baru</DialogTitle>
           <DialogDescription>
