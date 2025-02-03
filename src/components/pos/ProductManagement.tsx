@@ -12,6 +12,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductForm } from "./forms/ProductForm";
+import { useNavigate } from "react-router-dom";
 
 interface ProductManagementProps {
   onSuccess?: () => void;
@@ -19,36 +20,65 @@ interface ProductManagementProps {
 
 export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [categories, setCategories] = useState<Array<{ kategori_id: number; kategori_name: string }>>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    fetchCategories();
+    checkAuthAndFetchCategories();
   }, []);
 
-  const fetchCategories = async () => {
+  const checkAuthAndFetchCategories = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
       
-      if (!user) {
-        console.error('User not authenticated');
+      if (authError) {
+        console.error('Auth error:', authError);
+        navigate('/auth');
         return;
       }
 
+      if (!user) {
+        console.error('No authenticated user found');
+        navigate('/auth');
+        return;
+      }
+
+      await fetchCategories(user.id);
+    } catch (error) {
+      console.error('Error in checkAuthAndFetchCategories:', error);
+      toast({
+        title: "Error",
+        description: "Terjadi kesalahan saat memuat data",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const fetchCategories = async (userId: string) => {
+    try {
+      console.log('Fetching categories for user:', userId);
+      
       const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
         .from('pelaku_usaha')
         .select('pelaku_usaha_id')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .maybeSingle();
 
       if (pelakuUsahaError) {
         console.error('Error fetching pelaku usaha:', pelakuUsahaError);
-        return;
+        throw pelakuUsahaError;
       }
 
       if (!pelakuUsahaData) {
-        console.log('No pelaku_usaha found');
+        console.log('No pelaku_usaha found, redirecting to settings');
+        toast({
+          title: "Profil Usaha Belum Dibuat",
+          description: "Silakan lengkapi profil usaha Anda terlebih dahulu",
+          variant: "destructive",
+        });
+        navigate('/settings');
         return;
       }
 
@@ -59,14 +89,18 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
 
       if (categoriesError) {
         console.error('Error fetching categories:', categoriesError);
-        return;
+        throw categoriesError;
       }
 
-      if (categoriesData) {
-        setCategories(categoriesData);
-      }
+      console.log('Categories fetched:', categoriesData);
+      setCategories(categoriesData || []);
     } catch (error) {
       console.error('Error in fetchCategories:', error);
+      toast({
+        title: "Error",
+        description: "Gagal mengambil data kategori",
+        variant: "destructive",
+      });
     }
   };
 
@@ -83,14 +117,15 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
     setIsSubmitting(true);
     
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
       
-      if (!user) {
+      if (authError || !user) {
         toast({
           title: "Error",
           description: "Anda belum login",
           variant: "destructive",
         });
+        navigate('/auth');
         return;
       }
 
