@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const History = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [activeTab, setActiveTab] = useState("daily");
   const navigate = useNavigate();
 
   // Daily transactions query
@@ -153,7 +154,7 @@ const History = () => {
 
   return (
     <div className="space-y-4">
-      <Tabs defaultValue="daily" className="w-full">
+      <Tabs defaultValue="daily" className="w-full" onValueChange={setActiveTab}>
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-bold">Riwayat Transaksi</h1>
@@ -162,12 +163,14 @@ const History = () => {
               <TabsTrigger value="unpaid">Piutang</TabsTrigger>
             </TabsList>
           </div>
-          <Input
-            type="date"
-            value={format(selectedDate, 'yyyy-MM-dd')}
-            onChange={handleDateChange}
-            className="w-auto"
-          />
+          {activeTab === "daily" && (
+            <Input
+              type="date"
+              value={format(selectedDate, 'yyyy-MM-dd')}
+              onChange={handleDateChange}
+              className="w-auto"
+            />
+          )}
         </div>
 
         <TabsContent value="daily" className="mt-0">
