@@ -23,10 +23,12 @@ export const useProducts = () => {
             produk_id,
             product_name,
             retail_price,
-            member_price,
+            member_price_1,
+            member_price_2,
             stock,
             barcode,
             unit,
+            cost_price,
             kategori_produk (
               kategori_name
             )
@@ -40,12 +42,14 @@ export const useProducts = () => {
             id: product.produk_id,
             name: product.product_name,
             price: product.retail_price,
-            member_price: product.member_price,
+            member_price_1: product.member_price_1,
+            member_price_2: product.member_price_2,
             quantity: 1,
             category: product.kategori_produk?.kategori_name,
             stock: product.stock,
             barcode: product.barcode,
-            unit: product.unit
+            unit: product.unit,
+            cost_price: product.cost_price
           }));
           setProducts(mappedProducts);
           setFilteredProducts(mappedProducts);

@@ -35,9 +35,12 @@ const Products = () => {
             produk_id,
             product_name,
             retail_price,
-            member_price,
+            member_price_1,
+            member_price_2,
             stock,
             barcode,
+            cost_price,
+            unit,
             kategori_produk (
               kategori_name
             )
@@ -52,11 +55,14 @@ const Products = () => {
             id: product.produk_id,
             name: product.product_name,
             price: product.retail_price,
-            member_price: product.member_price,
+            member_price_1: product.member_price_1,
+            member_price_2: product.member_price_2,
             quantity: 1,
             category: product.kategori_produk?.kategori_name,
             stock: product.stock,
-            barcode: product.barcode
+            barcode: product.barcode,
+            unit: product.unit,
+            cost_price: product.cost_price
           }));
           setProducts(mappedProducts);
         }
@@ -85,7 +91,6 @@ const Products = () => {
     );
     setFilteredProducts(filtered);
 
-    // Jika pencarian menggunakan barcode dan tidak ada hasil
     if (searchTerm.length > 5 && filtered.length === 0) {
       toast({
         title: "Produk Tidak Ditemukan",
