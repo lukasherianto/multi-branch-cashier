@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ReturForm } from "@/components/history/ReturForm";
-import { Printer, MessageSquare, Ban, CheckCircle2 } from "lucide-react";
+import { Printer, MessageSquare, Ban, CheckCircle2, CreditCard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
@@ -43,6 +43,7 @@ const History = () => {
         `)
         .gte("transaction_date", startDate.toISOString())
         .lte("transaction_date", endDate.toISOString())
+        .order("payment_status", { ascending: true }) // Unpaid (0) will appear first
         .order("transaction_date", { ascending: false });
 
       if (error) throw error;
@@ -64,6 +65,23 @@ const History = () => {
     } catch (error) {
       console.error("Error updating payment status:", error);
       toast.error("Gagal memperbarui status pembayaran");
+    }
+  };
+
+  const handlePayDebt = async (transactionId: number) => {
+    try {
+      const { error } = await supabase
+        .from("transaksi")
+        .update({ payment_status: 1 })
+        .eq("transaksi_id", transactionId);
+
+      if (error) throw error;
+
+      toast.success("Pembayaran hutang berhasil");
+      refetch();
+    } catch (error) {
+      console.error("Error paying debt:", error);
+      toast.error("Gagal melakukan pembayaran hutang");
     }
   };
 
@@ -183,6 +201,17 @@ const History = () => {
                   <td className="px-3 py-2 text-xs">{transaction.cabang.branch_name}</td>
                   <td className="px-3 py-2">
                     <div className="flex space-x-1">
+                      {transaction.payment_status === 0 && (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="h-7 text-xs px-2"
+                          onClick={() => handlePayDebt(transaction.transaksi_id)}
+                        >
+                          <CreditCard className="w-3 h-3 mr-1" />
+                          Bayar
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"
