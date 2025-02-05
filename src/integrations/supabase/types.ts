@@ -448,6 +448,7 @@ export type Database = {
         Row: {
           cabang_id: number
           created_at: string
+          payment_status: number
           produk_id: number
           quantity: number
           total_price: number
@@ -458,6 +459,7 @@ export type Database = {
         Insert: {
           cabang_id: number
           created_at?: string
+          payment_status?: number
           produk_id: number
           quantity: number
           total_price: number
@@ -468,6 +470,7 @@ export type Database = {
         Update: {
           cabang_id?: number
           created_at?: string
+          payment_status?: number
           produk_id?: number
           quantity?: number
           total_price?: number

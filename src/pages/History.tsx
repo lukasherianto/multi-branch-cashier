@@ -1,13 +1,16 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ReturForm } from "@/components/history/ReturForm";
-import { Printer, MessageSquare } from "lucide-react";
+import { Printer, MessageSquare, Ban, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 const History = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -29,6 +32,7 @@ const History = () => {
           quantity,
           total_price,
           transaction_date,
+          payment_status,
           produk:produk_id (
             produk_id,
             product_name
@@ -45,6 +49,23 @@ const History = () => {
       return data;
     },
   });
+
+  const handleUpdatePaymentStatus = async (transactionId: number, currentStatus: number) => {
+    try {
+      const { error } = await supabase
+        .from("transaksi")
+        .update({ payment_status: currentStatus === 1 ? 0 : 1 })
+        .eq("transaksi_id", transactionId);
+
+      if (error) throw error;
+
+      toast.success("Status pembayaran berhasil diperbarui");
+      refetch();
+    } catch (error) {
+      console.error("Error updating payment status:", error);
+      toast.error("Gagal memperbarui status pembayaran");
+    }
+  };
 
   const handlePrint = (transaction: any) => {
     const items = [{
@@ -68,7 +89,8 @@ const History = () => {
       `*${transaction.cabang.branch_name}*\n\n` +
       `Tanggal: ${format(new Date(transaction.transaction_date), 'dd MMMM yyyy HH:mm', { locale: id })}\n\n` +
       `${transaction.produk.product_name} x${transaction.quantity} = Rp ${transaction.total_price.toLocaleString('id-ID')}\n\n` +
-      `*Total: Rp ${transaction.total_price.toLocaleString('id-ID')}*\n\n` +
+      `*Total: Rp ${transaction.total_price.toLocaleString('id-ID')}*\n` +
+      `Status: ${transaction.payment_status === 1 ? 'Lunas' : 'Belum Lunas'}\n\n` +
       `Terima kasih atas kunjungan Anda!`;
 
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
@@ -112,6 +134,9 @@ const History = () => {
                   Total
                 </th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Cabang
                 </th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -129,6 +154,31 @@ const History = () => {
                   <td className="px-3 py-2 text-xs">{transaction.quantity}</td>
                   <td className="px-3 py-2 text-xs">
                     Rp {transaction.total_price.toLocaleString('id-ID')}
+                  </td>
+                  <td className="px-3 py-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs px-2"
+                      onClick={() => handleUpdatePaymentStatus(transaction.transaksi_id, transaction.payment_status)}
+                    >
+                      <Badge 
+                        variant={transaction.payment_status === 1 ? "success" : "destructive"}
+                        className="flex items-center gap-1"
+                      >
+                        {transaction.payment_status === 1 ? (
+                          <>
+                            <CheckCircle2 className="w-3 h-3" />
+                            Lunas
+                          </>
+                        ) : (
+                          <>
+                            <Ban className="w-3 h-3" />
+                            Hutang
+                          </>
+                        )}
+                      </Badge>
+                    </Button>
                   </td>
                   <td className="px-3 py-2 text-xs">{transaction.cabang.branch_name}</td>
                   <td className="px-3 py-2">
