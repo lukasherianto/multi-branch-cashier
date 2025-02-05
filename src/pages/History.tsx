@@ -8,12 +8,14 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { toast } from "sonner";
 import { TransactionTable } from "@/components/history/TransactionTable";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const History = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const navigate = useNavigate();
 
-  const { data: transactions, refetch } = useQuery({
+  // Daily transactions query
+  const { data: dailyTransactions, refetch: refetchDaily } = useQuery({
     queryKey: ["transactions", selectedDate],
     queryFn: async () => {
       const startDate = new Date(selectedDate);
@@ -48,6 +50,34 @@ const History = () => {
     },
   });
 
+  // Unpaid transactions query (accounts receivable)
+  const { data: unpaidTransactions, refetch: refetchUnpaid } = useQuery({
+    queryKey: ["unpaid-transactions"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("transaksi")
+        .select(`
+          transaksi_id,
+          quantity,
+          total_price,
+          transaction_date,
+          payment_status,
+          produk:produk_id (
+            produk_id,
+            product_name
+          ),
+          cabang:cabang_id (
+            branch_name
+          )
+        `)
+        .eq("payment_status", 0)
+        .order("transaction_date", { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const handleUpdatePaymentStatus = async (transactionId: number, currentStatus: number) => {
     try {
       const { error } = await supabase
@@ -58,7 +88,8 @@ const History = () => {
       if (error) throw error;
 
       toast.success("Status pembayaran berhasil diperbarui");
-      refetch();
+      refetchDaily();
+      refetchUnpaid();
     } catch (error) {
       console.error("Error updating payment status:", error);
       toast.error("Gagal memperbarui status pembayaran");
@@ -75,7 +106,8 @@ const History = () => {
       if (error) throw error;
 
       toast.success("Pembayaran hutang berhasil");
-      refetch();
+      refetchDaily();
+      refetchUnpaid();
     } catch (error) {
       console.error("Error paying debt:", error);
       toast.error("Gagal melakukan pembayaran hutang");
@@ -121,24 +153,45 @@ const History = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h1 className="text-xl font-bold">Riwayat Transaksi</h1>
-        <Input
-          type="date"
-          value={format(selectedDate, 'yyyy-MM-dd')}
-          onChange={handleDateChange}
-          className="w-auto"
-        />
-      </div>
+      <Tabs defaultValue="daily" className="w-full">
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl font-bold">Riwayat Transaksi</h1>
+            <TabsList>
+              <TabsTrigger value="daily">Transaksi Harian</TabsTrigger>
+              <TabsTrigger value="unpaid">Piutang</TabsTrigger>
+            </TabsList>
+          </div>
+          <Input
+            type="date"
+            value={format(selectedDate, 'yyyy-MM-dd')}
+            onChange={handleDateChange}
+            className="w-auto"
+          />
+        </div>
 
-      <TransactionTable
-        transactions={transactions || []}
-        onUpdatePaymentStatus={handleUpdatePaymentStatus}
-        onPayDebt={handlePayDebt}
-        onPrint={handlePrint}
-        onWhatsApp={handleWhatsApp}
-        onReturSuccess={refetch}
-      />
+        <TabsContent value="daily" className="mt-0">
+          <TransactionTable
+            transactions={dailyTransactions || []}
+            onUpdatePaymentStatus={handleUpdatePaymentStatus}
+            onPayDebt={handlePayDebt}
+            onPrint={handlePrint}
+            onWhatsApp={handleWhatsApp}
+            onReturSuccess={refetchDaily}
+          />
+        </TabsContent>
+
+        <TabsContent value="unpaid" className="mt-0">
+          <TransactionTable
+            transactions={unpaidTransactions || []}
+            onUpdatePaymentStatus={handleUpdatePaymentStatus}
+            onPayDebt={handlePayDebt}
+            onPrint={handlePrint}
+            onWhatsApp={handleWhatsApp}
+            onReturSuccess={refetchUnpaid}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
