@@ -2,15 +2,12 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ReturForm } from "@/components/history/ReturForm";
-import { Printer, MessageSquare, Ban, CheckCircle2, CreditCard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { TransactionTable } from "@/components/history/TransactionTable";
 
 const History = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -43,7 +40,7 @@ const History = () => {
         `)
         .gte("transaction_date", startDate.toISOString())
         .lte("transaction_date", endDate.toISOString())
-        .order("payment_status", { ascending: true }) // Unpaid (0) will appear first
+        .order("payment_status", { ascending: true })
         .order("transaction_date", { ascending: false });
 
       if (error) throw error;
@@ -134,119 +131,14 @@ const History = () => {
         />
       </div>
 
-      <div className="bg-white rounded-lg shadow">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tanggal
-                </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Produk
-                </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Jumlah
-                </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total
-                </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Cabang
-                </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Aksi
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {transactions?.map((transaction) => (
-                <tr key={transaction.transaksi_id}>
-                  <td className="px-3 py-2 whitespace-nowrap text-xs">
-                    {format(new Date(transaction.transaction_date), 'dd MMM yyyy HH:mm', { locale: id })}
-                  </td>
-                  <td className="px-3 py-2 text-xs">{transaction.produk.product_name}</td>
-                  <td className="px-3 py-2 text-xs">{transaction.quantity}</td>
-                  <td className="px-3 py-2 text-xs">
-                    Rp {transaction.total_price.toLocaleString('id-ID')}
-                  </td>
-                  <td className="px-3 py-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 text-xs px-2"
-                      onClick={() => handleUpdatePaymentStatus(transaction.transaksi_id, transaction.payment_status)}
-                    >
-                      <Badge 
-                        variant={transaction.payment_status === 1 ? "success" : "destructive"}
-                        className="flex items-center gap-1"
-                      >
-                        {transaction.payment_status === 1 ? (
-                          <>
-                            <CheckCircle2 className="w-3 h-3" />
-                            Lunas
-                          </>
-                        ) : (
-                          <>
-                            <Ban className="w-3 h-3" />
-                            Hutang
-                          </>
-                        )}
-                      </Badge>
-                    </Button>
-                  </td>
-                  <td className="px-3 py-2 text-xs">{transaction.cabang.branch_name}</td>
-                  <td className="px-3 py-2">
-                    <div className="flex space-x-1">
-                      {transaction.payment_status === 0 && (
-                        <Button
-                          variant="default"
-                          size="sm"
-                          className="h-7 text-xs px-2"
-                          onClick={() => handlePayDebt(transaction.transaksi_id)}
-                        >
-                          <CreditCard className="w-3 h-3 mr-1" />
-                          Bayar
-                        </Button>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 text-xs px-2"
-                        onClick={() => handlePrint(transaction)}
-                      >
-                        <Printer className="w-3 h-3 mr-1" />
-                        Cetak
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 text-xs px-2"
-                        onClick={() => handleWhatsApp(transaction)}
-                      >
-                        <MessageSquare className="w-3 h-3 mr-1" />
-                        WA
-                      </Button>
-                      <ReturForm
-                        transactionId={transaction.transaksi_id}
-                        products={[{
-                          id: transaction.produk.produk_id,
-                          name: transaction.produk.product_name,
-                          quantity: transaction.quantity,
-                        }]}
-                        onSuccess={refetch}
-                      />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <TransactionTable
+        transactions={transactions || []}
+        onUpdatePaymentStatus={handleUpdatePaymentStatus}
+        onPayDebt={handlePayDebt}
+        onPrint={handlePrint}
+        onWhatsApp={handleWhatsApp}
+        onReturSuccess={refetch}
+      />
     </div>
   );
 };
