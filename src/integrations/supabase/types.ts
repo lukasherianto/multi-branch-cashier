@@ -304,7 +304,6 @@ export type Database = {
           nama: string
           pelaku_usaha_id: number
           pelanggan_id: number
-          tanggal_lahir: string | null
           updated_at: string
           whatsapp: string | null
         }
@@ -313,7 +312,6 @@ export type Database = {
           nama: string
           pelaku_usaha_id: number
           pelanggan_id?: number
-          tanggal_lahir?: string | null
           updated_at?: string
           whatsapp?: string | null
         }
@@ -322,7 +320,6 @@ export type Database = {
           nama?: string
           pelaku_usaha_id?: number
           pelanggan_id?: number
-          tanggal_lahir?: string | null
           updated_at?: string
           whatsapp?: string | null
         }

@@ -19,8 +19,7 @@ const CustomerReport = () => {
         .select(`
           pelanggan_id,
           nama,
-          whatsapp,
-          tanggal_lahir
+          whatsapp
         `);
 
       if (error) throw error;
@@ -46,7 +45,6 @@ const CustomerReport = () => {
             <TableRow>
               <TableHead>Nama</TableHead>
               <TableHead>WhatsApp</TableHead>
-              <TableHead>Tanggal Lahir</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -54,11 +52,6 @@ const CustomerReport = () => {
               <TableRow key={customer.pelanggan_id}>
                 <TableCell>{customer.nama}</TableCell>
                 <TableCell>{customer.whatsapp || '-'}</TableCell>
-                <TableCell>
-                  {customer.tanggal_lahir
-                    ? new Date(customer.tanggal_lahir).toLocaleDateString("id-ID")
-                    : '-'}
-                </TableCell>
               </TableRow>
             ))}
           </TableBody>
