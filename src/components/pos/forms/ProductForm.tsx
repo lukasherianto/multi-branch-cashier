@@ -18,7 +18,8 @@ interface ProductFormProps {
     selectedKategori: string;
     costPrice: string;
     retailPrice: string;
-    memberPrice: string;
+    memberPrice1: string;
+    memberPrice2: string;
     stock: string;
     barcode: string;
     unit: string;
@@ -30,7 +31,8 @@ export const ProductForm = ({ categories, onSubmit, isSubmitting }: ProductFormP
   const [productName, setProductName] = useState("");
   const [costPrice, setCostPrice] = useState("");
   const [retailPrice, setRetailPrice] = useState("");
-  const [memberPrice, setMemberPrice] = useState("");
+  const [memberPrice1, setMemberPrice1] = useState("");
+  const [memberPrice2, setMemberPrice2] = useState("");
   const [stock, setStock] = useState("");
   const [selectedKategori, setSelectedKategori] = useState("");
   const [barcode, setBarcode] = useState("");
@@ -45,7 +47,8 @@ export const ProductForm = ({ categories, onSubmit, isSubmitting }: ProductFormP
       selectedKategori,
       costPrice,
       retailPrice,
-      memberPrice,
+      memberPrice1,
+      memberPrice2,
       stock,
       barcode,
       unit,
@@ -132,14 +135,25 @@ export const ProductForm = ({ categories, onSubmit, isSubmitting }: ProductFormP
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="memberPrice">Harga Member</Label>
+          <Label htmlFor="memberPrice1">Harga Member 1</Label>
           <Input
-            id="memberPrice"
+            id="memberPrice1"
             type="number"
             min="0"
-            value={memberPrice}
-            onChange={(e) => setMemberPrice(e.target.value)}
-            placeholder="Masukkan harga member (opsional)"
+            value={memberPrice1}
+            onChange={(e) => setMemberPrice1(e.target.value)}
+            placeholder="Masukkan harga member 1 (opsional)"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="memberPrice2">Harga Member 2</Label>
+          <Input
+            id="memberPrice2"
+            type="number"
+            min="0"
+            value={memberPrice2}
+            onChange={(e) => setMemberPrice2(e.target.value)}
+            placeholder="Masukkan harga member 2 (opsional)"
           />
         </div>
         <div className="space-y-2">

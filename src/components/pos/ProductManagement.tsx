@@ -106,7 +106,8 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
     selectedKategori: string;
     costPrice: string;
     retailPrice: string;
-    memberPrice: string;
+    memberPrice1: string;
+    memberPrice2: string;
     stock: string;
     barcode: string;
     unit: string;
@@ -162,7 +163,8 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
           product_name: formData.productName,
           cost_price: parseFloat(formData.costPrice),
           retail_price: parseFloat(formData.retailPrice),
-          member_price: formData.memberPrice ? parseFloat(formData.memberPrice) : null,
+          member_price_1: formData.memberPrice1 ? parseFloat(formData.memberPrice1) : null,
+          member_price_2: formData.memberPrice2 ? parseFloat(formData.memberPrice2) : null,
           stock: parseInt(formData.stock),
           barcode: formData.barcode || null,
           unit: formData.unit,

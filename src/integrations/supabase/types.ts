@@ -342,7 +342,8 @@ export type Database = {
           cost_price: number
           created_at: string
           kategori_id: number
-          member_price: number | null
+          member_price_1: number | null
+          member_price_2: number | null
           pelaku_usaha_id: number
           product_name: string
           produk_id: number
@@ -356,7 +357,8 @@ export type Database = {
           cost_price: number
           created_at?: string
           kategori_id: number
-          member_price?: number | null
+          member_price_1?: number | null
+          member_price_2?: number | null
           pelaku_usaha_id: number
           product_name: string
           produk_id?: never
@@ -370,7 +372,8 @@ export type Database = {
           cost_price?: number
           created_at?: string
           kategori_id?: number
-          member_price?: number | null
+          member_price_1?: number | null
+          member_price_2?: number | null
           pelaku_usaha_id?: number
           product_name?: string
           produk_id?: never

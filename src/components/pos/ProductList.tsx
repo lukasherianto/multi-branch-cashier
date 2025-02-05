@@ -13,12 +13,14 @@ interface ProductListProps {
     id: number;
     name: string;
     price: number;
-    member_price?: number | null;
+    member_price_1?: number | null;
+    member_price_2?: number | null;
     quantity: number;
     category?: string;
     stock: number;
     barcode?: string;
     unit: string;
+    cost_price: number;
   }>;
   onAddToCart: (product: any) => void;
   isRegisteredCustomer: boolean;
@@ -35,8 +37,8 @@ export const ProductList = ({
 }: ProductListProps) => {
   const handleAddToCart = (product: any) => {
     // If customer is registered and member price exists, use member price
-    const priceToUse = isRegisteredCustomer && product.member_price 
-      ? product.member_price 
+    const priceToUse = isRegisteredCustomer && product.member_price_1 
+      ? product.member_price_1 
       : product.price;
 
     onAddToCart({
@@ -53,8 +55,10 @@ export const ProductList = ({
             <TableHead>Nama Produk</TableHead>
             <TableHead>Barcode</TableHead>
             <TableHead>Kategori</TableHead>
+            <TableHead>Harga Modal</TableHead>
             <TableHead>Harga Retail</TableHead>
-            <TableHead>Harga Member</TableHead>
+            <TableHead>Harga Member 1</TableHead>
+            <TableHead>Harga Member 2</TableHead>
             <TableHead>Stok</TableHead>
             <TableHead>Satuan</TableHead>
             <TableHead>Aksi</TableHead>
@@ -66,10 +70,17 @@ export const ProductList = ({
               <TableCell className="font-medium">{product.name}</TableCell>
               <TableCell>{product.barcode || '-'}</TableCell>
               <TableCell>{product.category || '-'}</TableCell>
+              <TableCell>Rp {product.cost_price.toLocaleString('id-ID')}</TableCell>
               <TableCell>Rp {product.price.toLocaleString('id-ID')}</TableCell>
               <TableCell>
-                {product.member_price 
-                  ? `Rp ${product.member_price.toLocaleString('id-ID')}`
+                {product.member_price_1 
+                  ? `Rp ${product.member_price_1.toLocaleString('id-ID')}`
+                  : '-'
+                }
+              </TableCell>
+              <TableCell>
+                {product.member_price_2 
+                  ? `Rp ${product.member_price_2.toLocaleString('id-ID')}`
                   : '-'
                 }
               </TableCell>
