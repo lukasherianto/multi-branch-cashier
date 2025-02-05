@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { User, CalendarIcon } from "lucide-react";
+import { User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { WhatsAppInput } from "@/components/settings/WhatsAppInput";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
 
 interface CustomerInfoProps {
   whatsappNumber: string;
@@ -43,7 +42,7 @@ export const CustomerInfo = ({
     try {
       const { data, error } = await supabase
         .from('pelanggan')
-        .select('nama, tanggal_lahir')
+        .select('nama')
         .eq('whatsapp', whatsappNumber)
         .maybeSingle();
 
@@ -51,7 +50,7 @@ export const CustomerInfo = ({
 
       if (data) {
         setCustomerName(data.nama);
-        setBirthDate(data.tanggal_lahir ? new Date(data.tanggal_lahir) : null);
+        setBirthDate(null);
         onCustomerFound?.();
         toast({
           title: "Data Pelanggan Ditemukan",
@@ -116,7 +115,6 @@ export const CustomerInfo = ({
           pelaku_usaha_id: pelakuUsaha.pelaku_usaha_id,
           nama: customerName,
           whatsapp: whatsappNumber,
-          tanggal_lahir: birthDate ? format(birthDate, 'yyyy-MM-dd') : null,
         });
 
       if (error) throw error;
@@ -144,7 +142,7 @@ export const CustomerInfo = ({
         onCheck={handleCheckCustomer}
         onSave={handleSaveCustomer}
       />
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <div className="space-y-2">
           <Label htmlFor="customerName" className="flex items-center gap-2">
             <User className="h-4 w-4" />
@@ -155,19 +153,6 @@ export const CustomerInfo = ({
             placeholder="Nama Pelanggan"
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
-            className="text-sm"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="birthDate" className="flex items-center gap-2">
-            <CalendarIcon className="h-4 w-4" />
-            Tanggal Lahir
-          </Label>
-          <Input
-            id="birthDate"
-            type="date"
-            value={birthDate ? format(birthDate, 'yyyy-MM-dd') : ''}
-            onChange={(e) => setBirthDate(e.target.value ? new Date(e.target.value) : null)}
             className="text-sm"
           />
         </div>
