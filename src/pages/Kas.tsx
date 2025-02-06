@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 const formSchema = z.object({
   amount: z.string().min(1, "Jumlah harus diisi"),
   description: z.string().optional(),
+  transaction_date: z.string().min(1, "Tanggal harus diisi"),
 });
 
 const Kas = () => {
@@ -29,6 +30,7 @@ const Kas = () => {
     defaultValues: {
       amount: "",
       description: "",
+      transaction_date: new Date().toISOString().split('T')[0],
     },
   });
 
@@ -37,6 +39,7 @@ const Kas = () => {
     defaultValues: {
       amount: "",
       description: "",
+      transaction_date: new Date().toISOString().split('T')[0],
     },
   });
 
@@ -46,6 +49,7 @@ const Kas = () => {
         amount: parseFloat(values.amount),
         transaction_type: "masuk",
         description: values.description || null,
+        transaction_date: new Date(values.transaction_date).toISOString(),
         cabang_id: 1, // You should replace this with the actual branch ID
       });
 
@@ -73,6 +77,7 @@ const Kas = () => {
         amount: parseFloat(values.amount),
         transaction_type: "keluar",
         description: values.description || null,
+        transaction_date: new Date(values.transaction_date).toISOString(),
         cabang_id: 1, // You should replace this with the actual branch ID
       });
 
@@ -106,6 +111,20 @@ const Kas = () => {
           <h2 className="mb-4 text-lg font-medium">Uang Masuk</h2>
           <Form {...cashInForm}>
             <form onSubmit={cashInForm.handleSubmit(onCashInSubmit)} className="space-y-4">
+              <FormField
+                control={cashInForm.control}
+                name="transaction_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tanggal</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={cashInForm.control}
                 name="amount"
@@ -145,6 +164,20 @@ const Kas = () => {
           <h2 className="mb-4 text-lg font-medium">Uang Keluar</h2>
           <Form {...cashOutForm}>
             <form onSubmit={cashOutForm.handleSubmit(onCashOutSubmit)} className="space-y-4">
+              <FormField
+                control={cashOutForm.control}
+                name="transaction_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tanggal</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={cashOutForm.control}
                 name="amount"
