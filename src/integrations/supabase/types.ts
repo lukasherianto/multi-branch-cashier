@@ -333,6 +333,63 @@ export type Database = {
           },
         ]
       }
+      pembelian: {
+        Row: {
+          cabang_id: number
+          created_at: string
+          jadwal_lunas: string | null
+          payment_status: number
+          pembelian_id: number
+          produk_id: number
+          quantity: number
+          tanggal_dilunaskan: string | null
+          total_price: number
+          transaction_date: string
+          updated_at: string
+        }
+        Insert: {
+          cabang_id: number
+          created_at?: string
+          jadwal_lunas?: string | null
+          payment_status?: number
+          pembelian_id?: never
+          produk_id: number
+          quantity: number
+          tanggal_dilunaskan?: string | null
+          total_price: number
+          transaction_date?: string
+          updated_at?: string
+        }
+        Update: {
+          cabang_id?: number
+          created_at?: string
+          jadwal_lunas?: string | null
+          payment_status?: number
+          pembelian_id?: never
+          produk_id?: number
+          quantity?: number
+          tanggal_dilunaskan?: string | null
+          total_price?: number
+          transaction_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pembelian_cabang_id_fkey"
+            columns: ["cabang_id"]
+            isOneToOne: false
+            referencedRelation: "cabang"
+            referencedColumns: ["cabang_id"]
+          },
+          {
+            foreignKeyName: "pembelian_produk_id_fkey"
+            columns: ["produk_id"]
+            isOneToOne: false
+            referencedRelation: "produk"
+            referencedColumns: ["produk_id"]
+          },
+        ]
+      }
       produk: {
         Row: {
           barcode: string | null
@@ -441,6 +498,51 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "transaksi"
             referencedColumns: ["transaksi_id"]
+          },
+        ]
+      }
+      supplier: {
+        Row: {
+          alamat: string | null
+          created_at: string
+          kategori_id: number
+          nama_usaha: string
+          pelaku_usaha_id: number
+          supplier_id: number
+          updated_at: string
+        }
+        Insert: {
+          alamat?: string | null
+          created_at?: string
+          kategori_id: number
+          nama_usaha: string
+          pelaku_usaha_id: number
+          supplier_id?: never
+          updated_at?: string
+        }
+        Update: {
+          alamat?: string | null
+          created_at?: string
+          kategori_id?: number
+          nama_usaha?: string
+          pelaku_usaha_id?: number
+          supplier_id?: never
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_kategori_id_fkey"
+            columns: ["kategori_id"]
+            isOneToOne: false
+            referencedRelation: "kategori_produk"
+            referencedColumns: ["kategori_id"]
+          },
+          {
+            foreignKeyName: "supplier_pelaku_usaha_id_fkey"
+            columns: ["pelaku_usaha_id"]
+            isOneToOne: false
+            referencedRelation: "pelaku_usaha"
+            referencedColumns: ["pelaku_usaha_id"]
           },
         ]
       }
