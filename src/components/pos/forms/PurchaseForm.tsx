@@ -83,11 +83,16 @@ export function PurchaseForm() {
         jadwal_lunas: values.jadwal_lunas ? format(values.jadwal_lunas, "yyyy-MM-dd") : null,
       };
 
+      console.log('Submitting purchase with values:', formattedValues);
+
       const { error } = await supabase
         .from('pembelian')
         .insert(formattedValues);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error submitting purchase:', error);
+        throw error;
+      }
 
       navigate('/purchase');
     } catch (error) {
