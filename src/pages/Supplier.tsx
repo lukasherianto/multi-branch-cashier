@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SupplierManagement } from "@/components/pos/SupplierManagement";
+import { CategoryManagement } from "@/components/pos/CategoryManagement";
 import { useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,7 @@ const Supplier = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800">Supplier</h2>
         <div className="flex gap-2">
+          <CategoryManagement onSuccess={fetchSuppliers} />
           <Button
             variant="outline"
             size="sm"

@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { ProductSearch } from "@/components/pos/ProductSearch";
 import { ProductList } from "@/components/pos/ProductList";
 import { ProductManagement } from "@/components/pos/ProductManagement";
-import { CategoryManagement } from "@/components/pos/CategoryManagement";
 
 const Products = () => {
   const { toast } = useToast();
@@ -105,7 +104,6 @@ const Products = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800">Produk</h2>
         <div className="flex gap-2">
-          <CategoryManagement />
           <ProductManagement onSuccess={fetchProducts} />
         </div>
       </div>
