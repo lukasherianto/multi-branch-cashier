@@ -50,20 +50,20 @@ export const BranchForm = () => {
       if (!user) throw new Error("User not authenticated");
 
       console.log("Getting pelaku_usaha_id for user:", user.id);
-      const { data: pelakuUsaha, error: pelakuUsahaError } = await supabase
+      const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
         .from('pelaku_usaha')
         .select('pelaku_usaha_id')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle(); // Changed from .single() to .maybeSingle()
 
       if (pelakuUsahaError) throw pelakuUsahaError;
-      if (!pelakuUsaha) throw new Error("Pelaku usaha not found");
+      if (!pelakuUsahaData) throw new Error("Pelaku usaha not found");
 
-      console.log("Creating new branch for pelaku_usaha_id:", pelakuUsaha.pelaku_usaha_id);
+      console.log("Creating new branch for pelaku_usaha_id:", pelakuUsahaData.pelaku_usaha_id);
       const { error: insertError } = await supabase
         .from('cabang')
         .insert({
-          pelaku_usaha_id: pelakuUsaha.pelaku_usaha_id,
+          pelaku_usaha_id: pelakuUsahaData.pelaku_usaha_id,
           branch_name: branchName,
           address: address || null,
           contact_whatsapp: whatsapp || null,
