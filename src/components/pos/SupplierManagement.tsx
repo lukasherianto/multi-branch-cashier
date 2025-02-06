@@ -22,11 +22,10 @@ export const SupplierManagement = ({ onSuccess }: SupplierManagementProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  const [categories, setCategories] = useState<Array<{ kategori_id: number; kategori_name: string }>>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const checkAuthAndFetchCategories = async () => {
+    const checkAuth = async () => {
       try {
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         
@@ -37,9 +36,8 @@ export const SupplierManagement = ({ onSuccess }: SupplierManagementProps) => {
         }
 
         console.log('Authenticated user:', user.id);
-        await fetchCategories(user.id);
       } catch (error) {
-        console.error('Error in checkAuthAndFetchCategories:', error);
+        console.error('Error in checkAuth:', error);
         toast({
           title: "Error",
           description: "Terjadi kesalahan saat memuat data",
@@ -49,59 +47,13 @@ export const SupplierManagement = ({ onSuccess }: SupplierManagementProps) => {
       }
     };
 
-    checkAuthAndFetchCategories();
+    checkAuth();
   }, [navigate, toast]);
-
-  const fetchCategories = async (userId: string) => {
-    try {
-      const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
-        .from('pelaku_usaha')
-        .select('pelaku_usaha_id')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (pelakuUsahaError) {
-        console.error('Error fetching pelaku usaha:', pelakuUsahaError);
-        throw pelakuUsahaError;
-      }
-
-      if (!pelakuUsahaData) {
-        console.log('No pelaku_usaha found, redirecting to settings');
-        toast({
-          title: "Profil Usaha Belum Dibuat",
-          description: "Silakan lengkapi profil usaha Anda terlebih dahulu",
-          variant: "destructive",
-        });
-        navigate('/settings');
-        return;
-      }
-
-      const { data: categoriesData, error: categoriesError } = await supabase
-        .from('kategori_produk')
-        .select('kategori_id, kategori_name')
-        .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id);
-
-      if (categoriesError) {
-        console.error('Error fetching categories:', categoriesError);
-        throw categoriesError;
-      }
-
-      console.log('Categories fetched:', categoriesData);
-      setCategories(categoriesData || []);
-    } catch (error) {
-      console.error('Error in fetchCategories:', error);
-      toast({
-        title: "Error",
-        description: "Gagal mengambil data kategori",
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleSubmit = async (formData: {
     namaUsaha: string;
-    selectedKategori: string;
     alamat: string;
+    whatsapp: string;
   }) => {
     setIsSubmitting(true);
     
@@ -141,9 +93,9 @@ export const SupplierManagement = ({ onSuccess }: SupplierManagementProps) => {
         .from('supplier')
         .insert({
           pelaku_usaha_id: pelakuUsahaData.pelaku_usaha_id,
-          kategori_id: parseInt(formData.selectedKategori),
           nama_usaha: formData.namaUsaha,
           alamat: formData.alamat || null,
+          whatsapp: formData.whatsapp || null,
         });
 
       if (error) throw error;
@@ -183,7 +135,6 @@ export const SupplierManagement = ({ onSuccess }: SupplierManagementProps) => {
           </DialogDescription>
         </DialogHeader>
         <SupplierForm 
-          categories={categories}
           onSubmit={handleSubmit}
           isSubmitting={isSubmitting}
         />
