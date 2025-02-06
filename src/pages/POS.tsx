@@ -8,11 +8,12 @@ import { ShoppingCart } from "@/components/pos/ShoppingCart";
 import { useAuth } from "@/hooks/useAuth";
 import { useProducts } from "@/hooks/useProducts";
 import { useCart } from "@/hooks/useCart";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const POS = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { pelakuUsaha, cabang } = useAuth();
+  const { pelakuUsaha, cabang, cabangList, selectedCabangId, setSelectedCabangId } = useAuth();
   const { filteredProducts, handleSearch } = useProducts();
   const { cartItems, addToCart, updateQuantity, removeItem } = useCart();
   
@@ -22,6 +23,15 @@ const POS = () => {
   const [isRegisteredCustomer, setIsRegisteredCustomer] = useState(false);
 
   const handlePayment = () => {
+    if (!cabang) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Silakan pilih cabang terlebih dahulu",
+      });
+      return;
+    }
+
     if (cartItems.length === 0) {
       toast({
         variant: "destructive",
@@ -46,6 +56,26 @@ const POS = () => {
       <div className="flex-1 space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold text-gray-800">Kasir</h2>
+          {cabangList.length > 1 && (
+            <Select
+              value={selectedCabangId?.toString()}
+              onValueChange={(value) => setSelectedCabangId(parseInt(value))}
+            >
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Pilih Cabang" />
+              </SelectTrigger>
+              <SelectContent>
+                {cabangList.map((branch) => (
+                  <SelectItem 
+                    key={branch.cabang_id} 
+                    value={branch.cabang_id.toString()}
+                  >
+                    {branch.branch_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         <CustomerInfo
