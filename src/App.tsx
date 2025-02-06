@@ -11,6 +11,8 @@ import Branches from "./pages/Branches";
 import PrintPreview from "./pages/PrintPreview";
 import Attendance from "./pages/Attendance";
 import Kas from "./pages/Kas";
+import Supplier from "./pages/Supplier";
+import Purchase from "./pages/Purchase";
 
 function App() {
   return (
@@ -87,6 +89,22 @@ function App() {
           element={
             <Layout>
               <Kas />
+            </Layout>
+          }
+        />
+        <Route
+          path="/supplier"
+          element={
+            <Layout>
+              <Supplier />
+            </Layout>
+          }
+        />
+        <Route
+          path="/purchase"
+          element={
+            <Layout>
+              <Purchase />
             </Layout>
           }
         />
