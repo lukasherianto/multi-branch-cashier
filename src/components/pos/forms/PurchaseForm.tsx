@@ -33,12 +33,12 @@ import {
 } from "@/components/ui/popover";
 
 const formSchema = z.object({
-  cabang_id: z.string(),
-  produk_id: z.string(),
-  quantity: z.string().transform(Number),
-  total_price: z.string().transform(Number),
+  cabang_id: z.string().transform((val) => parseInt(val, 10)),
+  produk_id: z.string().transform((val) => parseInt(val, 10)),
+  quantity: z.string().transform((val) => parseInt(val, 10)),
+  total_price: z.string().transform((val) => parseFloat(val)),
   transaction_date: z.date(),
-  payment_status: z.string().transform(Number),
+  payment_status: z.number(),
   jadwal_lunas: z.date().optional(),
 });
 
@@ -77,9 +77,15 @@ export function PurchaseForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
+      const formattedValues = {
+        ...values,
+        transaction_date: format(values.transaction_date, "yyyy-MM-dd"),
+        jadwal_lunas: values.jadwal_lunas ? format(values.jadwal_lunas, "yyyy-MM-dd") : null,
+      };
+
       const { error } = await supabase
         .from('pembelian')
-        .insert([values]);
+        .insert(formattedValues);
 
       if (error) throw error;
 
