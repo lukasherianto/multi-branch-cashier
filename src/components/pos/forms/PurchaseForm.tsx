@@ -87,7 +87,15 @@ export function PurchaseForm() {
 
       const { error } = await supabase
         .from('pembelian')
-        .insert(formattedValues);
+        .insert({
+          cabang_id: formattedValues.cabang_id,
+          produk_id: formattedValues.produk_id,
+          quantity: formattedValues.quantity,
+          total_price: formattedValues.total_price,
+          transaction_date: formattedValues.transaction_date,
+          payment_status: formattedValues.payment_status,
+          jadwal_lunas: formattedValues.jadwal_lunas,
+        });
 
       if (error) {
         console.error('Error submitting purchase:', error);
