@@ -1,6 +1,6 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
-import { Layout } from "@/components/Layout";
+import Layout from "@/components/Layout";
 import { Outlet } from "react-router-dom";
 import Auth from "@/pages/Auth";
 import Index from "@/pages/Index";
