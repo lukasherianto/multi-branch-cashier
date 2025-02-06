@@ -1,27 +1,31 @@
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster";
-import { AuthProvider } from "@/hooks/useAuth";
+import { RouterProvider, createBrowserRouter, Outlet } from "react-router-dom";
 import Layout from "@/components/Layout";
-import { Outlet } from "react-router-dom";
-import Auth from "@/pages/Auth";
 import Index from "@/pages/Index";
+import Auth from "@/pages/Auth";
 import POS from "@/pages/POS";
 import Products from "@/pages/Products";
 import Purchase from "@/pages/Purchase";
-import { PurchaseForm } from "@/components/pos/forms/PurchaseForm";
+import History from "@/pages/History";
+import Returns from "@/pages/Returns";
+import Reports from "@/pages/Reports";
+import Settings from "@/pages/Settings";
+import Kas from "@/pages/Kas";
+import Supplier from "@/pages/Supplier";
+import Branches from "@/pages/Branches";
+import Attendance from "@/pages/Attendance";
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: (
-      <Layout>
-        <Outlet />
-      </Layout>
-    ),
+    element: <Layout><Outlet /></Layout>,
     children: [
       {
         path: "/",
         element: <Index />,
+      },
+      {
+        path: "/auth",
+        element: <Auth />,
       },
       {
         path: "/pos",
@@ -36,24 +40,43 @@ const router = createBrowserRouter([
         element: <Purchase />,
       },
       {
-        path: "/purchase/add",
-        element: <PurchaseForm />,
+        path: "/history",
+        element: <History />,
+      },
+      {
+        path: "/returns",
+        element: <Returns />,
+      },
+      {
+        path: "/reports",
+        element: <Reports />,
+      },
+      {
+        path: "/settings",
+        element: <Settings />,
+      },
+      {
+        path: "/kas",
+        element: <Kas />,
+      },
+      {
+        path: "/supplier",
+        element: <Supplier />,
+      },
+      {
+        path: "/branches",
+        element: <Branches />,
+      },
+      {
+        path: "/attendance",
+        element: <Attendance />,
       },
     ],
-  },
-  {
-    path: "/auth",
-    element: <Auth />,
   },
 ]);
 
 function App() {
-  return (
-    <AuthProvider>
-      <RouterProvider router={router} />
-      <Toaster />
-    </AuthProvider>
-  );
+  return <RouterProvider router={router} />;
 }
 
 export default App;
