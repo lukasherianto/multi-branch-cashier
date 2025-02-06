@@ -55,6 +55,7 @@ const Supplier = () => {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Nama Usaha</th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">WhatsApp</th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Alamat</th>
@@ -63,6 +64,7 @@ const Supplier = () => {
             <tbody className="divide-y divide-gray-200">
               {suppliers.map((supplier) => (
                 <tr key={supplier.supplier_id}>
+                  <td className="px-4 py-2 text-sm">{supplier.supplier_id}</td>
                   <td className="px-4 py-2 text-sm">{supplier.nama_usaha}</td>
                   <td className="px-4 py-2 text-sm">{supplier.whatsapp || '-'}</td>
                   <td className="px-4 py-2 text-sm">{supplier.alamat || '-'}</td>
