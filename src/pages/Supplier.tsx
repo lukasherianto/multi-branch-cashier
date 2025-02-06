@@ -2,9 +2,13 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SupplierManagement } from "@/components/pos/SupplierManagement";
+import { useNavigate } from "react-router-dom";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const Supplier = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [suppliers, setSuppliers] = useState<any[]>([]);
 
   useEffect(() => {
@@ -47,7 +51,18 @@ const Supplier = () => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800">Supplier</h2>
-        <SupplierManagement onSuccess={fetchSuppliers} />
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => navigate('/purchase')}
+          >
+            <Plus className="h-4 w-4" />
+            Tambah Pembelian
+          </Button>
+          <SupplierManagement onSuccess={fetchSuppliers} />
+        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow">
