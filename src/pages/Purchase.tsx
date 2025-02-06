@@ -13,6 +13,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { PurchaseForm } from "@/components/pos/forms/PurchaseForm";
 
 const Purchase = () => {
   const navigate = useNavigate();
@@ -49,7 +50,7 @@ const Purchase = () => {
             variant="outline"
             size="sm"
             className="gap-2"
-            onClick={() => navigate('/purchase')}
+            onClick={() => navigate('/purchase/add')}
           >
             <Plus className="h-4 w-4" />
             Tambah Pembelian
