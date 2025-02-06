@@ -2,9 +2,43 @@ import { useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SupplierManagement } from "@/components/pos/SupplierManagement";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 
 const Purchase = () => {
   const navigate = useNavigate();
+
+  const { data: purchases, isLoading } = useQuery({
+    queryKey: ['purchases'],
+    queryFn: async () => {
+      console.log('Fetching purchases data...');
+      const { data, error } = await supabase
+        .from('pembelian')
+        .select(`
+          *,
+          produk:produk_id(product_name),
+          cabang:cabang_id(branch_name)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching purchases:', error);
+        throw error;
+      }
+
+      console.log('Purchases data:', data);
+      return data;
+    },
+  });
 
   return (
     <div className="space-y-4">
@@ -24,8 +58,60 @@ const Purchase = () => {
         </div>
       </div>
       
-      <div className="bg-white rounded-lg shadow p-4">
-        <p>Halaman Transaksi Pembelian sedang dalam pengembangan</p>
+      <div className="bg-white rounded-lg shadow">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Tanggal</TableHead>
+              <TableHead>Cabang</TableHead>
+              <TableHead>Produk</TableHead>
+              <TableHead>Jumlah</TableHead>
+              <TableHead>Total Harga</TableHead>
+              <TableHead>Status Pembayaran</TableHead>
+              <TableHead>Jadwal Lunas</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-4">
+                  Memuat data...
+                </TableCell>
+              </TableRow>
+            ) : purchases && purchases.length > 0 ? (
+              purchases.map((purchase) => (
+                <TableRow key={purchase.pembelian_id}>
+                  <TableCell>
+                    {format(new Date(purchase.transaction_date), 'dd/MM/yyyy')}
+                  </TableCell>
+                  <TableCell>{purchase.cabang?.branch_name}</TableCell>
+                  <TableCell>{purchase.produk?.product_name}</TableCell>
+                  <TableCell>{purchase.quantity}</TableCell>
+                  <TableCell>
+                    {new Intl.NumberFormat('id-ID', {
+                      style: 'currency',
+                      currency: 'IDR'
+                    }).format(purchase.total_price)}
+                  </TableCell>
+                  <TableCell>
+                    {purchase.payment_status === 1 ? 'Lunas' : 'Belum Lunas'}
+                  </TableCell>
+                  <TableCell>
+                    {purchase.jadwal_lunas 
+                      ? format(new Date(purchase.jadwal_lunas), 'dd/MM/yyyy')
+                      : '-'}
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-4">
+                  Tidak ada data transaksi pembelian
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );
