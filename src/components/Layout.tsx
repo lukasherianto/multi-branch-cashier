@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Building, Home, ShoppingCart, History, Settings, Package, FileText, Clock, DollarSign, Store, Users } from "lucide-react";
+import { Building, Home, ShoppingCart, History, Settings, Package, FileText, Clock, DollarSign, Store } from "lucide-react";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -18,14 +18,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { icon: Building, label: "Cabang", path: "/branches" },
     { icon: Package, label: "Produk", path: "/products" },
     { icon: ShoppingCart, label: "Kasir", path: "/pos" },
-    { 
-      icon: Store, 
-      label: "Supplier", 
-      path: "/supplier",
-      children: [
-        { icon: Users, label: "Pembelian", path: "/purchase" }
-      ]
-    },
+    { icon: Store, label: "Supplier", path: "/supplier" },
     { icon: Clock, label: "Absensi", path: "/attendance" },
     { icon: History, label: "Riwayat", path: "/history" },
     { icon: FileText, label: "Laporan", path: "/reports" },
@@ -33,24 +26,22 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { icon: Settings, label: "Pengaturan", path: "/settings" },
   ];
 
-  const renderNavItem = (item: any, isChild = false) => {
+  const renderNavItem = (item: any) => {
     const isItemActive = isActive(item.path);
-    const isParentActive = item.children?.some((child: any) => isActive(child.path));
     
     return (
       <div key={item.path}>
         <Link
           to={item.path}
           className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 ${
-            (isItemActive || isParentActive)
+            isItemActive
               ? "bg-mint-50 text-mint-600"
               : "text-gray-600 hover:bg-gray-50"
-          } ${isChild ? "ml-6" : ""}`}
+          }`}
         >
           <item.icon className="w-5 h-5" />
           <span>{item.label}</span>
         </Link>
-        {item.children?.map((child: any) => renderNavItem(child, true))}
       </div>
     );
   };
