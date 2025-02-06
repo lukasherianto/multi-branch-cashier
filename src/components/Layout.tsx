@@ -18,14 +18,42 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { icon: Building, label: "Cabang", path: "/branches" },
     { icon: Package, label: "Produk", path: "/products" },
     { icon: ShoppingCart, label: "Kasir", path: "/pos" },
-    { icon: Store, label: "Supplier", path: "/supplier" },
-    { icon: Users, label: "Pembelian", path: "/purchase" },
+    { 
+      icon: Store, 
+      label: "Supplier", 
+      path: "/supplier",
+      children: [
+        { icon: Users, label: "Pembelian", path: "/purchase" }
+      ]
+    },
     { icon: Clock, label: "Absensi", path: "/attendance" },
     { icon: History, label: "Riwayat", path: "/history" },
     { icon: FileText, label: "Laporan", path: "/reports" },
     { icon: DollarSign, label: "Kas", path: "/kas" },
     { icon: Settings, label: "Pengaturan", path: "/settings" },
   ];
+
+  const renderNavItem = (item: any, isChild = false) => {
+    const isItemActive = isActive(item.path);
+    const isParentActive = item.children?.some((child: any) => isActive(child.path));
+    
+    return (
+      <div key={item.path}>
+        <Link
+          to={item.path}
+          className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 ${
+            (isItemActive || isParentActive)
+              ? "bg-mint-50 text-mint-600"
+              : "text-gray-600 hover:bg-gray-50"
+          } ${isChild ? "ml-6" : ""}`}
+        >
+          <item.icon className="w-5 h-5" />
+          <span>{item.label}</span>
+        </Link>
+        {item.children?.map((child: any) => renderNavItem(child, true))}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -36,46 +64,27 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <h1 className="text-2xl font-semibold text-mint-600">KasirBengkulu</h1>
           </div>
           <div className="space-y-2">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 ${
-                    isActive(item.path)
-                      ? "bg-mint-50 text-mint-600"
-                      : "text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
+            {navItems.map(item => renderNavItem(item))}
           </div>
         </nav>
 
         {/* Mobile Bottom Navigation */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden">
           <div className="flex justify-around">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`flex flex-col items-center py-3 ${
-                    isActive(item.path)
-                      ? "text-mint-600"
-                      : "text-gray-600"
-                  }`}
-                >
-                  <Icon className="w-6 h-6" />
-                  <span className="text-xs mt-1">{item.label}</span>
-                </Link>
-              );
-            })}
+            {navItems.map(item => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex flex-col items-center py-3 ${
+                  isActive(item.path)
+                    ? "text-mint-600"
+                    : "text-gray-600"
+                }`}
+              >
+                <item.icon className="w-6 h-6" />
+                <span className="text-xs mt-1">{item.label}</span>
+              </Link>
+            ))}
           </div>
         </div>
 
