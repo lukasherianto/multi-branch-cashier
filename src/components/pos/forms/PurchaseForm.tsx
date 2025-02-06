@@ -112,7 +112,7 @@ export function PurchaseForm() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Cabang</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} defaultValue={field.value?.toString()}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih cabang" />
@@ -120,7 +120,7 @@ export function PurchaseForm() {
                   </FormControl>
                   <SelectContent>
                     {branches?.map((branch) => (
-                      <SelectItem key={branch.cabang_id} value={String(branch.cabang_id)}>
+                      <SelectItem key={branch.cabang_id} value={branch.cabang_id.toString()}>
                         {branch.branch_name}
                       </SelectItem>
                     ))}
@@ -137,7 +137,7 @@ export function PurchaseForm() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Produk</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} defaultValue={field.value?.toString()}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih produk" />
@@ -145,7 +145,7 @@ export function PurchaseForm() {
                   </FormControl>
                   <SelectContent>
                     {products?.map((product) => (
-                      <SelectItem key={product.produk_id} value={String(product.produk_id)}>
+                      <SelectItem key={product.produk_id} value={product.produk_id.toString()}>
                         {product.product_name}
                       </SelectItem>
                     ))}
@@ -232,7 +232,10 @@ export function PurchaseForm() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Status Pembayaran</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={String(field.value)}>
+                <Select 
+                  onValueChange={(value) => field.onChange(parseInt(value, 10))} 
+                  defaultValue={field.value.toString()}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih status pembayaran" />
@@ -248,7 +251,7 @@ export function PurchaseForm() {
             )}
           />
 
-          {form.watch("payment_status") === "0" && (
+          {form.watch("payment_status") === 0 && (
             <FormField
               control={form.control}
               name="jadwal_lunas"
