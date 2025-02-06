@@ -2,29 +2,27 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface SupplierFormProps {
-  categories: Array<{ kategori_id: number; kategori_name: string }>;
   onSubmit: (formData: {
     namaUsaha: string;
-    selectedKategori: string;
     alamat: string;
+    whatsapp: string;
   }) => void;
   isSubmitting: boolean;
 }
 
-export const SupplierForm = ({ categories, onSubmit, isSubmitting }: SupplierFormProps) => {
+export const SupplierForm = ({ onSubmit, isSubmitting }: SupplierFormProps) => {
   const [namaUsaha, setNamaUsaha] = useState("");
-  const [selectedKategori, setSelectedKategori] = useState("");
   const [alamat, setAlamat] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({
       namaUsaha,
-      selectedKategori,
       alamat,
+      whatsapp,
     });
   };
 
@@ -42,19 +40,14 @@ export const SupplierForm = ({ categories, onSubmit, isSubmitting }: SupplierFor
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="kategori">Kategori</Label>
-        <Select value={selectedKategori} onValueChange={setSelectedKategori} required>
-          <SelectTrigger>
-            <SelectValue placeholder="Pilih kategori" />
-          </SelectTrigger>
-          <SelectContent>
-            {categories.map((category) => (
-              <SelectItem key={category.kategori_id} value={category.kategori_id.toString()}>
-                {category.kategori_name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Label htmlFor="whatsapp">Nomor WhatsApp</Label>
+        <Input
+          id="whatsapp"
+          value={whatsapp}
+          onChange={(e) => setWhatsapp(e.target.value)}
+          placeholder="Masukkan nomor WhatsApp"
+          type="tel"
+        />
       </div>
 
       <div className="space-y-2">

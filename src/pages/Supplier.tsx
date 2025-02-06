@@ -26,9 +26,7 @@ const Supplier = () => {
             supplier_id,
             nama_usaha,
             alamat,
-            kategori_produk (
-              kategori_name
-            )
+            whatsapp
           `)
           .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id);
 
@@ -58,7 +56,7 @@ const Supplier = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Nama Usaha</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Kategori</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">WhatsApp</th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Alamat</th>
               </tr>
             </thead>
@@ -66,7 +64,7 @@ const Supplier = () => {
               {suppliers.map((supplier) => (
                 <tr key={supplier.supplier_id}>
                   <td className="px-4 py-2 text-sm">{supplier.nama_usaha}</td>
-                  <td className="px-4 py-2 text-sm">{supplier.kategori_produk?.kategori_name}</td>
+                  <td className="px-4 py-2 text-sm">{supplier.whatsapp || '-'}</td>
                   <td className="px-4 py-2 text-sm">{supplier.alamat || '-'}</td>
                 </tr>
               ))}

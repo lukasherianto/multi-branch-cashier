@@ -505,38 +505,31 @@ export type Database = {
         Row: {
           alamat: string | null
           created_at: string
-          kategori_id: number
           nama_usaha: string
           pelaku_usaha_id: number
           supplier_id: number
           updated_at: string
+          whatsapp: string | null
         }
         Insert: {
           alamat?: string | null
           created_at?: string
-          kategori_id: number
           nama_usaha: string
           pelaku_usaha_id: number
           supplier_id?: never
           updated_at?: string
+          whatsapp?: string | null
         }
         Update: {
           alamat?: string | null
           created_at?: string
-          kategori_id?: number
           nama_usaha?: string
           pelaku_usaha_id?: number
           supplier_id?: never
           updated_at?: string
+          whatsapp?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "supplier_kategori_id_fkey"
-            columns: ["kategori_id"]
-            isOneToOne: false
-            referencedRelation: "kategori_produk"
-            referencedColumns: ["kategori_id"]
-          },
           {
             foreignKeyName: "supplier_pelaku_usaha_id_fkey"
             columns: ["pelaku_usaha_id"]
