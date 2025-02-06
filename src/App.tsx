@@ -13,7 +13,11 @@ import { PurchaseForm } from "@/components/pos/forms/PurchaseForm";
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Layout />,
+    element: (
+      <Layout>
+        <Outlet />
+      </Layout>
+    ),
     children: [
       {
         path: "/",
