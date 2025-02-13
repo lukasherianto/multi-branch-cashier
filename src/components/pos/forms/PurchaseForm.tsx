@@ -114,6 +114,19 @@ export function PurchaseForm() {
 
       console.log('Submitting purchase with values:', formattedValues);
 
+      // First, get the pelaku_usaha_id
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data: pelakuUsaha } = await supabase
+        .from('pelaku_usaha')
+        .select('pelaku_usaha_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!pelakuUsaha) throw new Error('Business data not found');
+
+      // Now insert the purchase with the pelaku_usaha_id
       const { error } = await supabase
         .from('pembelian')
         .insert({
@@ -130,7 +143,7 @@ export function PurchaseForm() {
         console.error('Error submitting purchase:', error);
         toast({
           title: "Error",
-          description: "Gagal menyimpan data pembelian",
+          description: "Gagal menyimpan data pembelian: " + error.message,
           variant: "destructive",
         });
         return;
@@ -142,11 +155,11 @@ export function PurchaseForm() {
       });
 
       navigate('/purchase');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting purchase:', error);
       toast({
         title: "Error",
-        description: "Terjadi kesalahan saat menyimpan data",
+        description: error.message || "Terjadi kesalahan saat menyimpan data",
         variant: "destructive",
       });
     }
