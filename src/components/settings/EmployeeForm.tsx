@@ -1,3 +1,4 @@
+
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,9 +30,20 @@ export function EmployeeForm() {
       setIsLoading(true);
       console.log("Submitting employee data:", data);
       
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "Anda harus login terlebih dahulu",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { data: pelakuUsaha } = await supabase
         .from("pelaku_usaha")
         .select("pelaku_usaha_id")
+        .eq("user_id", user.id)
         .single();
 
       if (!pelakuUsaha) {
@@ -43,27 +55,19 @@ export function EmployeeForm() {
         return;
       }
 
-      // Create auth user for employee
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password || '',
-        options: {
-          data: {
-            name: data.name,
-            role: 'employee'
-          }
-        }
-      });
-
-      if (authError) throw authError;
-
-      // Create employee record
-      const { error: employeeError } = await supabase.from("karyawan").insert({
-        ...data,
-        auth_id: authData.user?.id,
-        cabang_id: data.cabang_id ? parseInt(data.cabang_id) : null,
-        pelaku_usaha_id: pelakuUsaha.pelaku_usaha_id,
-      });
+      // Insert employee data first
+      const { data: employeeData, error: employeeError } = await supabase
+        .from("karyawan")
+        .insert({
+          name: data.name,
+          email: data.email,
+          whatsapp_contact: data.whatsapp_contact,
+          role: data.role,
+          cabang_id: data.cabang_id ? parseInt(data.cabang_id) : null,
+          pelaku_usaha_id: pelakuUsaha.pelaku_usaha_id,
+        })
+        .select()
+        .single();
 
       if (employeeError) throw employeeError;
 
