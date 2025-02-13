@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,23 +37,27 @@ const SalesReport = () => {
     },
   });
 
-  // Calculate total transactions and revenue
+  // Calculate total transactions and revenue from valid data only
   const totalTransactions = salesData?.length || 0;
   const totalRevenue = salesData?.reduce((sum, sale) => sum + Number(sale.total_price), 0) || 0;
 
-  // Calculate product sales
+  // Calculate product sales from valid data only
   const productSales = salesData?.reduce((acc, sale) => {
-    const productName = sale.produk.product_name;
-    acc[productName] = (acc[productName] || 0) + sale.quantity;
+    if (sale.produk && sale.produk.product_name) {
+      const productName = sale.produk.product_name;
+      acc[productName] = (acc[productName] || 0) + sale.quantity;
+    }
     return acc;
-  }, {} as Record<string, number>);
+  }, {} as Record<string, number>) || {};
 
-  // Calculate category sales
+  // Calculate category sales from valid data only
   const categorySales = salesData?.reduce((acc, sale) => {
-    const category = sale.produk.kategori_produk.kategori_name;
-    acc[category] = (acc[category] || 0) + Number(sale.total_price);
+    if (sale.produk?.kategori_produk?.kategori_name) {
+      const category = sale.produk.kategori_produk.kategori_name;
+      acc[category] = (acc[category] || 0) + Number(sale.total_price);
+    }
     return acc;
-  }, {} as Record<string, number>);
+  }, {} as Record<string, number>) || {};
 
   return (
     <div className="space-y-6">
@@ -80,7 +85,7 @@ const SalesReport = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {Object.entries(productSales || {})
+            {Object.entries(productSales)
               .sort(([, a], [, b]) => b - a)
               .slice(0, 5)
               .map(([product, quantity]) => (
@@ -103,7 +108,7 @@ const SalesReport = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {Object.entries(categorySales || {})
+            {Object.entries(categorySales)
               .sort(([, a], [, b]) => b - a)
               .map(([category, total]) => (
                 <TableRow key={category}>
