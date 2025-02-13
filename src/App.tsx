@@ -1,6 +1,7 @@
-import { RouterProvider, createBrowserRouter, Outlet } from "react-router-dom";
+
+import { RouterProvider, createBrowserRouter, Outlet, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
-import { AuthProvider } from "@/hooks/useAuth";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import Layout from "@/components/Layout";
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
@@ -16,18 +17,35 @@ import Supplier from "@/pages/Supplier";
 import Branches from "@/pages/Branches";
 import Attendance from "@/pages/Attendance";
 
+// Protected Route wrapper component
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user } = useAuth();
+  
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
 const router = createBrowserRouter([
   {
+    path: "/auth",
+    element: <Auth />,
+  },
+  {
     path: "/",
-    element: <Layout><Outlet /></Layout>,
+    element: (
+      <ProtectedRoute>
+        <Layout>
+          <Outlet />
+        </Layout>
+      </ProtectedRoute>
+    ),
     children: [
       {
         path: "/",
         element: <Index />,
-      },
-      {
-        path: "/auth",
-        element: <Auth />,
       },
       {
         path: "/pos",
