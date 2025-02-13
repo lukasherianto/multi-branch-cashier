@@ -25,10 +25,31 @@ const Auth = () => {
     }
   }, [user, navigate]);
 
+  // Basic email validation
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
+
+    // Validate email first
+    if (!isValidEmail(email)) {
+      setError("Format email tidak valid. Mohon periksa kembali.");
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate password
+    if (password.length < 6) {
+      setError("Kata sandi harus minimal 6 karakter.");
+      setIsLoading(false);
+      return;
+    }
+
     console.log(`Mencoba ${isSignUp ? 'mendaftar' : 'masuk'} dengan:`, email);
 
     try {
@@ -46,6 +67,8 @@ const Auth = () => {
           if (error.message.includes("already registered")) {
             setError("Email sudah terdaftar. Silakan masuk dengan email tersebut.");
             setIsSignUp(false);
+          } else if (error.message.includes("invalid")) {
+            setError("Format email tidak valid atau domain email tidak diizinkan.");
           } else {
             setError(error.message);
           }
