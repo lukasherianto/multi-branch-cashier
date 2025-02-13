@@ -1,4 +1,5 @@
 
+import React, { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -45,10 +46,12 @@ const formSchema = z.object({
   jadwal_lunas: z.date().optional(),
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 export function PurchaseForm() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       transaction_date: new Date(),
@@ -64,7 +67,7 @@ export function PurchaseForm() {
   const unitPrice = form.watch("unit_price");
 
   // Update total price when quantity or unit price changes
-  React.useEffect(() => {
+  useEffect(() => {
     const total = parseFloat(quantity || "0") * parseFloat(unitPrice || "0");
     form.setValue("total_price", total.toString());
   }, [quantity, unitPrice, form]);
