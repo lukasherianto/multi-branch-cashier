@@ -16,6 +16,7 @@ import Kas from "@/pages/Kas";
 import Supplier from "@/pages/Supplier";
 import Branches from "@/pages/Branches";
 import Attendance from "@/pages/Attendance";
+import { PurchaseForm } from "@/components/pos/forms/PurchaseForm";
 
 // Protected Route wrapper component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -58,6 +59,10 @@ const router = createBrowserRouter([
       {
         path: "/purchase",
         element: <Purchase />,
+      },
+      {
+        path: "/purchase/add",
+        element: <PurchaseForm />,
       },
       {
         path: "/history",
