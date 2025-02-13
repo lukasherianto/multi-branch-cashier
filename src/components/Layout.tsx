@@ -1,6 +1,10 @@
+
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Building, Home, ShoppingCart, History, Settings, Package, FileText, Clock, DollarSign, Store, Users } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Building, Home, ShoppingCart, History, Settings, Package, FileText, Clock, DollarSign, Store, Users, LogOut } from "lucide-react";
+import { Button } from "./ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -8,9 +12,31 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   
   const isActive = (path: string) => {
     return location.pathname === path;
+  };
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      toast({
+        title: "Berhasil keluar",
+        description: "Anda telah keluar dari akun",
+      });
+      navigate("/auth");
+    } catch (error: any) {
+      console.error("Error logging out:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Gagal keluar dari akun",
+      });
+    }
   };
 
   const navItems = [
@@ -81,9 +107,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="mb-8">
             <h1 className="text-2xl font-semibold text-mint-600">KasirBengkulu</h1>
           </div>
-          <div className="space-y-2">
+          
+          {/* Navigation Items */}
+          <div className="flex-1 space-y-2">
             {navItems.map(item => renderNavItem(item))}
           </div>
+          
+          {/* Logout Button */}
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 mt-4"
+            onClick={handleLogout}
+          >
+            <LogOut className="w-5 h-5 mr-2" />
+            Keluar
+          </Button>
         </nav>
 
         {/* Mobile Bottom Navigation */}
@@ -103,6 +141,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <span className="text-xs mt-1">{item.label}</span>
               </Link>
             ))}
+            <button
+              onClick={handleLogout}
+              className="flex flex-col items-center py-3 text-red-600"
+            >
+              <LogOut className="w-6 h-6" />
+              <span className="text-xs mt-1">Keluar</span>
+            </button>
           </div>
         </div>
 
