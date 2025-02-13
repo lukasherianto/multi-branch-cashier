@@ -1,3 +1,4 @@
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -31,6 +32,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   cabang_id: z.string().transform((val) => parseInt(val, 10)),
@@ -44,6 +46,7 @@ const formSchema = z.object({
 
 export function PurchaseForm() {
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -56,9 +59,22 @@ export function PurchaseForm() {
   const { data: branches } = useQuery({
     queryKey: ['branches'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data: pelakuUsaha } = await supabase
+        .from('pelaku_usaha')
+        .select('pelaku_usaha_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!pelakuUsaha) throw new Error('Business data not found');
+
       const { data, error } = await supabase
         .from('cabang')
-        .select('*');
+        .select('*')
+        .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id);
+
       if (error) throw error;
       return data;
     },
@@ -67,9 +83,22 @@ export function PurchaseForm() {
   const { data: products } = useQuery({
     queryKey: ['products'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data: pelakuUsaha } = await supabase
+        .from('pelaku_usaha')
+        .select('pelaku_usaha_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!pelakuUsaha) throw new Error('Business data not found');
+
       const { data, error } = await supabase
         .from('produk')
-        .select('*');
+        .select('*')
+        .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id);
+
       if (error) throw error;
       return data;
     },
@@ -99,12 +128,27 @@ export function PurchaseForm() {
 
       if (error) {
         console.error('Error submitting purchase:', error);
-        throw error;
+        toast({
+          title: "Error",
+          description: "Gagal menyimpan data pembelian",
+          variant: "destructive",
+        });
+        return;
       }
+
+      toast({
+        title: "Sukses",
+        description: "Data pembelian berhasil disimpan",
+      });
 
       navigate('/purchase');
     } catch (error) {
       console.error('Error submitting purchase:', error);
+      toast({
+        title: "Error",
+        description: "Terjadi kesalahan saat menyimpan data",
+        variant: "destructive",
+      });
     }
   }
 
