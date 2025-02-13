@@ -55,7 +55,25 @@ export function EmployeeForm() {
         return;
       }
 
-      // Insert employee data first
+      // Verify if the selected branch exists (if one was selected)
+      if (data.cabang_id && data.cabang_id !== "0") {
+        const { data: branchData, error: branchError } = await supabase
+          .from("cabang")
+          .select("cabang_id")
+          .eq("cabang_id", parseInt(data.cabang_id))
+          .single();
+
+        if (branchError || !branchData) {
+          toast({
+            title: "Error",
+            description: "Cabang yang dipilih tidak valid",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      // Insert employee data
       const { data: employeeData, error: employeeError } = await supabase
         .from("karyawan")
         .insert({
@@ -63,13 +81,16 @@ export function EmployeeForm() {
           email: data.email,
           whatsapp_contact: data.whatsapp_contact,
           role: data.role,
-          cabang_id: data.cabang_id ? parseInt(data.cabang_id) : null,
+          cabang_id: data.cabang_id === "0" ? null : parseInt(data.cabang_id),
           pelaku_usaha_id: pelakuUsaha.pelaku_usaha_id,
         })
         .select()
         .single();
 
-      if (employeeError) throw employeeError;
+      if (employeeError) {
+        console.error("Employee insert error:", employeeError);
+        throw employeeError;
+      }
 
       toast({
         title: "Sukses",
