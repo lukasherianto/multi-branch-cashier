@@ -38,9 +38,9 @@ import { useToast } from "@/hooks/use-toast";
 const formSchema = z.object({
   cabang_id: z.string().transform((val) => parseInt(val, 10)),
   produk_id: z.string().transform((val) => parseInt(val, 10)),
-  quantity: z.string().transform((val) => parseInt(val, 10)),
-  unit_price: z.string().transform((val) => parseFloat(val)),
-  total_price: z.string().transform((val) => parseFloat(val)),
+  quantity: z.number(),
+  unit_price: z.number(),
+  total_price: z.number(),
   transaction_date: z.date(),
   payment_status: z.number(),
   jadwal_lunas: z.date().optional(),
@@ -56,9 +56,9 @@ export function PurchaseForm() {
     defaultValues: {
       transaction_date: new Date(),
       payment_status: 0,
-      total_price: "0",
-      unit_price: "0",
-      quantity: "0",
+      total_price: 0,
+      unit_price: 0,
+      quantity: 0,
     },
   });
 
@@ -68,8 +68,8 @@ export function PurchaseForm() {
 
   // Update total price when quantity or unit price changes
   useEffect(() => {
-    const total = parseFloat(quantity || "0") * parseFloat(unitPrice || "0");
-    form.setValue("total_price", total.toString());
+    const total = Number(quantity || 0) * Number(unitPrice || 0);
+    form.setValue("total_price", total);
   }, [quantity, unitPrice, form]);
 
   const { data: branches } = useQuery({
@@ -120,7 +120,7 @@ export function PurchaseForm() {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: FormValues) {
     try {
       const formattedValues = {
         ...values,
@@ -130,7 +130,6 @@ export function PurchaseForm() {
 
       console.log('Submitting purchase with values:', formattedValues);
 
-      // First, get the pelaku_usaha_id
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
@@ -142,7 +141,6 @@ export function PurchaseForm() {
 
       if (!pelakuUsaha) throw new Error('Business data not found');
 
-      // Now insert the purchase with the pelaku_usaha_id
       const { error } = await supabase
         .from('pembelian')
         .insert({
@@ -250,7 +248,12 @@ export function PurchaseForm() {
               <FormItem>
                 <FormLabel>Jumlah</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="Masukkan jumlah" {...field} />
+                  <Input 
+                    type="number" 
+                    placeholder="Masukkan jumlah" 
+                    {...field}
+                    onChange={e => field.onChange(Number(e.target.value))}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -264,7 +267,12 @@ export function PurchaseForm() {
               <FormItem>
                 <FormLabel>Harga Satuan</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="Masukkan harga satuan" {...field} />
+                  <Input 
+                    type="number" 
+                    placeholder="Masukkan harga satuan" 
+                    {...field}
+                    onChange={e => field.onChange(Number(e.target.value))}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
