@@ -38,6 +38,7 @@ const formSchema = z.object({
   cabang_id: z.string().transform((val) => parseInt(val, 10)),
   produk_id: z.string().transform((val) => parseInt(val, 10)),
   quantity: z.string().transform((val) => parseInt(val, 10)),
+  unit_price: z.string().transform((val) => parseFloat(val)),
   total_price: z.string().transform((val) => parseFloat(val)),
   transaction_date: z.date(),
   payment_status: z.number(),
@@ -47,14 +48,26 @@ const formSchema = z.object({
 export function PurchaseForm() {
   const navigate = useNavigate();
   const { toast } = useToast();
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       transaction_date: new Date(),
       payment_status: 0,
+      total_price: "0",
+      unit_price: "0",
+      quantity: "0",
     },
   });
+
+  // Watch quantity and unit price for auto calculation
+  const quantity = form.watch("quantity");
+  const unitPrice = form.watch("unit_price");
+
+  // Update total price when quantity or unit price changes
+  React.useEffect(() => {
+    const total = parseFloat(quantity || "0") * parseFloat(unitPrice || "0");
+    form.setValue("total_price", total.toString());
+  }, [quantity, unitPrice, form]);
 
   const { data: branches } = useQuery({
     queryKey: ['branches'],
@@ -133,6 +146,7 @@ export function PurchaseForm() {
           cabang_id: formattedValues.cabang_id,
           produk_id: formattedValues.produk_id,
           quantity: formattedValues.quantity,
+          unit_price: formattedValues.unit_price,
           total_price: formattedValues.total_price,
           transaction_date: formattedValues.transaction_date,
           payment_status: formattedValues.payment_status,
@@ -242,12 +256,31 @@ export function PurchaseForm() {
 
           <FormField
             control={form.control}
+            name="unit_price"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Harga Satuan</FormLabel>
+                <FormControl>
+                  <Input type="number" placeholder="Masukkan harga satuan" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
             name="total_price"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Total Harga</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="Masukkan total harga" {...field} />
+                  <Input 
+                    type="number" 
+                    placeholder="Total harga" 
+                    {...field}
+                    disabled
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

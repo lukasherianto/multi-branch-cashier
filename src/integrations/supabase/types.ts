@@ -345,6 +345,7 @@ export type Database = {
           tanggal_dilunaskan: string | null
           total_price: number
           transaction_date: string
+          unit_price: number
           updated_at: string
         }
         Insert: {
@@ -358,6 +359,7 @@ export type Database = {
           tanggal_dilunaskan?: string | null
           total_price: number
           transaction_date?: string
+          unit_price?: number
           updated_at?: string
         }
         Update: {
@@ -371,6 +373,7 @@ export type Database = {
           tanggal_dilunaskan?: string | null
           total_price?: number
           transaction_date?: string
+          unit_price?: number
           updated_at?: string
         }
         Relationships: [

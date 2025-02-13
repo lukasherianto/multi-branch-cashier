@@ -74,6 +74,7 @@ const Purchase = () => {
               <TableHead>Cabang</TableHead>
               <TableHead>Produk</TableHead>
               <TableHead>Jumlah</TableHead>
+              <TableHead>Harga Satuan</TableHead>
               <TableHead>Total Harga</TableHead>
               <TableHead>Status Pembayaran</TableHead>
               <TableHead>Jadwal Lunas</TableHead>
@@ -82,7 +83,7 @@ const Purchase = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-4">
+                <TableCell colSpan={8} className="text-center py-4">
                   Memuat data...
                 </TableCell>
               </TableRow>
@@ -95,6 +96,12 @@ const Purchase = () => {
                   <TableCell>{purchase.cabang?.branch_name}</TableCell>
                   <TableCell>{purchase.produk?.product_name}</TableCell>
                   <TableCell>{purchase.quantity}</TableCell>
+                  <TableCell>
+                    {new Intl.NumberFormat('id-ID', {
+                      style: 'currency',
+                      currency: 'IDR'
+                    }).format(purchase.unit_price)}
+                  </TableCell>
                   <TableCell>
                     {new Intl.NumberFormat('id-ID', {
                       style: 'currency',
@@ -113,7 +120,7 @@ const Purchase = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-4">
+                <TableCell colSpan={8} className="text-center py-4">
                   Tidak ada data transaksi pembelian
                 </TableCell>
               </TableRow>
