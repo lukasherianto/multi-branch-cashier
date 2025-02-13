@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -27,7 +28,7 @@ const Reports = () => {
 
       <Tabs defaultValue="sales" className="space-y-6">
         <Card className="p-4">
-          <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2">
+          <TabsList className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
             <TabsTrigger value="sales" className="w-full">
               <div className="flex items-center space-x-2">
                 <ChartBar className="w-4 h-4" />
@@ -52,26 +53,29 @@ const Reports = () => {
                 <span>Keuangan</span>
               </div>
             </TabsTrigger>
-            <TabsTrigger value="employees" className="w-full">
-              <div className="flex items-center space-x-2">
-                <User className="w-4 h-4" />
-                <span>Karyawan</span>
-              </div>
-            </TabsTrigger>
-            <TabsTrigger value="discounts" className="w-full">
-              <div className="flex items-center space-x-2">
-                <Percent className="w-4 h-4" />
-                <span>Diskon</span>
-              </div>
-            </TabsTrigger>
-            <TabsTrigger value="returns" className="w-full">
-              <div className="flex items-center space-x-2">
-                <RotateCcw className="w-4 h-4" />
-                <span>Retur</span>
-              </div>
-            </TabsTrigger>
           </TabsList>
         </Card>
+
+        <TabsList className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <TabsTrigger value="employees" className="w-full">
+            <div className="flex items-center space-x-2">
+              <User className="w-4 h-4" />
+              <span>Karyawan</span>
+            </div>
+          </TabsTrigger>
+          <TabsTrigger value="discounts" className="w-full">
+            <div className="flex items-center space-x-2">
+              <Percent className="w-4 h-4" />
+              <span>Diskon</span>
+            </div>
+          </TabsTrigger>
+          <TabsTrigger value="returns" className="w-full">
+            <div className="flex items-center space-x-2">
+              <RotateCcw className="w-4 h-4" />
+              <span>Retur</span>
+            </div>
+          </TabsTrigger>
+        </TabsList>
 
         <div className="mt-6">
           <TabsContent value="sales">
