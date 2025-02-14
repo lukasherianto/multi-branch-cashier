@@ -11,7 +11,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { useCart } from "@/hooks/useCart";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client"; // Menambahkan import supabase
+import { supabase } from "@/integrations/supabase/client";
 
 const POS = () => {
   const navigate = useNavigate();
@@ -44,20 +44,29 @@ const POS = () => {
       // Calculate total after points
       const finalTotal = totalBeforePoints - (pointsToUse * 1000);
 
-      // Create transaction
-      const { data: transaction, error: transactionError } = await supabase
-        .from('transaksi')
-        .insert({
-          cabang_id: selectedCabangId,
-          total_price: finalTotal,
-          points_used: pointsToUse,
-          pelanggan_id: memberId,
-          transaction_date: new Date().toISOString()
-        })
-        .select()
-        .single();
+      // Create transactions for each item
+      const transactionPromises = cartItems.map(item => 
+        supabase
+          .from('transaksi')
+          .insert({
+            cabang_id: selectedCabangId,
+            produk_id: item.id,
+            quantity: item.quantity,
+            total_price: item.price * item.quantity,
+            points_used: pointsToUse > 0 ? Math.floor((item.price * item.quantity / totalBeforePoints) * pointsToUse) : 0,
+            pelanggan_id: memberId,
+            transaction_date: new Date().toISOString()
+          })
+          .select()
+      );
 
-      if (transactionError) throw transactionError;
+      const results = await Promise.all(transactionPromises);
+      const errors = results.filter(result => result.error);
+
+      if (errors.length > 0) {
+        console.error('Errors processing transactions:', errors);
+        throw new Error('Failed to process some transactions');
+      }
 
       // Navigate to print preview
       navigate('/print-preview', {
@@ -77,7 +86,7 @@ const POS = () => {
     }
   };
 
-  const handleCustomerFound = (customer: any) => { // Menghapus async karena tidak diperlukan
+  const handleCustomerFound = (customer: any) => {
     setIsRegisteredCustomer(true);
     setMemberId(customer.member_id);
     setMemberPoints(customer.loyalty_points || 0);
