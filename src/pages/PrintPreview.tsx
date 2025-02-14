@@ -1,3 +1,4 @@
+
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -15,25 +16,34 @@ interface TransactionItem {
 const PrintPreview = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { items, total, businessName, branchName } = location.state || {};
+  const { items, total, pointsUsed, pointsEarned, businessName, branchName } = location.state || {};
   
   const handlePrint = () => {
     window.print();
   };
 
   const handleWhatsApp = () => {
-    // Format items for WhatsApp message
     const itemsList = items.map((item: TransactionItem) => 
       `${item.name} x${item.quantity} = Rp ${(item.price * item.quantity).toLocaleString('id-ID')}`
     ).join('\n');
 
-    const message = `*Struk Pembayaran*\n\n` +
+    let message = `*Struk Pembayaran*\n\n` +
       `*${businessName}*\n` +
       `${branchName}\n\n` +
       `Tanggal: ${formatInTimeZone(new Date(), 'Asia/Jakarta', 'dd MMMM yyyy HH:mm', { locale: id })}\n\n` +
-      `${itemsList}\n\n` +
-      `*Total: Rp ${total.toLocaleString('id-ID')}*\n\n` +
-      `Terima kasih atas kunjungan Anda!`;
+      `${itemsList}\n\n`;
+
+    if (pointsUsed > 0) {
+      message += `Poin Digunakan: ${pointsUsed} (Rp ${(pointsUsed * 1000).toLocaleString('id-ID')})\n`;
+    }
+
+    message += `*Total: Rp ${total.toLocaleString('id-ID')}*\n\n`;
+
+    if (pointsEarned > 0) {
+      message += `Poin Diperoleh: ${pointsEarned}\n\n`;
+    }
+
+    message += `Terima kasih atas kunjungan Anda!`;
 
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
@@ -47,7 +57,6 @@ const PrintPreview = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <Card className="max-w-2xl mx-auto p-6 space-y-6">
-        {/* Print Preview Content */}
         <div className="space-y-4 print:space-y-2">
           <div className="text-center">
             <h1 className="text-2xl font-bold">{businessName}</h1>
@@ -69,17 +78,29 @@ const PrintPreview = () => {
             ))}
           </div>
 
+          {pointsUsed > 0 && (
+            <div className="flex justify-between text-sm text-red-500">
+              <span>Poin Digunakan</span>
+              <span>- Rp {(pointsUsed * 1000).toLocaleString('id-ID')}</span>
+            </div>
+          )}
+
           <div className="flex justify-between font-bold">
             <span>Total</span>
             <span>Rp {total.toLocaleString('id-ID')}</span>
           </div>
+
+          {pointsEarned > 0 && (
+            <div className="text-sm text-mint-600 text-center">
+              Selamat! Anda mendapatkan {pointsEarned} poin dari transaksi ini
+            </div>
+          )}
 
           <p className="text-center text-sm text-gray-500 pt-4">
             Terima kasih atas kunjungan Anda!
           </p>
         </div>
 
-        {/* Action Buttons - Hidden when printing */}
         <div className="flex gap-4 justify-center print:hidden">
           <Button onClick={handlePrint} className="w-40">
             <Printer className="mr-2 h-4 w-4" />

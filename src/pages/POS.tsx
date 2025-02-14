@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -9,9 +10,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProducts } from "@/hooks/useProducts";
 import { useCart } from "@/hooks/useCart";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 
 const POS = () => {
-  const { toast } = useToast();
   const navigate = useNavigate();
   const { pelakuUsaha, cabang, cabangList, selectedCabangId, setSelectedCabangId } = useAuth();
   const { filteredProducts, handleSearch } = useProducts();
@@ -21,34 +22,64 @@ const POS = () => {
   const [customerName, setCustomerName] = useState("");
   const [birthDate, setBirthDate] = useState<Date | null>(null);
   const [isRegisteredCustomer, setIsRegisteredCustomer] = useState(false);
+  const [memberId, setMemberId] = useState<number | null>(null);
+  const [memberPoints, setMemberPoints] = useState<number>(0);
 
-  const handlePayment = () => {
+  const handlePayment = async (pointsToUse: number) => {
     if (!cabang) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Silakan pilih cabang terlebih dahulu",
-      });
+      toast.error("Silakan pilih cabang terlebih dahulu");
       return;
     }
 
     if (cartItems.length === 0) {
-      toast({
-        variant: "destructive",
-        title: "Keranjang Kosong",
-        description: "Tambahkan produk ke keranjang terlebih dahulu",
-      });
+      toast.error("Tambahkan produk ke keranjang terlebih dahulu");
       return;
     }
 
-    navigate('/print-preview', {
-      state: {
-        items: cartItems,
-        total: cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-        businessName: pelakuUsaha?.business_name,
-        branchName: cabang?.branch_name
-      }
-    });
+    try {
+      // Calculate total before points
+      const totalBeforePoints = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      
+      // Calculate total after points
+      const finalTotal = totalBeforePoints - (pointsToUse * 1000);
+
+      // Create transaction
+      const { data: transaction, error: transactionError } = await supabase
+        .from('transaksi')
+        .insert({
+          cabang_id: selectedCabangId,
+          total_price: finalTotal,
+          points_used: pointsToUse,
+          pelanggan_id: memberId,
+          transaction_date: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (transactionError) throw transactionError;
+
+      // Navigate to print preview
+      navigate('/print-preview', {
+        state: {
+          items: cartItems,
+          total: finalTotal,
+          pointsUsed: pointsToUse,
+          pointsEarned: Math.floor(finalTotal / 1000),
+          businessName: pelakuUsaha?.business_name,
+          branchName: cabang?.branch_name
+        }
+      });
+
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      toast.error("Gagal memproses pembayaran");
+    }
+  };
+
+  const handleCustomerFound = async (customer: any) => {
+    setIsRegisteredCustomer(true);
+    setMemberId(customer.member_id);
+    setMemberPoints(customer.loyalty_points || 0);
   };
 
   return (
@@ -85,8 +116,12 @@ const POS = () => {
           setCustomerName={setCustomerName}
           birthDate={birthDate}
           setBirthDate={setBirthDate}
-          onCustomerFound={() => setIsRegisteredCustomer(true)}
-          onNewCustomer={() => setIsRegisteredCustomer(false)}
+          onCustomerFound={handleCustomerFound}
+          onNewCustomer={() => {
+            setIsRegisteredCustomer(false);
+            setMemberId(null);
+            setMemberPoints(0);
+          }}
         />
 
         <ProductSearch onSearch={handleSearch} />
@@ -103,6 +138,7 @@ const POS = () => {
         onUpdateQuantity={updateQuantity}
         onRemoveItem={removeItem}
         onCheckout={handlePayment}
+        customerPoints={memberPoints}
       />
     </div>
   );

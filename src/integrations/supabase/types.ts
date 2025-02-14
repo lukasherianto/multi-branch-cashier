@@ -585,6 +585,9 @@ export type Database = {
           cabang_id: number
           created_at: string
           payment_status: number
+          pelanggan_id: number | null
+          points_earned: number | null
+          points_used: number | null
           produk_id: number
           quantity: number
           total_price: number
@@ -596,6 +599,9 @@ export type Database = {
           cabang_id: number
           created_at?: string
           payment_status?: number
+          pelanggan_id?: number | null
+          points_earned?: number | null
+          points_used?: number | null
           produk_id: number
           quantity: number
           total_price: number
@@ -607,6 +613,9 @@ export type Database = {
           cabang_id?: number
           created_at?: string
           payment_status?: number
+          pelanggan_id?: number | null
+          points_earned?: number | null
+          points_used?: number | null
           produk_id?: number
           quantity?: number
           total_price?: number
@@ -621,6 +630,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "cabang"
             referencedColumns: ["cabang_id"]
+          },
+          {
+            foreignKeyName: "transaksi_pelanggan_id_fkey"
+            columns: ["pelanggan_id"]
+            isOneToOne: false
+            referencedRelation: "member"
+            referencedColumns: ["member_id"]
           },
           {
             foreignKeyName: "transaksi_produk_id_fkey"

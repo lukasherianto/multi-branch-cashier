@@ -1,3 +1,4 @@
+
 export interface CartItem {
   id: number;
   name: string;
@@ -17,4 +18,6 @@ export interface Customer {
   customerName: string;
   birthDate: Date | null;
   isRegistered: boolean;
+  memberId?: number;
+  loyaltyPoints?: number;
 }
