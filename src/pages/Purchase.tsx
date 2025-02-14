@@ -44,6 +44,22 @@ const Purchase = () => {
     },
   });
 
+  const { data: stockHistory } = useQuery({
+    queryKey: ['stock-history'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('produk_history')
+        .select(`
+          *,
+          produk:produk_id(product_name)
+        `)
+        .order('entry_date', { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   if (isAddRoute) {
     return <PurchaseForm />;
   }
@@ -127,6 +143,53 @@ const Purchase = () => {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      <div className="mt-8">
+        <h3 className="text-xl font-semibold mb-4">Riwayat Stok per Tanggal</h3>
+        <div className="bg-white rounded-lg shadow">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Tanggal</TableHead>
+                <TableHead>Produk</TableHead>
+                <TableHead>Jumlah Stok Masuk</TableHead>
+                <TableHead>Harga Modal</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {!stockHistory ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-4">
+                    Memuat data...
+                  </TableCell>
+                </TableRow>
+              ) : stockHistory.length > 0 ? (
+                stockHistory.map((history) => (
+                  <TableRow key={history.history_id}>
+                    <TableCell>
+                      {format(new Date(history.entry_date), 'dd/MM/yyyy')}
+                    </TableCell>
+                    <TableCell>{history.produk?.product_name}</TableCell>
+                    <TableCell>{history.stock}</TableCell>
+                    <TableCell>
+                      {new Intl.NumberFormat('id-ID', {
+                        style: 'currency',
+                        currency: 'IDR'
+                      }).format(history.cost_price)}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-4">
+                    Tidak ada data riwayat stok
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </div>
   );
