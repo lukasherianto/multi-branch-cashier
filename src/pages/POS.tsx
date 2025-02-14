@@ -16,8 +16,8 @@ import { supabase } from "@/integrations/supabase/client";
 const POS = () => {
   const navigate = useNavigate();
   const { pelakuUsaha, cabang, cabangList, selectedCabangId, setSelectedCabangId } = useAuth();
-  const { filteredProducts, handleSearch } = useProducts();
-  const { cartItems, addToCart, updateQuantity, removeItem } = useCart();
+  const { filteredProducts, handleSearch, fetchProducts } = useProducts();
+  const { cartItems, addToCart, updateQuantity, removeItem, clearCart } = useCart();
   
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [customerName, setCustomerName] = useState("");
@@ -38,6 +38,20 @@ const POS = () => {
     }
 
     try {
+      // Validate stock for all items
+      for (const item of cartItems) {
+        const { data: productData } = await supabase
+          .from('produk')
+          .select('stock')
+          .eq('produk_id', item.id)
+          .single();
+
+        if (!productData || productData.stock < item.quantity) {
+          toast.error(`Stok tidak cukup untuk produk: ${item.name}`);
+          return;
+        }
+      }
+
       // Calculate total before points
       const totalBeforePoints = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       
@@ -68,6 +82,22 @@ const POS = () => {
         throw new Error('Failed to process some transactions');
       }
 
+      // Update product stock
+      const stockUpdatePromises = cartItems.map(item =>
+        supabase
+          .from('produk')
+          .update({ 
+            stock: supabase.rpc('decrement', { x: item.quantity }) 
+          })
+          .eq('produk_id', item.id)
+      );
+
+      await Promise.all(stockUpdatePromises);
+
+      // Clear cart and refresh products
+      clearCart();
+      fetchProducts();
+
       // Navigate to print preview
       navigate('/print-preview', {
         state: {
@@ -76,7 +106,9 @@ const POS = () => {
           pointsUsed: pointsToUse,
           pointsEarned: Math.floor(finalTotal / 1000),
           businessName: pelakuUsaha?.business_name,
-          branchName: cabang?.branch_name
+          branchName: cabang?.branch_name,
+          customerName: customerName,
+          whatsappNumber: whatsappNumber
         }
       });
 
@@ -87,9 +119,17 @@ const POS = () => {
   };
 
   const handleCustomerFound = (customer: any) => {
+    console.log('Customer found:', customer);
     setIsRegisteredCustomer(true);
     setMemberId(customer.member_id);
     setMemberPoints(customer.loyalty_points || 0);
+  };
+
+  const handleNewCustomer = () => {
+    console.log('New customer initiated');
+    setIsRegisteredCustomer(false);
+    setMemberId(null);
+    setMemberPoints(0);
   };
 
   return (
@@ -127,11 +167,7 @@ const POS = () => {
           birthDate={birthDate}
           setBirthDate={setBirthDate}
           onCustomerFound={handleCustomerFound}
-          onNewCustomer={() => {
-            setIsRegisteredCustomer(false);
-            setMemberId(null);
-            setMemberPoints(0);
-          }}
+          onNewCustomer={handleNewCustomer}
         />
 
         <ProductSearch onSearch={handleSearch} />
