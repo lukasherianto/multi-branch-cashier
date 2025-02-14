@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { CartItem } from "@/types/pos";
 
@@ -32,10 +33,15 @@ export const useCart = () => {
     setCartItems(items => items.filter(item => item.id !== itemId));
   };
 
+  const clearCart = () => {
+    setCartItems([]);
+  };
+
   return {
     cartItems,
     addToCart,
     updateQuantity,
-    removeItem
+    removeItem,
+    clearCart
   };
 };

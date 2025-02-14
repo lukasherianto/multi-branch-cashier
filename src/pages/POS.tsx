@@ -83,14 +83,22 @@ const POS = () => {
       }
 
       // Update product stock
-      const stockUpdatePromises = cartItems.map(item =>
-        supabase
+      const stockUpdatePromises = cartItems.map(async item => {
+        const { data: currentProduct } = await supabase
           .from('produk')
-          .update({ 
-            stock: supabase.rpc('decrement', { x: item.quantity }) 
-          })
+          .select('stock')
           .eq('produk_id', item.id)
-      );
+          .single();
+        
+        if (currentProduct) {
+          return supabase
+            .from('produk')
+            .update({ 
+              stock: currentProduct.stock - item.quantity 
+            })
+            .eq('produk_id', item.id);
+        }
+      });
 
       await Promise.all(stockUpdatePromises);
 
