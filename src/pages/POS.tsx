@@ -11,6 +11,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { useCart } from "@/hooks/useCart";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client"; // Menambahkan import supabase
 
 const POS = () => {
   const navigate = useNavigate();
@@ -76,7 +77,7 @@ const POS = () => {
     }
   };
 
-  const handleCustomerFound = async (customer: any) => {
+  const handleCustomerFound = (customer: any) => { // Menghapus async karena tidak diperlukan
     setIsRegisteredCustomer(true);
     setMemberId(customer.member_id);
     setMemberPoints(customer.loyalty_points || 0);
