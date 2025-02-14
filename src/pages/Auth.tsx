@@ -15,6 +15,8 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,6 +52,20 @@ const Auth = () => {
       return;
     }
 
+    // Additional validation for sign up
+    if (isSignUp) {
+      if (!fullName) {
+        setError("Nama lengkap harus diisi.");
+        setIsLoading(false);
+        return;
+      }
+      if (!whatsappNumber) {
+        setError("Nomor WhatsApp harus diisi.");
+        setIsLoading(false);
+        return;
+      }
+    }
+
     console.log(`Mencoba ${isSignUp ? 'mendaftar' : 'masuk'} dengan:`, email);
 
     try {
@@ -58,6 +74,10 @@ const Auth = () => {
           email,
           password,
           options: {
+            data: {
+              full_name: fullName,
+              whatsapp_number: whatsappNumber
+            },
             emailRedirectTo: window.location.origin,
           }
         });
@@ -128,6 +148,34 @@ const Auth = () => {
         )}
         <form className="mt-8 space-y-6" onSubmit={handleAuth}>
           <div className="rounded-md shadow-sm -space-y-px">
+            {isSignUp && (
+              <>
+                <div className="mb-2">
+                  <Input
+                    id="fullName"
+                    name="fullName"
+                    type="text"
+                    autoComplete="name"
+                    placeholder="Nama Lengkap"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="mb-2"
+                  />
+                </div>
+                <div className="mb-2">
+                  <Input
+                    id="whatsapp"
+                    name="whatsapp"
+                    type="tel"
+                    autoComplete="tel"
+                    placeholder="Nomor WhatsApp"
+                    value={whatsappNumber}
+                    onChange={(e) => setWhatsappNumber(e.target.value)}
+                    className="mb-2"
+                  />
+                </div>
+              </>
+            )}
             <div>
               <Input
                 id="email"
@@ -170,6 +218,8 @@ const Auth = () => {
               onClick={() => {
                 setError(null);
                 setIsSignUp(!isSignUp);
+                setFullName("");
+                setWhatsappNumber("");
               }}
               disabled={isLoading}
             >
