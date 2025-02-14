@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -44,6 +43,7 @@ const formSchema = z.object({
   transaction_date: z.date(),
   payment_status: z.number(),
   jadwal_lunas: z.date().optional(),
+  cost_price: z.number(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -59,14 +59,13 @@ export function PurchaseForm() {
       total_price: 0,
       unit_price: 0,
       quantity: 0,
+      cost_price: 0,
     },
   });
 
-  // Watch quantity and unit price for auto calculation
   const quantity = form.watch("quantity");
   const unitPrice = form.watch("unit_price");
 
-  // Update total price when quantity or unit price changes
   useEffect(() => {
     const total = Number(quantity || 0) * Number(unitPrice || 0);
     form.setValue("total_price", total);
@@ -141,7 +140,7 @@ export function PurchaseForm() {
 
       if (!pelakuUsaha) throw new Error('Business data not found');
 
-      const { error } = await supabase
+      const { error: purchaseError } = await supabase
         .from('pembelian')
         .insert({
           cabang_id: formattedValues.cabang_id,
@@ -154,15 +153,32 @@ export function PurchaseForm() {
           jadwal_lunas: formattedValues.jadwal_lunas,
         });
 
-      if (error) {
-        console.error('Error submitting purchase:', error);
-        toast({
-          title: "Error",
-          description: "Gagal menyimpan data pembelian: " + error.message,
-          variant: "destructive",
+      if (purchaseError) throw purchaseError;
+
+      const { error: historyError } = await supabase
+        .from('produk_history')
+        .insert({
+          produk_id: formattedValues.produk_id,
+          cost_price: formattedValues.cost_price,
+          stock: formattedValues.quantity,
+          entry_date: formattedValues.transaction_date,
         });
-        return;
-      }
+
+      if (historyError) throw historyError;
+
+      const { data: currentHistory } = await supabase
+        .from('produk_history')
+        .select('stock')
+        .eq('produk_id', formattedValues.produk_id);
+
+      const totalStock = (currentHistory || []).reduce((sum, record) => sum + record.stock, 0);
+
+      const { error: updateError } = await supabase
+        .from('produk')
+        .update({ stock: totalStock })
+        .eq('produk_id', formattedValues.produk_id);
+
+      if (updateError) throw updateError;
 
       toast({
         title: "Sukses",
@@ -408,6 +424,25 @@ export function PurchaseForm() {
               )}
             />
           )}
+
+          <FormField
+            control={form.control}
+            name="cost_price"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Harga Modal</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="number" 
+                    placeholder="Masukkan harga modal" 
+                    {...field}
+                    onChange={e => field.onChange(Number(e.target.value))}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <div className="flex justify-end space-x-4">
             <Button variant="outline" type="button" onClick={() => navigate('/purchase')}>

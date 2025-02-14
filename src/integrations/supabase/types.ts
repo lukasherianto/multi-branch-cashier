@@ -420,7 +420,7 @@ export type Database = {
           product_name: string
           produk_id?: never
           retail_price: number
-          stock: number
+          stock?: number
           unit?: string
           updated_at?: string
         }
@@ -453,6 +453,44 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "pelaku_usaha"
             referencedColumns: ["pelaku_usaha_id"]
+          },
+        ]
+      }
+      produk_history: {
+        Row: {
+          cost_price: number
+          created_at: string
+          entry_date: string
+          history_id: number
+          produk_id: number | null
+          stock: number
+          updated_at: string
+        }
+        Insert: {
+          cost_price: number
+          created_at?: string
+          entry_date?: string
+          history_id?: number
+          produk_id?: number | null
+          stock: number
+          updated_at?: string
+        }
+        Update: {
+          cost_price?: number
+          created_at?: string
+          entry_date?: string
+          history_id?: number
+          produk_id?: number | null
+          stock?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produk_history_produk_id_fkey"
+            columns: ["produk_id"]
+            isOneToOne: false
+            referencedRelation: "produk"
+            referencedColumns: ["produk_id"]
           },
         ]
       }
