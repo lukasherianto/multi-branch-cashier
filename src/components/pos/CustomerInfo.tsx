@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { User } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -13,8 +14,8 @@ interface CustomerInfoProps {
   setCustomerName: (value: string) => void;
   birthDate: Date | null;
   setBirthDate: (value: Date | null) => void;
-  onCustomerFound?: () => void;
-  onNewCustomer?: () => void;
+  onCustomerFound: (customer: any) => void; // Mengubah tipe props ini
+  onNewCustomer: () => void;
 }
 
 export const CustomerInfo = ({
@@ -42,7 +43,7 @@ export const CustomerInfo = ({
     try {
       const { data, error } = await supabase
         .from('pelanggan')
-        .select('nama')
+        .select('*') // Mengubah untuk select semua kolom
         .eq('whatsapp', whatsappNumber)
         .maybeSingle();
 
@@ -51,7 +52,7 @@ export const CustomerInfo = ({
       if (data) {
         setCustomerName(data.nama);
         setBirthDate(null);
-        onCustomerFound?.();
+        onCustomerFound(data); // Mengirim semua data pelanggan
         toast({
           title: "Data Pelanggan Ditemukan",
           description: `Selamat datang kembali, ${data.nama}!`,
@@ -59,7 +60,7 @@ export const CustomerInfo = ({
       } else {
         setCustomerName("");
         setBirthDate(null);
-        onNewCustomer?.();
+        onNewCustomer();
         toast({
           title: "Pelanggan Baru",
           description: "Silakan lengkapi data pelanggan",
@@ -119,7 +120,16 @@ export const CustomerInfo = ({
 
       if (error) throw error;
 
-      onCustomerFound?.();
+      // Ambil data pelanggan yang baru dibuat
+      const { data: newCustomer, error: fetchError } = await supabase
+        .from('pelanggan')
+        .select('*')
+        .eq('whatsapp', whatsappNumber)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      onCustomerFound(newCustomer);
       toast({
         title: "Sukses",
         description: "Data pelanggan berhasil disimpan",
