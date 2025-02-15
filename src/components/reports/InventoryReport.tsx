@@ -1,6 +1,8 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Table,
   TableBody,
@@ -11,9 +13,13 @@ import {
 } from "@/components/ui/table";
 
 const InventoryReport = () => {
+  const { pelakuUsaha } = useAuth();
+
   const { data: inventory } = useQuery({
-    queryKey: ["inventory-report"],
+    queryKey: ["inventory-report", pelakuUsaha?.pelaku_usaha_id],
     queryFn: async () => {
+      if (!pelakuUsaha) return null;
+
       const { data, error } = await supabase
         .from("produk")
         .select(`
@@ -25,11 +31,13 @@ const InventoryReport = () => {
           kategori_produk (
             kategori_name
           )
-        `);
+        `)
+        .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id);
 
       if (error) throw error;
       return data;
     },
+    enabled: !!pelakuUsaha
   });
 
   const lowStockThreshold = 10;
@@ -38,6 +46,14 @@ const InventoryReport = () => {
     (sum, item) => sum + (Number(item.cost_price) * item.stock),
     0
   ) || 0;
+
+  if (!pelakuUsaha) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500">Silakan lengkapi profil usaha Anda terlebih dahulu</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

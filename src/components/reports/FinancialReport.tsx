@@ -1,6 +1,8 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Table,
   TableBody,
@@ -11,9 +13,23 @@ import {
 } from "@/components/ui/table";
 
 const FinancialReport = () => {
+  const { pelakuUsaha } = useAuth();
+
   const { data: transactions } = useQuery({
-    queryKey: ["financial-report"],
+    queryKey: ["financial-report", pelakuUsaha?.pelaku_usaha_id],
     queryFn: async () => {
+      if (!pelakuUsaha) return null;
+
+      // Get all branches for this pelaku usaha
+      const { data: branches, error: branchError } = await supabase
+        .from('cabang')
+        .select('cabang_id')
+        .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id);
+
+      if (branchError) throw branchError;
+
+      const branchIds = branches.map(b => b.cabang_id);
+
       const { data: kasData, error: kasError } = await supabase
         .from("kas")
         .select(`
@@ -22,6 +38,7 @@ const FinancialReport = () => {
           description,
           transaction_date
         `)
+        .in('cabang_id', branchIds)
         .order('transaction_date', { ascending: false });
 
       if (kasError) throw kasError;
@@ -31,7 +48,8 @@ const FinancialReport = () => {
         .select(`
           total_price,
           transaction_date
-        `);
+        `)
+        .in('cabang_id', branchIds);
 
       if (salesError) throw salesError;
 
@@ -40,6 +58,7 @@ const FinancialReport = () => {
         sales: salesData,
       };
     },
+    enabled: !!pelakuUsaha
   });
 
   const totalIncome = transactions?.kas
@@ -52,6 +71,14 @@ const FinancialReport = () => {
 
   const totalSales = transactions?.sales
     .reduce((sum, t) => sum + Number(t.total_price), 0) || 0;
+
+  if (!pelakuUsaha) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500">Silakan lengkapi profil usaha Anda terlebih dahulu</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

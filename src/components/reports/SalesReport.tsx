@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Table,
   TableBody,
@@ -12,9 +13,13 @@ import {
 } from "@/components/ui/table";
 
 const SalesReport = () => {
+  const { pelakuUsaha } = useAuth();
+
   const { data: salesData } = useQuery({
-    queryKey: ["sales-report"],
+    queryKey: ["sales-report", pelakuUsaha?.pelaku_usaha_id],
     queryFn: async () => {
+      if (!pelakuUsaha) return null;
+
       const { data, error } = await supabase
         .from("transaksi")
         .select(`
@@ -30,11 +35,13 @@ const SalesReport = () => {
           cabang:cabang_id (
             branch_name
           )
-        `);
+        `)
+        .order('transaction_date', { ascending: false });
 
       if (error) throw error;
       return data;
     },
+    enabled: !!pelakuUsaha
   });
 
   // Calculate total transactions and revenue from valid data only
@@ -58,6 +65,14 @@ const SalesReport = () => {
     }
     return acc;
   }, {} as Record<string, number>) || {};
+
+  if (!pelakuUsaha) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500">Silakan lengkapi profil usaha Anda terlebih dahulu</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
