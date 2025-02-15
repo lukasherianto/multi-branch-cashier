@@ -23,6 +23,7 @@ const Auth = () => {
   // Redirect if user is already logged in
   useEffect(() => {
     if (user) {
+      console.log("User terdeteksi, mengarahkan ke halaman utama");
       navigate("/");
     }
   }, [user, navigate]);
@@ -92,6 +93,7 @@ const Auth = () => {
           } else {
             setError(error.message);
           }
+          setIsLoading(false);
           return;
         }
 
@@ -101,7 +103,7 @@ const Auth = () => {
         });
         setIsSignUp(false);
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
@@ -113,14 +115,18 @@ const Auth = () => {
           } else {
             setError(error.message);
           }
+          setIsLoading(false);
           return;
         }
 
-        toast({
-          title: "Berhasil masuk",
-          description: "Anda akan diarahkan ke halaman utama",
-        });
-        navigate("/");
+        if (data.user) {
+          console.log("Login berhasil, mengarahkan ke halaman utama");
+          toast({
+            title: "Berhasil masuk",
+            description: "Anda akan diarahkan ke halaman utama",
+          });
+          navigate("/", { replace: true });
+        }
       }
     } catch (error: any) {
       console.error("Error tidak terduga:", error);
