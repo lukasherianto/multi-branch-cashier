@@ -1,6 +1,6 @@
 
 import { Card } from "@/components/ui/card";
-import { DollarSign, TrendingUp, Building, ShoppingBag, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { DollarSign, TrendingUp, Building, ShoppingBag } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -87,57 +87,21 @@ const Dashboard = () => {
       title: "Total Penjualan Hari Ini",
       value: `Rp ${(todayStats?.total || 0).toLocaleString('id-ID')}`,
       icon: DollarSign,
-      trend: "+12,5%",
-      trendIcon: ArrowUpRight,
-      trendColor: "text-green-500",
     },
     {
       title: "Total Transaksi",
       value: todayStats?.count?.toString() || "0",
       icon: ShoppingBag,
-      trend: "-3,2%",
-      trendIcon: ArrowDownRight,
-      trendColor: "text-red-500",
     },
     {
       title: "Jumlah Cabang",
       value: branchCount?.toString() || "0",
       icon: Building,
-      trend: "0%",
-      trendIcon: ArrowUpRight,
-      trendColor: "text-gray-500",
     },
     {
       title: "Pertumbuhan",
-      value: "15,2%",
+      value: "0%",
       icon: TrendingUp,
-      trend: "+2,3%",
-      trendIcon: ArrowUpRight,
-      trendColor: "text-green-500",
-    },
-  ];
-
-  const recentTransactions = [
-    {
-      id: "TR001",
-      amount: "Rp 150.000",
-      branch: "Cabang Pusat",
-      time: "2 menit yang lalu",
-      status: "success"
-    },
-    {
-      id: "TR002",
-      amount: "Rp 75.000",
-      branch: "Cabang Timur",
-      time: "15 menit yang lalu",
-      status: "success"
-    },
-    {
-      id: "TR003",
-      amount: "Rp 225.000",
-      branch: "Cabang Barat",
-      time: "45 menit yang lalu",
-      status: "success"
     },
   ];
 
@@ -173,18 +137,11 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
-          const TrendIcon = stat.trendIcon;
           return (
             <Card key={index} className="p-6 hover:shadow-lg transition-shadow duration-200">
               <div className="flex items-center justify-between">
                 <div className="bg-mint-50 p-3 rounded-lg">
                   <Icon className="w-6 h-6 text-mint-600" />
-                </div>
-                <div className={`flex items-center ${stat.trendColor}`}>
-                  <TrendIcon className="w-4 h-4 mr-1" />
-                  <span className="text-sm font-medium">
-                    {stat.trend}
-                  </span>
                 </div>
               </div>
               <div className="mt-4">
@@ -197,35 +154,6 @@ const Dashboard = () => {
           );
         })}
       </div>
-
-      {/* Transaksi Terkini */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-semibold text-gray-800">
-            Transaksi Terkini
-          </h3>
-          <button className="text-mint-600 hover:text-mint-700 text-sm font-medium">
-            Lihat Semua
-          </button>
-        </div>
-        <div className="space-y-4">
-          {recentTransactions.map((transaction) => (
-            <div
-              key={transaction.id}
-              className="flex items-center justify-between py-3 border-b last:border-0"
-            >
-              <div>
-                <p className="font-medium text-gray-800">Transaksi #{transaction.id}</p>
-                <p className="text-sm text-gray-600">{transaction.branch}</p>
-              </div>
-              <div className="text-right">
-                <p className="font-medium text-gray-800">{transaction.amount}</p>
-                <p className="text-sm text-gray-600">{transaction.time}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
 
       {/* Grafik Penjualan */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
