@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { Building, Phone, MapPin, Loader2, Plus } from "lucide-react";
+import { Building, Phone, MapPin, Loader2, Plus, Home } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -114,25 +114,50 @@ const Branches = () => {
         </Link>
       </div>
 
-      {branches.length === 0 ? (
-        <Card className="p-8 text-center">
-          <div className="flex flex-col items-center space-y-4">
-            <Building className="w-12 h-12 text-gray-400" />
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800">Belum ada cabang</h3>
-              <p className="text-gray-600 mt-1">Mulai dengan menambahkan cabang pertama Anda</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Kantor Pusat */}
+        <Card className="p-6 hover:shadow-lg transition-shadow duration-200 bg-mint-50/50">
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="bg-mint-100 p-2 rounded-lg">
+              <Home className="w-5 h-5 text-mint-600" />
             </div>
-            <Link to="/settings?tab=branches">
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Tambah Cabang
-              </Button>
-            </Link>
+            <h3 className="font-semibold text-gray-800">Kantor Pusat</h3>
+          </div>
+          <div className="space-y-3">
+            {pelakuUsaha?.business_name && (
+              <div className="flex items-center space-x-2 text-gray-600">
+                <Building className="w-4 h-4" />
+                <span className="text-sm">{pelakuUsaha.business_name}</span>
+              </div>
+            )}
+            {pelakuUsaha?.contact_whatsapp && (
+              <div className="flex items-center space-x-2 text-gray-600">
+                <Phone className="w-4 h-4" />
+                <span className="text-sm">{pelakuUsaha.contact_whatsapp}</span>
+              </div>
+            )}
           </div>
         </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {branches.map((branch) => (
+
+        {/* Daftar Cabang */}
+        {branches.length === 0 ? (
+          <Card className="p-8 text-center">
+            <div className="flex flex-col items-center space-y-4">
+              <Building className="w-12 h-12 text-gray-400" />
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">Belum ada cabang</h3>
+                <p className="text-gray-600 mt-1">Mulai dengan menambahkan cabang pertama Anda</p>
+              </div>
+              <Link to="/settings?tab=branches">
+                <Button>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Tambah Cabang
+                </Button>
+              </Link>
+            </div>
+          </Card>
+        ) : (
+          branches.map((branch) => (
             <Card key={branch.cabang_id} className="p-6 hover:shadow-lg transition-shadow duration-200">
               <div className="flex items-center space-x-3 mb-4">
                 <div className="bg-mint-50 p-2 rounded-lg">
@@ -155,9 +180,9 @@ const Branches = () => {
                 )}
               </div>
             </Card>
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
     </div>
   );
 };
