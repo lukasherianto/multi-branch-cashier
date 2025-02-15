@@ -53,21 +53,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (user) {
       // Get pelaku usaha data
       const fetchPelakuUsaha = async () => {
-        const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
-          .from('pelaku_usaha')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
+        try {
+          console.log("Fetching pelaku usaha for user:", user.id);
+          
+          const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
+            .from('pelaku_usaha')
+            .select('*')
+            .eq('user_id', user.id)
+            .maybeSingle();
 
-        if (pelakuUsahaError) {
-          console.error('Error mengambil data pelaku usaha:', pelakuUsahaError);
-          return;
-        }
+          if (pelakuUsahaError) {
+            console.error('Error mengambil data pelaku usaha:', pelakuUsahaError);
+            return;
+          }
 
-        console.log("Data pelaku usaha:", pelakuUsahaData);
-        setPelakuUsaha(pelakuUsahaData);
+          if (!pelakuUsahaData) {
+            console.log("No pelaku_usaha found for user:", user.id);
+            setPelakuUsaha(null);
+            setCabangList([]);
+            setCabang(null);
+            setSelectedCabangId(null);
+            return;
+          }
 
-        if (pelakuUsahaData) {
+          console.log("Data pelaku usaha ditemukan:", pelakuUsahaData);
+          setPelakuUsaha(pelakuUsahaData);
+
           // Get all branches for this pelaku usaha
           const { data: cabangData, error: cabangError } = await supabase
             .from('cabang')
@@ -79,6 +90,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             return;
           }
 
+          console.log("Data cabang:", cabangData);
           setCabangList(cabangData || []);
           
           // If there's only one branch, select it automatically
@@ -91,12 +103,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setSelectedCabangId(cabangData[0].cabang_id);
             setCabang(cabangData[0]);
           }
+        } catch (error) {
+          console.error('Error in fetchPelakuUsaha:', error);
         }
       };
 
       fetchPelakuUsaha();
     }
-  }, [user]);
+  }, [user, selectedCabangId]);
 
   useEffect(() => {
     if (selectedCabangId && cabangList.length > 0) {
