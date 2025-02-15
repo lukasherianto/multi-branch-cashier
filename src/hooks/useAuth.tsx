@@ -1,8 +1,10 @@
+
 import { useState, useEffect, createContext, useContext } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { User } from "@supabase/supabase-js";
 
 interface AuthContextType {
-  user: any;
+  user: User | null;
   pelakuUsaha: any;
   cabang: any;
   cabangList: any[];
@@ -13,32 +15,44 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [pelakuUsaha, setPelakuUsaha] = useState<any>(null);
   const [cabangList, setCabangList] = useState<any[]>([]);
   const [cabang, setCabang] = useState<any>(null);
   const [selectedCabangId, setSelectedCabangId] = useState<number | null>(null);
 
   useEffect(() => {
-    checkAuth();
+    // Check current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        console.log("Session ditemukan:", session.user.id);
+        setUser(session.user);
+      }
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        console.log("Auth state changed:", session.user.id);
+        setUser(session.user);
+      } else {
+        setUser(null);
+        setPelakuUsaha(null);
+        setCabang(null);
+        setCabangList([]);
+        setSelectedCabangId(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
-    if (selectedCabangId && cabangList.length > 0) {
-      const selected = cabangList.find(c => c.cabang_id === selectedCabangId);
-      setCabang(selected);
-    }
-  }, [selectedCabangId, cabangList]);
-
-  const checkAuth = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      console.log("User ditemukan:", user?.id);
-      
-      if (user) {
-        setUser(user);
-        
-        // Get pelaku usaha data
+    if (user) {
+      // Get pelaku usaha data
+      const fetchPelakuUsaha = async () => {
         const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
           .from('pelaku_usaha')
           .select('*')
@@ -53,34 +67,43 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("Data pelaku usaha:", pelakuUsahaData);
         setPelakuUsaha(pelakuUsahaData);
 
-        // Get all branches for this pelaku usaha
-        const { data: cabangData, error: cabangError } = await supabase
-          .from('cabang')
-          .select('*')
-          .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id);
+        if (pelakuUsahaData) {
+          // Get all branches for this pelaku usaha
+          const { data: cabangData, error: cabangError } = await supabase
+            .from('cabang')
+            .select('*')
+            .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id);
 
-        if (cabangError) {
-          console.error('Error mengambil data cabang:', cabangError);
-          return;
-        }
+          if (cabangError) {
+            console.error('Error mengambil data cabang:', cabangError);
+            return;
+          }
 
-        setCabangList(cabangData);
-        
-        // If there's only one branch, select it automatically
-        if (cabangData.length === 1) {
-          setSelectedCabangId(cabangData[0].cabang_id);
-          setCabang(cabangData[0]);
+          setCabangList(cabangData || []);
+          
+          // If there's only one branch, select it automatically
+          if (cabangData && cabangData.length === 1) {
+            setSelectedCabangId(cabangData[0].cabang_id);
+            setCabang(cabangData[0]);
+          }
+          // If there are multiple branches and none selected, select the first one
+          else if (cabangData && cabangData.length > 1 && !selectedCabangId) {
+            setSelectedCabangId(cabangData[0].cabang_id);
+            setCabang(cabangData[0]);
+          }
         }
-        // If there are multiple branches and none selected, select the first one
-        else if (cabangData.length > 1 && !selectedCabangId) {
-          setSelectedCabangId(cabangData[0].cabang_id);
-          setCabang(cabangData[0]);
-        }
-      }
-    } catch (error) {
-      console.error('Error checking auth:', error);
+      };
+
+      fetchPelakuUsaha();
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (selectedCabangId && cabangList.length > 0) {
+      const selected = cabangList.find(c => c.cabang_id === selectedCabangId);
+      setCabang(selected);
+    }
+  }, [selectedCabangId, cabangList]);
 
   return (
     <AuthContext.Provider value={{ 
