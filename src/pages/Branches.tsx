@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Building, Phone, MapPin, Loader2, Plus } from "lucide-react";
@@ -58,6 +59,37 @@ const Branches = () => {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Tambahkan console.log untuk debugging
+    console.log("Current pelakuUsaha:", pelakuUsaha);
+    console.log("Current branches:", branches);
+  }, [pelakuUsaha, branches]);
+
+  if (!pelakuUsaha) {
+    return (
+      <div className="space-y-8">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-800">Cabang</h2>
+          <p className="text-gray-600 mt-2">Silakan lengkapi profil usaha Anda terlebih dahulu</p>
+        </div>
+        <Card className="p-8 text-center">
+          <div className="flex flex-col items-center space-y-4">
+            <Building className="w-12 h-12 text-gray-400" />
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800">Profil Usaha Belum Lengkap</h3>
+              <p className="text-gray-600 mt-1">Anda perlu melengkapi profil usaha sebelum menambahkan cabang</p>
+            </div>
+            <Link to="/settings?tab=business">
+              <Button>
+                Lengkapi Profil Usaha
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
