@@ -1,13 +1,18 @@
-import React, { useEffect } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
 
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Form,
   FormControl,
@@ -16,75 +21,47 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { useToast } from "@/hooks/use-toast";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useQuery } from "@tanstack/react-query";
 
 const formSchema = z.object({
-  cabang_id: z.string().transform((val) => parseInt(val, 10)),
-  produk_id: z.string().transform((val) => parseInt(val, 10)),
-  quantity: z.number(),
-  unit_price: z.number(),
-  total_price: z.number(),
-  transaction_date: z.date(),
-  payment_status: z.number(),
+  produk_id: z.string().min(1, { message: "Pilih produk" }),
+  cabang_id: z.string().min(1, { message: "Pilih cabang" }),
+  quantity: z.string().min(1, { message: "Masukkan jumlah" }),
+  unit_price: z.string().min(1, { message: "Masukkan harga satuan" }),
+  payment_status: z.string().min(1, { message: "Pilih status pembayaran" }),
   jadwal_lunas: z.date().optional(),
-  cost_price: z.number(),
+  transaction_date: z.date({
+    required_error: "Pilih tanggal transaksi",
+  }),
 });
 
-type FormValues = z.infer<typeof formSchema>;
-
-export function PurchaseForm() {
-  const navigate = useNavigate();
+export const PurchaseForm = () => {
   const { toast } = useToast();
-  const form = useForm<FormValues>({
+  const navigate = useNavigate();
+  const { pelakuUsaha } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       transaction_date: new Date(),
-      payment_status: 0,
-      total_price: 0,
-      unit_price: 0,
-      quantity: 0,
-      cost_price: 0,
     },
   });
 
-  const quantity = form.watch("quantity");
-  const unitPrice = form.watch("unit_price");
-
-  useEffect(() => {
-    const total = Number(quantity || 0) * Number(unitPrice || 0);
-    form.setValue("total_price", total);
-  }, [quantity, unitPrice, form]);
-
   const { data: branches } = useQuery({
-    queryKey: ['branches'],
+    queryKey: ['branches', pelakuUsaha?.pelaku_usaha_id],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-
-      const { data: pelakuUsaha } = await supabase
-        .from('pelaku_usaha')
-        .select('pelaku_usaha_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!pelakuUsaha) throw new Error('Business data not found');
-
+      if (!pelakuUsaha) return [];
+      
       const { data, error } = await supabase
         .from('cabang')
         .select('*')
@@ -93,22 +70,14 @@ export function PurchaseForm() {
       if (error) throw error;
       return data;
     },
+    enabled: !!pelakuUsaha,
   });
 
   const { data: products } = useQuery({
-    queryKey: ['products'],
+    queryKey: ['products', pelakuUsaha?.pelaku_usaha_id],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-
-      const { data: pelakuUsaha } = await supabase
-        .from('pelaku_usaha')
-        .select('pelaku_usaha_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!pelakuUsaha) throw new Error('Business data not found');
-
+      if (!pelakuUsaha) return [];
+      
       const { data, error } = await supabase
         .from('produk')
         .select('*')
@@ -117,289 +86,285 @@ export function PurchaseForm() {
       if (error) throw error;
       return data;
     },
+    enabled: !!pelakuUsaha,
   });
 
-  async function onSubmit(values: FormValues) {
+  const paymentStatus = [
+    { value: "1", label: "Lunas" },
+    { value: "0", label: "Belum Lunas" },
+  ];
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const formattedValues = {
-        ...values,
-        transaction_date: format(values.transaction_date, "yyyy-MM-dd"),
-        jadwal_lunas: values.jadwal_lunas ? format(values.jadwal_lunas, "yyyy-MM-dd") : null,
-      };
+      setIsSubmitting(true);
 
-      console.log('Submitting purchase with values:', formattedValues);
+      const totalPrice = Number(values.quantity) * Number(values.unit_price);
+      const jadwalLunas = values.payment_status === "0" ? values.jadwal_lunas : null;
+      const tanggalDilunaskan = values.payment_status === "1" ? new Date() : null;
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-
-      const { data: pelakuUsaha } = await supabase
-        .from('pelaku_usaha')
-        .select('pelaku_usaha_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!pelakuUsaha) throw new Error('Business data not found');
-
-      const { error: purchaseError } = await supabase
+      // Insert pembelian record
+      const { error: pembelianError } = await supabase
         .from('pembelian')
         .insert({
-          cabang_id: formattedValues.cabang_id,
-          produk_id: formattedValues.produk_id,
-          quantity: formattedValues.quantity,
-          unit_price: formattedValues.unit_price,
-          total_price: formattedValues.total_price,
-          transaction_date: formattedValues.transaction_date,
-          payment_status: formattedValues.payment_status,
-          jadwal_lunas: formattedValues.jadwal_lunas,
+          cabang_id: parseInt(values.cabang_id),
+          produk_id: parseInt(values.produk_id),
+          quantity: parseInt(values.quantity),
+          unit_price: Number(values.unit_price),
+          total_price: totalPrice,
+          payment_status: parseInt(values.payment_status),
+          jadwal_lunas,
+          tanggal_dilunaskan,
+          transaction_date: values.transaction_date,
         });
 
-      if (purchaseError) throw purchaseError;
+      if (pembelianError) throw pembelianError;
 
+      // Update stock in produk table
+      const { error: stockError } = await supabase
+        .from('produk')
+        .update({
+          stock: supabase.rpc('increment', { inc: parseInt(values.quantity) }),
+          cost_price: Number(values.unit_price), // Update cost_price to match unit_price
+        })
+        .eq('produk_id', values.produk_id);
+
+      if (stockError) throw stockError;
+
+      // Insert into produk_history
       const { error: historyError } = await supabase
         .from('produk_history')
         .insert({
-          produk_id: formattedValues.produk_id,
-          cost_price: formattedValues.cost_price,
-          stock: formattedValues.quantity,
-          entry_date: formattedValues.transaction_date,
+          produk_id: parseInt(values.produk_id),
+          stock: parseInt(values.quantity),
+          cost_price: Number(values.unit_price),
+          entry_date: values.transaction_date,
         });
 
       if (historyError) throw historyError;
 
-      const { data: currentHistory } = await supabase
-        .from('produk_history')
-        .select('stock')
-        .eq('produk_id', formattedValues.produk_id);
-
-      const totalStock = (currentHistory || []).reduce((sum, record) => sum + record.stock, 0);
-
-      const { error: updateError } = await supabase
-        .from('produk')
-        .update({ stock: totalStock })
-        .eq('produk_id', formattedValues.produk_id);
-
-      if (updateError) throw updateError;
-
       toast({
         title: "Sukses",
-        description: "Data pembelian berhasil disimpan",
+        description: "Transaksi pembelian berhasil ditambahkan",
       });
 
-      navigate('/purchase');
-    } catch (error: any) {
-      console.error('Error submitting purchase:', error);
+      navigate("/purchase");
+    } catch (error) {
+      console.error('Error:', error);
       toast({
         title: "Error",
-        description: error.message || "Terjadi kesalahan saat menyimpan data",
+        description: "Gagal menambahkan transaksi pembelian",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
-  }
+  };
+
+  useEffect(() => {
+    if (!pelakuUsaha) {
+      toast({
+        title: "Error",
+        description: "Silakan lengkapi profil usaha Anda terlebih dahulu",
+        variant: "destructive",
+      });
+      navigate("/settings");
+    }
+  }, [pelakuUsaha, navigate, toast]);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium">Tambah Transaksi Pembelian</h3>
-        <p className="text-sm text-muted-foreground">
-          Masukkan detail transaksi pembelian baru
-        </p>
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-800">Tambah Pembelian</h2>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="cabang_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Cabang</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value?.toString()}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih cabang" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {branches?.map((branch) => (
-                      <SelectItem key={branch.cabang_id} value={branch.cabang_id.toString()}>
-                        {branch.branch_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="produk_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Produk</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value?.toString()}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih produk" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {products?.map((product) => (
-                      <SelectItem key={product.produk_id} value={product.produk_id.toString()}>
-                        {product.product_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="quantity"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Jumlah</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number" 
-                    placeholder="Masukkan jumlah" 
-                    {...field}
-                    onChange={e => field.onChange(Number(e.target.value))}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="unit_price"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Harga Satuan</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number" 
-                    placeholder="Masukkan harga satuan" 
-                    {...field}
-                    onChange={e => field.onChange(Number(e.target.value))}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="total_price"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Total Harga</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number" 
-                    placeholder="Total harga" 
-                    {...field}
-                    disabled
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="transaction_date"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Tanggal Transaksi</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "dd/MM/yyyy")
-                        ) : (
-                          <span>Pilih tanggal</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) =>
-                        date > new Date() || date < new Date("1900-01-01")
-                      }
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="payment_status"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Status Pembayaran</FormLabel>
-                <Select 
-                  onValueChange={(value) => field.onChange(parseInt(value, 10))} 
-                  defaultValue={field.value.toString()}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih status pembayaran" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="1">Lunas</SelectItem>
-                    <SelectItem value="0">Belum Lunas</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {form.watch("payment_status") === 0 && (
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
               control={form.control}
-              name="jadwal_lunas"
+              name="produk_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Produk</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih produk" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {products?.map((product) => (
+                        <SelectItem
+                          key={product.produk_id}
+                          value={product.produk_id.toString()}
+                        >
+                          {product.product_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="cabang_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Cabang</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih cabang" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {branches?.map((branch) => (
+                        <SelectItem
+                          key={branch.cabang_id}
+                          value={branch.cabang_id.toString()}
+                        >
+                          {branch.branch_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="quantity"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Jumlah</FormLabel>
+                  <FormControl>
+                    <Input type="number" min="1" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="unit_price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Harga Satuan</FormLabel>
+                  <FormControl>
+                    <Input type="number" min="0" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="payment_status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status Pembayaran</FormLabel>
+                  <Select
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      if (value === "1") {
+                        form.setValue("jadwal_lunas", undefined);
+                      }
+                    }}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih status pembayaran" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {paymentStatus.map((status) => (
+                        <SelectItem key={status.value} value={status.value}>
+                          {status.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {form.watch("payment_status") === "0" && (
+              <FormField
+                control={form.control}
+                name="jadwal_lunas"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Jadwal Lunas</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "P")
+                            ) : (
+                              <span>Pilih tanggal</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) =>
+                            date < new Date() || date < new Date("1900-01-01")
+                          }
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            <FormField
+              control={form.control}
+              name="transaction_date"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Jadwal Pelunasan</FormLabel>
+                  <FormLabel>Tanggal Transaksi</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
                           variant={"outline"}
                           className={cn(
-                            "w-full pl-3 text-left font-normal",
+                            "pl-3 text-left font-normal",
                             !field.value && "text-muted-foreground"
                           )}
                         >
                           {field.value ? (
-                            format(field.value, "dd/MM/yyyy")
+                            format(field.value, "P")
                           ) : (
                             <span>Pilih tanggal</span>
                           )}
@@ -412,9 +377,7 @@ export function PurchaseForm() {
                         mode="single"
                         selected={field.value}
                         onSelect={field.onChange}
-                        disabled={(date) =>
-                          date < new Date() || date < new Date("1900-01-01")
-                        }
+                        disabled={(date) => date > new Date()}
                         initialFocus
                       />
                     </PopoverContent>
@@ -423,35 +386,22 @@ export function PurchaseForm() {
                 </FormItem>
               )}
             />
-          )}
+          </div>
 
-          <FormField
-            control={form.control}
-            name="cost_price"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Harga Modal</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number" 
-                    placeholder="Masukkan harga modal" 
-                    {...field}
-                    onChange={e => field.onChange(Number(e.target.value))}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="flex justify-end space-x-4">
-            <Button variant="outline" type="button" onClick={() => navigate('/purchase')}>
+          <div className="flex justify-end gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate("/purchase")}
+            >
               Batal
             </Button>
-            <Button type="submit">Simpan</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Menyimpan..." : "Simpan"}
+            </Button>
           </div>
         </form>
       </Form>
     </div>
   );
-}
+};
