@@ -1,11 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -99,34 +97,34 @@ export const PurchaseForm = () => {
       setIsSubmitting(true);
 
       const totalPrice = Number(values.quantity) * Number(values.unit_price);
-      const jadwalLunas = values.payment_status === "0" ? values.jadwal_lunas : null;
-      const tanggalDilunaskan = values.payment_status === "1" ? new Date() : null;
+      const jadwalLunas = values.payment_status === "0" ? values.jadwal_lunas?.toISOString() : null;
+      const tanggalDilunaskan = values.payment_status === "1" ? new Date().toISOString() : null;
 
       // Insert pembelian record
       const { error: pembelianError } = await supabase
         .from('pembelian')
         .insert({
-          cabang_id: parseInt(values.cabang_id),
-          produk_id: parseInt(values.produk_id),
-          quantity: parseInt(values.quantity),
+          cabang_id: Number(values.cabang_id),
+          produk_id: Number(values.produk_id),
+          quantity: Number(values.quantity),
           unit_price: Number(values.unit_price),
           total_price: totalPrice,
-          payment_status: parseInt(values.payment_status),
-          jadwal_lunas,
-          tanggal_dilunaskan,
-          transaction_date: values.transaction_date,
+          payment_status: Number(values.payment_status),
+          jadwal_lunas: jadwalLunas,
+          tanggal_dilunaskan: tanggalDilunaskan,
+          transaction_date: values.transaction_date.toISOString(),
         });
 
       if (pembelianError) throw pembelianError;
 
-      // Update stock in produk table
+      // Update stock and cost_price in produk table
       const { error: stockError } = await supabase
         .from('produk')
         .update({
-          stock: supabase.rpc('increment', { inc: parseInt(values.quantity) }),
-          cost_price: Number(values.unit_price), // Update cost_price to match unit_price
+          stock: supabase.rpc('increment', { inc: Number(values.quantity) }),
+          cost_price: Number(values.unit_price),
         })
-        .eq('produk_id', values.produk_id);
+        .eq('produk_id', Number(values.produk_id));
 
       if (stockError) throw stockError;
 
@@ -134,10 +132,10 @@ export const PurchaseForm = () => {
       const { error: historyError } = await supabase
         .from('produk_history')
         .insert({
-          produk_id: parseInt(values.produk_id),
-          stock: parseInt(values.quantity),
+          produk_id: Number(values.produk_id),
+          stock: Number(values.quantity),
           cost_price: Number(values.unit_price),
-          entry_date: values.transaction_date,
+          entry_date: values.transaction_date.toISOString(),
         });
 
       if (historyError) throw historyError;
