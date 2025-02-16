@@ -117,11 +117,20 @@ export const PurchaseForm = () => {
 
       if (pembelianError) throw pembelianError;
 
-      // Update stock and cost_price in produk table
+      // First, get the current stock
+      const { data: productData, error: productError } = await supabase
+        .from('produk')
+        .select('stock')
+        .eq('produk_id', Number(values.produk_id))
+        .single();
+
+      if (productError) throw productError;
+
+      // Then update the product with new stock and cost_price
       const { error: stockError } = await supabase
         .from('produk')
         .update({
-          stock: supabase.rpc('increment', { inc: Number(values.quantity) }),
+          stock: (productData?.stock || 0) + Number(values.quantity),
           cost_price: Number(values.unit_price),
         })
         .eq('produk_id', Number(values.produk_id));
