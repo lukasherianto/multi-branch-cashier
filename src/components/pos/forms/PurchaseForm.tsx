@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -25,7 +26,7 @@ import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useQuery } from "@tanstack/react-query";
@@ -66,7 +67,17 @@ export const PurchaseForm = () => {
         .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id);
 
       if (error) throw error;
-      return data;
+
+      // Add kantor pusat as a branch option
+      const kantorPusat = {
+        cabang_id: 0,
+        branch_name: 'Kantor Pusat',
+        pelaku_usaha_id: pelakuUsaha.pelaku_usaha_id,
+        address: pelakuUsaha.address,
+        contact_whatsapp: pelakuUsaha.contact_whatsapp,
+      };
+
+      return [kantorPusat, ...(data || [])];
     },
     enabled: !!pelakuUsaha,
   });
@@ -240,6 +251,9 @@ export const PurchaseForm = () => {
                           value={branch.cabang_id.toString()}
                         >
                           {branch.branch_name}
+                          {branch.cabang_id === 0 && (
+                            <Home className="inline-block ml-2 h-4 w-4" />
+                          )}
                         </SelectItem>
                       ))}
                     </SelectContent>
