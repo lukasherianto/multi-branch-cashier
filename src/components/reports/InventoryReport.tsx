@@ -1,16 +1,9 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import StatCard from "./shared/StatCard";
+import ProductInventoryTable from "./inventory/ProductInventoryTable";
 
 const InventoryReport = () => {
   const { pelakuUsaha } = useAuth();
@@ -58,71 +51,30 @@ const InventoryReport = () => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-2">Total Produk</h3>
-          <p className="text-3xl font-bold text-mint-600">{inventory?.length || 0}</p>
-        </Card>
-
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-2">Nilai Inventaris</h3>
-          <p className="text-3xl font-bold text-mint-600">
-            Rp {totalInventoryValue.toLocaleString("id-ID")}
-          </p>
-        </Card>
-
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-2">Stok Menipis</h3>
-          <p className="text-3xl font-bold text-mint-600">{lowStockItems.length}</p>
-        </Card>
+        <StatCard
+          title="Total Produk"
+          value={inventory?.length || 0}
+        />
+        <StatCard
+          title="Nilai Inventaris"
+          value={`Rp ${totalInventoryValue.toLocaleString("id-ID")}`}
+        />
+        <StatCard
+          title="Stok Menipis"
+          value={lowStockItems.length}
+        />
       </div>
 
-      <Card className="p-6">
-        <h3 className="text-xl font-semibold mb-4">Produk Stok Menipis</h3>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Produk</TableHead>
-              <TableHead>Kategori</TableHead>
-              <TableHead className="text-right">Stok</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {lowStockItems.map((item) => (
-              <TableRow key={item.produk_id}>
-                <TableCell>{item.product_name}</TableCell>
-                <TableCell>{item.kategori_produk.kategori_name}</TableCell>
-                <TableCell className="text-right">{item.stock}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
+      <ProductInventoryTable
+        products={lowStockItems}
+        title="Produk Stok Menipis"
+      />
 
-      <Card className="p-6">
-        <h3 className="text-xl font-semibold mb-4">Semua Produk</h3>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Produk</TableHead>
-              <TableHead>Kategori</TableHead>
-              <TableHead className="text-right">Stok</TableHead>
-              <TableHead className="text-right">Nilai</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {inventory?.map((item) => (
-              <TableRow key={item.produk_id}>
-                <TableCell>{item.product_name}</TableCell>
-                <TableCell>{item.kategori_produk.kategori_name}</TableCell>
-                <TableCell className="text-right">{item.stock}</TableCell>
-                <TableCell className="text-right">
-                  Rp {(Number(item.cost_price) * item.stock).toLocaleString("id-ID")}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
+      <ProductInventoryTable
+        products={inventory || []}
+        title="Semua Produk"
+        showValue
+      />
     </div>
   );
 };
