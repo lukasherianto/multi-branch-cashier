@@ -22,22 +22,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [selectedCabangId, setSelectedCabangId] = useState<number | null>(null);
 
   useEffect(() => {
-    // Check current session
+    // Check active session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        console.log("Session ditemukan:", session.user.id);
+        console.log("Active session found:", session.user.id);
         setUser(session.user);
       }
     });
 
-    // Listen for auth changes
+    // Set up real-time subscription to auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        console.log("Auth state changed:", session.user.id);
-        setUser(session.user);
-      } else {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event, session?.user?.id);
+      
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        setUser(session?.user ?? null);
+      } else if (event === 'SIGNED_OUT') {
         setUser(null);
         setPelakuUsaha(null);
         setCabang(null);
@@ -46,7 +47,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
