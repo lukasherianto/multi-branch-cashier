@@ -80,8 +80,16 @@ export const useEmployeeData = () => {
 
       const { data: employeesData, error } = await supabase
         .from("karyawan")
-        .select("*, cabang(branch_name)")
-        .eq("pelaku_usaha_id", pelakuUsaha.pelaku_usaha_id);
+        .select(`
+          *,
+          cabang(branch_name),
+          profiles:auth_id(
+            is_employee,
+            business_role
+          )
+        `)
+        .eq("pelaku_usaha_id", pelakuUsaha.pelaku_usaha_id)
+        .eq("is_active", true);
 
       if (error) throw error;
       console.log("Employees loaded:", employeesData);

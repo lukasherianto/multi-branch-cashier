@@ -55,6 +55,29 @@ export function EmployeeForm() {
         return;
       }
 
+      // Create Supabase auth account for employee
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            full_name: data.name,
+            whatsapp_number: data.whatsapp_contact,
+            is_employee: true,
+            business_role: data.role
+          }
+        }
+      });
+
+      if (authError) {
+        console.error("Auth error:", authError);
+        throw authError;
+      }
+
+      if (!authData.user) {
+        throw new Error("Failed to create employee account");
+      }
+
       // Verify if the selected branch exists (if one was selected)
       if (data.cabang_id && data.cabang_id !== "0") {
         const { data: branchData, error: branchError } = await supabase
@@ -83,6 +106,8 @@ export function EmployeeForm() {
           role: data.role,
           cabang_id: data.cabang_id === "0" ? null : parseInt(data.cabang_id),
           pelaku_usaha_id: pelakuUsaha.pelaku_usaha_id,
+          auth_id: authData.user.id,
+          is_active: true
         })
         .select()
         .single();
@@ -99,11 +124,11 @@ export function EmployeeForm() {
 
       form.reset();
       loadEmployees();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding employee:", error);
       toast({
         title: "Error",
-        description: "Gagal menambahkan karyawan",
+        description: error.message || "Gagal menambahkan karyawan",
         variant: "destructive",
       });
     } finally {
@@ -115,12 +140,32 @@ export function EmployeeForm() {
     try {
       setIsLoading(true);
       console.log("Deleting employee:", karyawanId);
-      const { error } = await supabase
+      
+      // Get employee data first to get auth_id
+      const { data: employee, error: getError } = await supabase
+        .from("karyawan")
+        .select("auth_id")
+        .eq("karyawan_id", karyawanId)
+        .single();
+
+      if (getError) throw getError;
+
+      // Delete from karyawan table
+      const { error: deleteError } = await supabase
         .from("karyawan")
         .delete()
         .eq("karyawan_id", karyawanId);
 
-      if (error) throw error;
+      if (deleteError) throw deleteError;
+
+      // Deactivate Supabase auth account
+      if (employee?.auth_id) {
+        const { error: authError } = await supabase.auth.admin.updateUserById(
+          employee.auth_id,
+          { user_metadata: { is_active: false } }
+        );
+        if (authError) throw authError;
+      }
 
       toast({
         title: "Sukses",

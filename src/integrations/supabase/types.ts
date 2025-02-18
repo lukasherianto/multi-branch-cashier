@@ -496,23 +496,29 @@ export type Database = {
       }
       profiles: {
         Row: {
+          business_role: string | null
           created_at: string
           full_name: string
           id: string
+          is_employee: boolean | null
           updated_at: string
           whatsapp_number: string | null
         }
         Insert: {
+          business_role?: string | null
           created_at?: string
           full_name: string
           id: string
+          is_employee?: boolean | null
           updated_at?: string
           whatsapp_number?: string | null
         }
         Update: {
+          business_role?: string | null
           created_at?: string
           full_name?: string
           id?: string
+          is_employee?: boolean | null
           updated_at?: string
           whatsapp_number?: string | null
         }

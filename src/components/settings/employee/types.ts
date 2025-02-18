@@ -1,3 +1,4 @@
+
 export interface Branch {
   cabang_id: number;
   branch_name: string;
@@ -8,6 +9,8 @@ export interface Employee {
   name: string;
   email?: string;
   role: string;
+  auth_id?: string;
+  is_active?: boolean;
   cabang?: {
     branch_name: string;
   };
@@ -19,5 +22,5 @@ export interface EmployeeFormData {
   whatsapp_contact: string;
   role: string;
   cabang_id: string;
-  password?: string; // Menambahkan field password
+  password: string;
 }
