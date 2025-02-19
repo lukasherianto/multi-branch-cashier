@@ -57,15 +57,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       show: !isEmployee,
       subItems: [
         { label: "Daftar Supplier", path: "/supplier" },
-        { label: "Transaksi Pembelian", path: "/purchase" },
+        { label: "Transaksi Pembelian", path: "/purchase" }
       ]
     },
     { icon: Clock, label: "Absensi", path: "/attendance", show: true },
     { icon: History, label: "Riwayat", path: "/history", show: true },
     { icon: FileText, label: "Laporan", path: "/reports", show: !isEmployee },
     { icon: DollarSign, label: "Kas", path: "/kas", show: !isEmployee },
-    { icon: Settings, label: "Pengaturan", path: "/settings", show: !isEmployee },
-  ].filter(item => item.show); // Filter items based on show property
+    { icon: Settings, label: "Pengaturan", path: "/settings", show: !isEmployee }
+  ].filter(item => item.show);
 
   const renderNavItem = (item: any) => {
     const isItemActive = isActive(item.path);
@@ -87,19 +87,23 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         
         {hasSubItems && (
           <div className="ml-7 space-y-1">
-            {item.subItems.map((subItem: any) => (
-              <Link
-                key={subItem.path}
-                to={subItem.path}
-                className={`block px-3 py-2 text-sm rounded-lg transition-all duration-200 ${
-                  isActive(subItem.path)
-                    ? "bg-mint-50 text-mint-600"
-                    : "text-gray-600 hover:bg-gray-50"
-                }`}
-              >
-                {subItem.label}
-              </Link>
-            ))}
+            {item.subItems.map((subItem: any) => {
+              // Ensure subItem path is absolute
+              const absolutePath = subItem.path.startsWith('/') ? subItem.path : `/${subItem.path}`;
+              return (
+                <Link
+                  key={absolutePath}
+                  to={absolutePath}
+                  className={`block px-3 py-2 text-sm rounded-lg transition-all duration-200 ${
+                    isActive(absolutePath)
+                      ? "bg-mint-50 text-mint-600"
+                      : "text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  {subItem.label}
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>
