@@ -46,10 +46,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Define navigation items based on user role
   const navItems = [
-    { icon: Home, label: "Dasbor", path: "/", show: true },
+    { icon: Home, label: "Dasbor", path: "/" },
     { icon: Building, label: "Cabang", path: "/branches", show: !isEmployee },
-    { icon: Package, label: "Produk", path: "/products", show: true },
-    { icon: ShoppingCart, label: "Kasir", path: "/pos", show: true },
+    { icon: Package, label: "Produk", path: "/products" },
+    { icon: ShoppingCart, label: "Kasir", path: "/pos" },
     { 
       icon: Store, 
       label: "Supplier", 
@@ -60,12 +60,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         { label: "Transaksi Pembelian", path: "/purchase" }
       ]
     },
-    { icon: Clock, label: "Absensi", path: "/attendance", show: true },
-    { icon: History, label: "Riwayat", path: "/history", show: true },
+    { icon: Clock, label: "Absensi", path: "/attendance" },
+    { icon: History, label: "Riwayat", path: "/history" },
     { icon: FileText, label: "Laporan", path: "/reports", show: !isEmployee },
     { icon: DollarSign, label: "Kas", path: "/kas", show: !isEmployee },
     { icon: Settings, label: "Pengaturan", path: "/settings", show: !isEmployee }
-  ].filter(item => item.show);
+  ].filter(item => item.show !== false);
 
   const renderNavItem = (item: any) => {
     const isItemActive = isActive(item.path);
@@ -87,23 +87,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         
         {hasSubItems && (
           <div className="ml-7 space-y-1">
-            {item.subItems.map((subItem: any) => {
-              // Ensure subItem path is absolute
-              const absolutePath = subItem.path.startsWith('/') ? subItem.path : `/${subItem.path}`;
-              return (
-                <Link
-                  key={absolutePath}
-                  to={absolutePath}
-                  className={`block px-3 py-2 text-sm rounded-lg transition-all duration-200 ${
-                    isActive(absolutePath)
-                      ? "bg-mint-50 text-mint-600"
-                      : "text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
-                  {subItem.label}
-                </Link>
-              );
-            })}
+            {item.subItems.map((subItem: any) => (
+              <Link
+                key={subItem.path}
+                to={subItem.path}
+                className={`block px-3 py-2 text-sm rounded-lg transition-all duration-200 ${
+                  isActive(subItem.path)
+                    ? "bg-mint-50 text-mint-600"
+                    : "text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                {subItem.label}
+              </Link>
+            ))}
           </div>
         )}
       </div>
