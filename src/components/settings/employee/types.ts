@@ -11,8 +11,14 @@ export interface Employee {
   role: string;
   auth_id?: string;
   is_active?: boolean;
+  pelaku_usaha_id: number;
+  isSameBusiness?: boolean;
+  businessName?: string;
   cabang?: {
     branch_name: string;
+  };
+  pelaku_usaha?: {
+    business_name: string;
   };
 }
 

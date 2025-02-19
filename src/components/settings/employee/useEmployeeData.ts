@@ -3,9 +3,11 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Branch, Employee } from "./types";
+import { useAuth } from "@/hooks/useAuth";
 
 export const useEmployeeData = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -13,7 +15,6 @@ export const useEmployeeData = () => {
   const loadBranches = async () => {
     try {
       console.log("Loading branches...");
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         console.error("No authenticated user");
         return;
@@ -56,13 +57,13 @@ export const useEmployeeData = () => {
   const loadEmployees = async () => {
     try {
       console.log("Loading employees...");
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         console.error("No authenticated user");
         return;
       }
 
-      const { data: pelakuUsaha, error: pelakuUsahaError } = await supabase
+      // Get current user's pelaku usaha
+      const { data: currentPelakuUsaha, error: pelakuUsahaError } = await supabase
         .from("pelaku_usaha")
         .select("pelaku_usaha_id")
         .eq("user_id", user.id)
@@ -73,27 +74,50 @@ export const useEmployeeData = () => {
         return;
       }
 
-      if (!pelakuUsaha) {
+      if (!currentPelakuUsaha) {
         console.log("No pelaku usaha found, user needs to create business profile first");
         return;
       }
 
-      const { data: employeesData, error } = await supabase
+      // Get all employees from this pelaku usaha
+      const { data: employeesData, error: employeesError } = await supabase
         .from("karyawan")
         .select(`
-          *,
-          cabang(branch_name),
-          profiles:auth_id(
+          karyawan_id,
+          name,
+          email,
+          role,
+          auth_id,
+          is_active,
+          pelaku_usaha_id,
+          cabang:cabang_id (
+            branch_name
+          ),
+          pelaku_usaha:pelaku_usaha_id (
+            business_name
+          ),
+          profiles:auth_id (
             is_employee,
             business_role
           )
         `)
-        .eq("pelaku_usaha_id", pelakuUsaha.pelaku_usaha_id)
-        .eq("is_active", true);
+        .eq("is_active", true)
+        .order('name', { ascending: true });
 
-      if (error) throw error;
-      console.log("Employees loaded:", employeesData);
-      setEmployees(employeesData || []);
+      if (employeesError) {
+        console.error("Error fetching employees:", employeesError);
+        throw employeesError;
+      }
+
+      // Filter and format employee data
+      const formattedEmployees = employeesData?.map(emp => ({
+        ...emp,
+        isSameBusiness: emp.pelaku_usaha_id === currentPelakuUsaha.pelaku_usaha_id,
+        businessName: emp.pelaku_usaha?.business_name || 'Tidak diketahui'
+      })) || [];
+
+      console.log("Employees loaded:", formattedEmployees);
+      setEmployees(formattedEmployees);
     } catch (error) {
       console.error("Error loading employees:", error);
       toast({
@@ -105,9 +129,11 @@ export const useEmployeeData = () => {
   };
 
   useEffect(() => {
-    loadBranches();
-    loadEmployees();
-  }, []);
+    if (user) {
+      loadBranches();
+      loadEmployees();
+    }
+  }, [user]);
 
   return {
     isLoading,
