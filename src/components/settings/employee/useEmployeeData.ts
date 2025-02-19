@@ -79,7 +79,7 @@ export const useEmployeeData = () => {
         return;
       }
 
-      // Get all employees from this pelaku usaha
+      // Get all employees
       const { data: employeesData, error: employeesError } = await supabase
         .from("karyawan")
         .select(`
@@ -95,10 +95,6 @@ export const useEmployeeData = () => {
           ),
           pelaku_usaha:pelaku_usaha_id (
             business_name
-          ),
-          profiles:auth_id (
-            is_employee,
-            business_role
           )
         `)
         .eq("is_active", true)
