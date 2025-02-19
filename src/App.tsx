@@ -26,7 +26,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// Definisikan routes di luar komponen App
 const routes = [
   {
     path: "/",
@@ -54,12 +53,14 @@ const routes = [
     ],
   },
   {
-    path: "/auth",
+    path: "auth",
     element: <Auth />,
   },
 ];
 
-const router = createBrowserRouter(routes);
+const router = createBrowserRouter(routes, {
+  basename: "/",
+});
 
 function App() {
   return (
