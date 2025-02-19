@@ -31,7 +31,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 const router = createBrowserRouter([
   {
-    path: "/auth",
+    path: "auth",
     element: <Auth />,
   },
   {
@@ -45,7 +45,7 @@ const router = createBrowserRouter([
     ),
     children: [
       {
-        path: "",
+        index: true,
         element: <Index />,
       },
       {

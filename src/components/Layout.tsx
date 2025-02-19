@@ -41,10 +41,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   };
 
-  // Check if user is an employee
   const isEmployee = user?.user_metadata?.is_employee || false;
 
-  // Define navigation items based on user role
   const navItems = [
     { icon: Home, label: "Dasbor", path: "/" },
     { icon: Building, label: "Cabang", path: "/branches", show: !isEmployee },
@@ -67,23 +65,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { icon: Settings, label: "Pengaturan", path: "/settings", show: !isEmployee }
   ].filter(item => item.show !== false);
 
-  // Ensure all paths are properly formatted
-  const formatPath = (path: string) => {
-    // If path is just "/", return it as is
-    if (path === "/") return path;
-    // Remove trailing slash if exists
-    return path.endsWith("/") ? path.slice(0, -1) : path;
-  };
-
   const renderNavItem = (item: any) => {
-    const formattedPath = formatPath(item.path);
-    const isItemActive = isActive(formattedPath);
+    const isItemActive = isActive(item.path);
     const hasSubItems = item.subItems && item.subItems.length > 0;
     
     return (
-      <div key={formattedPath} className="space-y-1">
+      <div key={item.path} className="space-y-1">
         <Link
-          to={formattedPath}
+          to={item.path}
           className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 ${
             isItemActive
               ? "bg-mint-50 text-mint-600"
@@ -96,22 +85,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         
         {hasSubItems && (
           <div className="ml-7 space-y-1">
-            {item.subItems.map((subItem: any) => {
-              const formattedSubPath = formatPath(subItem.path);
-              return (
-                <Link
-                  key={formattedSubPath}
-                  to={formattedSubPath}
-                  className={`block px-3 py-2 text-sm rounded-lg transition-all duration-200 ${
-                    isActive(formattedSubPath)
-                      ? "bg-mint-50 text-mint-600"
-                      : "text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
-                  {subItem.label}
-                </Link>
-              );
-            })}
+            {item.subItems.map((subItem: any) => (
+              <Link
+                key={subItem.path}
+                to={subItem.path}
+                className={`block px-3 py-2 text-sm rounded-lg transition-all duration-200 ${
+                  isActive(subItem.path)
+                    ? "bg-mint-50 text-mint-600"
+                    : "text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                {subItem.label}
+              </Link>
+            ))}
           </div>
         )}
       </div>
@@ -121,18 +107,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="flex h-screen">
-        {/* Sidebar */}
         <nav className="hidden md:flex flex-col w-48 bg-white border-r border-gray-200 p-3">
           <div className="mb-8">
             <h1 className="text-2xl font-semibold text-mint-600">KasirBengkulu</h1>
           </div>
           
-          {/* Navigation Items */}
           <div className="flex-1 space-y-2">
             {navItems.map(item => renderNavItem(item))}
           </div>
           
-          {/* Logout Button */}
           <Button
             variant="ghost"
             className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 mt-4"
@@ -143,15 +126,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </Button>
         </nav>
 
-        {/* Mobile Bottom Navigation */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden">
           <div className="flex justify-around">
             {navItems.slice(0, 4).map(item => (
               <Link
-                key={formatPath(item.path)}
-                to={formatPath(item.path)}
+                key={item.path}
+                to={item.path}
                 className={`flex flex-col items-center py-3 ${
-                  isActive(formatPath(item.path))
+                  isActive(item.path)
                     ? "text-mint-600"
                     : "text-gray-600"
                 }`}
@@ -170,7 +152,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </div>
 
-        {/* Main Content */}
         <main className="flex-1 overflow-y-auto p-8 pb-20 md:pb-8">
           <div className="animate-fadeIn">
             {children}
