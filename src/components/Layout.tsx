@@ -5,6 +5,7 @@ import { Building, Home, ShoppingCart, History, Settings, Package, FileText, Clo
 import { Button } from "./ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -14,6 +15,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -39,28 +41,35 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   };
 
+  // Check if user is an employee
+  const isEmployee = user?.user_metadata?.is_employee || false;
+
+  // Define navigation items based on user role
   const navItems = [
-    { icon: Home, label: "Dasbor", path: "/" },
-    { icon: Building, label: "Cabang", path: "/branches" },
-    { icon: Package, label: "Produk", path: "/products" },
-    { icon: ShoppingCart, label: "Kasir", path: "/pos" },
+    { icon: Home, label: "Dasbor", path: "/", show: true }, // Show to all users
+    { icon: Building, label: "Cabang", path: "/branches", show: !isEmployee },
+    { icon: Package, label: "Produk", path: "/products", show: true }, // Show to all users
+    { icon: ShoppingCart, label: "Kasir", path: "/pos", show: true }, // Show to all users
     { 
       icon: Store, 
       label: "Supplier", 
       path: "/supplier",
+      show: !isEmployee,
       subItems: [
         { label: "Daftar Supplier", path: "/supplier" },
         { label: "Transaksi Pembelian", path: "/purchase" },
       ]
     },
-    { icon: Clock, label: "Absensi", path: "/attendance" },
-    { icon: History, label: "Riwayat", path: "/history" },
-    { icon: FileText, label: "Laporan", path: "/reports" },
-    { icon: DollarSign, label: "Kas", path: "/kas" },
-    { icon: Settings, label: "Pengaturan", path: "/settings" },
+    { icon: Clock, label: "Absensi", path: "/attendance", show: true }, // Show to all users
+    { icon: History, label: "Riwayat", path: "/history", show: true }, // Show to all users
+    { icon: FileText, label: "Laporan", path: "/reports", show: !isEmployee },
+    { icon: DollarSign, label: "Kas", path: "/kas", show: !isEmployee },
+    { icon: Settings, label: "Pengaturan", path: "/settings", show: !isEmployee },
   ];
 
   const renderNavItem = (item: any) => {
+    if (!item.show) return null;
+
     const isItemActive = isActive(item.path);
     const hasSubItems = item.subItems && item.subItems.length > 0;
     
@@ -127,7 +136,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {/* Mobile Bottom Navigation */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden">
           <div className="flex justify-around">
-            {navItems.map(item => (
+            {navItems.filter(item => item.show).map(item => (
               <Link
                 key={item.path}
                 to={item.path}
