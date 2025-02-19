@@ -18,22 +18,16 @@ import Branches from "@/pages/Branches";
 import Attendance from "@/pages/Attendance";
 import { PurchaseForm } from "@/components/pos/forms/PurchaseForm";
 
-// Protected Route wrapper component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
-  
   if (!user) {
     return <Navigate to="/auth" replace />;
   }
-  
   return <>{children}</>;
 };
 
-const router = createBrowserRouter([
-  {
-    path: "auth",
-    element: <Auth />,
-  },
+// Definisikan routes di luar komponen App
+const routes = [
   {
     path: "/",
     element: (
@@ -44,61 +38,28 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      {
-        index: true,
-        element: <Index />,
-      },
-      {
-        path: "pos",
-        element: <POS />,
-      },
-      {
-        path: "products",
-        element: <Products />,
-      },
-      {
-        path: "purchase",
-        element: <Purchase />,
-      },
-      {
-        path: "purchase/add",
-        element: <PurchaseForm />,
-      },
-      {
-        path: "history",
-        element: <History />,
-      },
-      {
-        path: "returns",
-        element: <Returns />,
-      },
-      {
-        path: "reports",
-        element: <Reports />,
-      },
-      {
-        path: "settings",
-        element: <Settings />,
-      },
-      {
-        path: "kas",
-        element: <Kas />,
-      },
-      {
-        path: "supplier",
-        element: <Supplier />,
-      },
-      {
-        path: "branches",
-        element: <Branches />,
-      },
-      {
-        path: "attendance",
-        element: <Attendance />,
-      },
+      { index: true, element: <Index /> },
+      { path: "pos", element: <POS /> },
+      { path: "products", element: <Products /> },
+      { path: "purchase", element: <Purchase /> },
+      { path: "purchase/add", element: <PurchaseForm /> },
+      { path: "history", element: <History /> },
+      { path: "returns", element: <Returns /> },
+      { path: "reports", element: <Reports /> },
+      { path: "settings", element: <Settings /> },
+      { path: "kas", element: <Kas /> },
+      { path: "supplier", element: <Supplier /> },
+      { path: "branches", element: <Branches /> },
+      { path: "attendance", element: <Attendance /> },
     ],
   },
-]);
+  {
+    path: "/auth",
+    element: <Auth />,
+  },
+];
+
+const router = createBrowserRouter(routes);
 
 function App() {
   return (
