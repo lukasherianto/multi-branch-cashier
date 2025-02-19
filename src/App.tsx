@@ -45,55 +45,55 @@ const router = createBrowserRouter([
     ),
     children: [
       {
-        path: "",
+        path: "/",
         element: <Index />,
       },
       {
-        path: "pos",
+        path: "/pos",
         element: <POS />,
       },
       {
-        path: "products",
+        path: "/products",
         element: <Products />,
       },
       {
-        path: "purchase",
+        path: "/purchase",
         element: <Purchase />,
       },
       {
-        path: "purchase/add",
+        path: "/purchase/add",
         element: <PurchaseForm />,
       },
       {
-        path: "history",
+        path: "/history",
         element: <History />,
       },
       {
-        path: "returns",
+        path: "/returns",
         element: <Returns />,
       },
       {
-        path: "reports",
+        path: "/reports",
         element: <Reports />,
       },
       {
-        path: "settings",
+        path: "/settings",
         element: <Settings />,
       },
       {
-        path: "kas",
+        path: "/kas",
         element: <Kas />,
       },
       {
-        path: "supplier",
+        path: "/supplier",
         element: <Supplier />,
       },
       {
-        path: "branches",
+        path: "/branches",
         element: <Branches />,
       },
       {
-        path: "attendance",
+        path: "/attendance",
         element: <Attendance />,
       },
     ],
