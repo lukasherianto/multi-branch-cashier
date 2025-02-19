@@ -67,14 +67,23 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { icon: Settings, label: "Pengaturan", path: "/settings", show: !isEmployee }
   ].filter(item => item.show !== false);
 
+  // Ensure all paths are properly formatted
+  const formatPath = (path: string) => {
+    // If path is just "/", return it as is
+    if (path === "/") return path;
+    // Remove trailing slash if exists
+    return path.endsWith("/") ? path.slice(0, -1) : path;
+  };
+
   const renderNavItem = (item: any) => {
-    const isItemActive = isActive(item.path);
+    const formattedPath = formatPath(item.path);
+    const isItemActive = isActive(formattedPath);
     const hasSubItems = item.subItems && item.subItems.length > 0;
     
     return (
-      <div key={item.path} className="space-y-1">
+      <div key={formattedPath} className="space-y-1">
         <Link
-          to={item.path}
+          to={formattedPath}
           className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 ${
             isItemActive
               ? "bg-mint-50 text-mint-600"
@@ -87,19 +96,22 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         
         {hasSubItems && (
           <div className="ml-7 space-y-1">
-            {item.subItems.map((subItem: any) => (
-              <Link
-                key={subItem.path}
-                to={subItem.path}
-                className={`block px-3 py-2 text-sm rounded-lg transition-all duration-200 ${
-                  isActive(subItem.path)
-                    ? "bg-mint-50 text-mint-600"
-                    : "text-gray-600 hover:bg-gray-50"
-                }`}
-              >
-                {subItem.label}
-              </Link>
-            ))}
+            {item.subItems.map((subItem: any) => {
+              const formattedSubPath = formatPath(subItem.path);
+              return (
+                <Link
+                  key={formattedSubPath}
+                  to={formattedSubPath}
+                  className={`block px-3 py-2 text-sm rounded-lg transition-all duration-200 ${
+                    isActive(formattedSubPath)
+                      ? "bg-mint-50 text-mint-600"
+                      : "text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  {subItem.label}
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>
@@ -136,10 +148,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="flex justify-around">
             {navItems.slice(0, 4).map(item => (
               <Link
-                key={item.path}
-                to={item.path}
+                key={formatPath(item.path)}
+                to={formatPath(item.path)}
                 className={`flex flex-col items-center py-3 ${
-                  isActive(item.path)
+                  isActive(formatPath(item.path))
                     ? "text-mint-600"
                     : "text-gray-600"
                 }`}
