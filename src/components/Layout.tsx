@@ -46,10 +46,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Define navigation items based on user role
   const navItems = [
-    { icon: Home, label: "Dasbor", path: "/", show: true }, // Show to all users
+    { icon: Home, label: "Dasbor", path: "/", show: true },
     { icon: Building, label: "Cabang", path: "/branches", show: !isEmployee },
-    { icon: Package, label: "Produk", path: "/products", show: true }, // Show to all users
-    { icon: ShoppingCart, label: "Kasir", path: "/pos", show: true }, // Show to all users
+    { icon: Package, label: "Produk", path: "/products", show: true },
+    { icon: ShoppingCart, label: "Kasir", path: "/pos", show: true },
     { 
       icon: Store, 
       label: "Supplier", 
@@ -60,16 +60,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         { label: "Transaksi Pembelian", path: "/purchase" },
       ]
     },
-    { icon: Clock, label: "Absensi", path: "/attendance", show: true }, // Show to all users
-    { icon: History, label: "Riwayat", path: "/history", show: true }, // Show to all users
+    { icon: Clock, label: "Absensi", path: "/attendance", show: true },
+    { icon: History, label: "Riwayat", path: "/history", show: true },
     { icon: FileText, label: "Laporan", path: "/reports", show: !isEmployee },
     { icon: DollarSign, label: "Kas", path: "/kas", show: !isEmployee },
     { icon: Settings, label: "Pengaturan", path: "/settings", show: !isEmployee },
-  ];
+  ].filter(item => item.show); // Filter items based on show property
 
   const renderNavItem = (item: any) => {
-    if (!item.show) return null;
-
     const isItemActive = isActive(item.path);
     const hasSubItems = item.subItems && item.subItems.length > 0;
     
@@ -136,7 +134,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {/* Mobile Bottom Navigation */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden">
           <div className="flex justify-around">
-            {navItems.filter(item => item.show).map(item => (
+            {navItems.slice(0, 4).map(item => (
               <Link
                 key={item.path}
                 to={item.path}
