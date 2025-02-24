@@ -109,6 +109,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <nav className="hidden md:flex flex-col w-48 bg-white border-r border-gray-200 p-3">
           <div className="mb-8">
             <h1 className="text-2xl font-semibold text-mint-600">KasirBengkulu</h1>
+            {user && (
+              <p className="text-sm text-gray-600 mt-1">
+                Login sebagai: {user.user_metadata?.full_name || user.email}
+              </p>
+            )}
           </div>
           
           <div className="flex-1 space-y-2">
