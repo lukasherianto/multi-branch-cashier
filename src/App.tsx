@@ -40,14 +40,14 @@ const routes = [
       { index: true, element: <Index /> },
       { path: "pos", element: <POS /> },
       { path: "products", element: <Products /> },
+      { path: "supplier", element: <Supplier /> },
       { path: "purchase", element: <Purchase /> },
-      { path: "purchase/add", element: <PurchaseForm /> },
+      { path: "purchase/add", element: <Purchase /> },
       { path: "history", element: <History /> },
       { path: "returns", element: <Returns /> },
       { path: "reports", element: <Reports /> },
       { path: "settings", element: <Settings /> },
       { path: "kas", element: <Kas /> },
-      { path: "supplier", element: <Supplier /> },
       { path: "branches", element: <Branches /> },
       { path: "attendance", element: <Attendance /> },
     ],
@@ -58,9 +58,7 @@ const routes = [
   },
 ];
 
-const router = createBrowserRouter(routes, {
-  basename: "/",
-});
+const router = createBrowserRouter(routes);
 
 function App() {
   return (
