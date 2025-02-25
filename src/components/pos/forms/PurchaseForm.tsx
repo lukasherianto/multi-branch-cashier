@@ -2,6 +2,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -23,21 +25,30 @@ import {
 } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 
-interface PurchaseFormData {
-  kategori_id: string;
-  product_name: string;
-  barcode: string;
-  quantity: number;
-  unit_price: number;
-  total_price: number;
-  cabang_id: string;
-  payment_status: string;
-}
+const purchaseFormSchema = z.object({
+  kategori_id: z.string().min(1, "Kategori produk harus dipilih"),
+  product_name: z.string().min(1, "Nama produk harus diisi"),
+  barcode: z.string().optional(),
+  quantity: z.number().min(1, "Jumlah harus lebih dari 0"),
+  unit_price: z.number().min(1, "Harga satuan harus lebih dari 0"),
+  total_price: z.number().optional(),
+  cabang_id: z.string().min(1, "Cabang harus dipilih"),
+  payment_status: z.string().min(1, "Status pembayaran harus dipilih"),
+});
+
+type PurchaseFormData = z.infer<typeof purchaseFormSchema>;
 
 export const PurchaseForm = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const form = useForm<PurchaseFormData>();
+  
+  const form = useForm<PurchaseFormData>({
+    resolver: zodResolver(purchaseFormSchema),
+    defaultValues: {
+      quantity: 0,
+      unit_price: 0,
+    }
+  });
 
   const { data: categories } = useQuery({
     queryKey: ['categories'],
@@ -107,7 +118,10 @@ export const PurchaseForm = () => {
         .select()
         .single();
 
-      if (productError) throw productError;
+      if (productError) {
+        console.error('Error creating product:', productError);
+        throw productError;
+      }
 
       // Create purchase record
       const purchaseData = {
@@ -123,7 +137,10 @@ export const PurchaseForm = () => {
         .from('pembelian')
         .insert(purchaseData);
 
-      if (purchaseError) throw purchaseError;
+      if (purchaseError) {
+        console.error('Error creating purchase:', purchaseError);
+        throw purchaseError;
+      }
 
       // Create product history record
       const { error: historyError } = await supabase
@@ -134,7 +151,10 @@ export const PurchaseForm = () => {
           stock: data.quantity,
         });
 
-      if (historyError) throw historyError;
+      if (historyError) {
+        console.error('Error creating history:', historyError);
+        throw historyError;
+      }
 
       toast({
         title: "Sukses",
@@ -142,12 +162,12 @@ export const PurchaseForm = () => {
       });
 
       navigate("/purchase");
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting purchase:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Gagal menambahkan pembelian",
+        description: error.message || "Gagal menambahkan pembelian",
       });
     }
   };
@@ -163,7 +183,7 @@ export const PurchaseForm = () => {
             name="kategori_id"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Kategori Produk</FormLabel>
+                <FormLabel className="required">Kategori Produk</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
@@ -191,7 +211,7 @@ export const PurchaseForm = () => {
             name="product_name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nama Produk</FormLabel>
+                <FormLabel className="required">Nama Produk</FormLabel>
                 <FormControl>
                   <Input placeholder="Masukkan nama produk" {...field} />
                 </FormControl>
@@ -212,7 +232,7 @@ export const PurchaseForm = () => {
                     {...field}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
-                        e.preventDefault(); // Prevent form submission
+                        e.preventDefault();
                       }
                     }}
                   />
@@ -227,7 +247,7 @@ export const PurchaseForm = () => {
             name="quantity"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Jumlah</FormLabel>
+                <FormLabel className="required">Jumlah</FormLabel>
                 <FormControl>
                   <Input 
                     type="number" 
@@ -246,7 +266,7 @@ export const PurchaseForm = () => {
             name="unit_price"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Harga Satuan</FormLabel>
+                <FormLabel className="required">Harga Satuan</FormLabel>
                 <FormControl>
                   <Input 
                     type="number"
@@ -265,7 +285,7 @@ export const PurchaseForm = () => {
             name="cabang_id"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Cabang</FormLabel>
+                <FormLabel className="required">Cabang</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
@@ -293,7 +313,7 @@ export const PurchaseForm = () => {
             name="payment_status"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Status Pembayaran</FormLabel>
+                <FormLabel className="required">Status Pembayaran</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
