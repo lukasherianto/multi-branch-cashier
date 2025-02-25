@@ -26,6 +26,7 @@ import { useQuery } from "@tanstack/react-query";
 interface PurchaseFormData {
   kategori_id: string;
   product_name: string;
+  barcode: string;
   quantity: number;
   unit_price: number;
   total_price: number;
@@ -78,7 +79,6 @@ export const PurchaseForm = () => {
 
   const onSubmit = async (data: PurchaseFormData) => {
     try {
-      // Create new product first
       const { data: pelakuUsahaData } = await supabase
         .from('pelaku_usaha')
         .select('pelaku_usaha_id')
@@ -99,6 +99,7 @@ export const PurchaseForm = () => {
           pelaku_usaha_id: pelakuUsahaData.pelaku_usaha_id,
           kategori_id: parseInt(data.kategori_id),
           product_name: data.product_name,
+          barcode: data.barcode,
           cost_price: data.unit_price,
           retail_price: data.unit_price * 1.2, // Example markup
           stock: data.quantity
@@ -193,6 +194,28 @@ export const PurchaseForm = () => {
                 <FormLabel>Nama Produk</FormLabel>
                 <FormControl>
                   <Input placeholder="Masukkan nama produk" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="barcode"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Barcode</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="Scan atau masukkan barcode produk" 
+                    {...field}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault(); // Prevent form submission
+                      }
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
