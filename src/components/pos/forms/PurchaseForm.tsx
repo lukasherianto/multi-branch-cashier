@@ -104,13 +104,31 @@ export const PurchaseForm = () => {
         return;
       }
 
+      // Cek apakah barcode sudah ada jika barcode diisi
+      if (data.barcode) {
+        const { data: existingProduct } = await supabase
+          .from('produk')
+          .select('product_name')
+          .eq('barcode', data.barcode)
+          .single();
+
+        if (existingProduct) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: `Barcode sudah digunakan untuk produk: ${existingProduct.product_name}`,
+          });
+          return;
+        }
+      }
+
       const { data: newProduct, error: productError } = await supabase
         .from('produk')
         .insert({
           pelaku_usaha_id: pelakuUsahaData.pelaku_usaha_id,
           kategori_id: parseInt(data.kategori_id),
           product_name: data.product_name,
-          barcode: data.barcode,
+          barcode: data.barcode || null, // Set null jika barcode kosong
           cost_price: data.unit_price,
           retail_price: data.unit_price * 1.2, // Example markup
           stock: data.quantity
