@@ -458,28 +458,34 @@ export type Database = {
       }
       produk_history: {
         Row: {
+          adjustment_type: string | null
           cost_price: number
           created_at: string
           entry_date: string
           history_id: number
+          notes: string | null
           produk_id: number | null
           stock: number
           updated_at: string
         }
         Insert: {
+          adjustment_type?: string | null
           cost_price: number
           created_at?: string
           entry_date?: string
           history_id?: number
+          notes?: string | null
           produk_id?: number | null
           stock: number
           updated_at?: string
         }
         Update: {
+          adjustment_type?: string | null
           cost_price?: number
           created_at?: string
           entry_date?: string
           history_id?: number
+          notes?: string | null
           produk_id?: number | null
           stock?: number
           updated_at?: string
