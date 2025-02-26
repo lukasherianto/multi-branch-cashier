@@ -1,3 +1,4 @@
+
 import { DollarSign } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -100,25 +101,25 @@ const Kas = () => {
   };
 
   return (
-    <div>
-      <div className="flex items-center gap-2 mb-6">
-        <DollarSign className="w-8 h-8 text-mint-600" />
-        <h1 className="text-2xl font-semibold">Kas</h1>
+    <div className="container mx-auto max-w-5xl">
+      <div className="flex items-center gap-2 mb-4">
+        <DollarSign className="w-6 h-6 text-mint-600" />
+        <h1 className="text-xl font-semibold">Kas</h1>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="p-6 bg-white rounded-lg shadow">
-          <h2 className="mb-4 text-lg font-medium">Uang Masuk</h2>
+        <div className="p-4 bg-white rounded-lg shadow-sm">
+          <h2 className="mb-3 text-base font-medium">Uang Masuk</h2>
           <Form {...cashInForm}>
-            <form onSubmit={cashInForm.handleSubmit(onCashInSubmit)} className="space-y-4">
+            <form onSubmit={cashInForm.handleSubmit(onCashInSubmit)} className="space-y-3">
               <FormField
                 control={cashInForm.control}
                 name="transaction_date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tanggal</FormLabel>
+                    <FormLabel className="text-sm">Tanggal</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <Input type="date" {...field} className="h-9" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -130,9 +131,9 @@ const Kas = () => {
                 name="amount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Jumlah (Rp)</FormLabel>
+                    <FormLabel className="text-sm">Jumlah (Rp)</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="0" {...field} />
+                      <Input type="number" placeholder="0" {...field} className="h-9" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -144,34 +145,34 @@ const Kas = () => {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Keterangan</FormLabel>
+                    <FormLabel className="text-sm">Keterangan</FormLabel>
                     <FormControl>
-                      <Input placeholder="Keterangan uang masuk" {...field} />
+                      <Input placeholder="Keterangan uang masuk" {...field} className="h-9" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full h-9">
                 Simpan Uang Masuk
               </Button>
             </form>
           </Form>
         </div>
 
-        <div className="p-6 bg-white rounded-lg shadow">
-          <h2 className="mb-4 text-lg font-medium">Uang Keluar</h2>
+        <div className="p-4 bg-white rounded-lg shadow-sm">
+          <h2 className="mb-3 text-base font-medium">Uang Keluar</h2>
           <Form {...cashOutForm}>
-            <form onSubmit={cashOutForm.handleSubmit(onCashOutSubmit)} className="space-y-4">
+            <form onSubmit={cashOutForm.handleSubmit(onCashOutSubmit)} className="space-y-3">
               <FormField
                 control={cashOutForm.control}
                 name="transaction_date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tanggal</FormLabel>
+                    <FormLabel className="text-sm">Tanggal</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <Input type="date" {...field} className="h-9" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -183,9 +184,9 @@ const Kas = () => {
                 name="amount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Jumlah (Rp)</FormLabel>
+                    <FormLabel className="text-sm">Jumlah (Rp)</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="0" {...field} />
+                      <Input type="number" placeholder="0" {...field} className="h-9" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -197,16 +198,16 @@ const Kas = () => {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Keterangan</FormLabel>
+                    <FormLabel className="text-sm">Keterangan</FormLabel>
                     <FormControl>
-                      <Input placeholder="Keterangan uang keluar" {...field} />
+                      <Input placeholder="Keterangan uang keluar" {...field} className="h-9" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full h-9">
                 Simpan Uang Keluar
               </Button>
             </form>
