@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -20,7 +19,8 @@ const menuItems = [
     icon: Package2,
     subItems: [
       { path: "/products", label: "Daftar Produk" },
-      { path: "/products/categories", label: "Kategori" }
+      { path: "/products/categories", label: "Kategori" },
+      { path: "/products/transfer", label: "Transfer Produk" }
     ]
   },
   { path: "/history", label: "Riwayat", icon: History },
