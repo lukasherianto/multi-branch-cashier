@@ -89,9 +89,9 @@ export function TransferStockForm() {
       const { error: transferError } = await supabase
         .from('transfer_stok')
         .insert({
-          produk_id: parseInt(values.produk_id),
-          cabang_id_from: parseInt(values.cabang_id_from),
-          cabang_id_to: parseInt(values.cabang_id_to),
+          produk_id: parseInt(values.produk_id, 10),
+          cabang_id_from: parseInt(values.cabang_id_from, 10),
+          cabang_id_to: parseInt(values.cabang_id_to, 10),
           quantity: values.quantity,
         });
 
@@ -101,7 +101,7 @@ export function TransferStockForm() {
       const { error: updateError } = await supabase
         .from('produk')
         .update({ stock: product.stock - values.quantity })
-        .eq('produk_id', values.produk_id);
+        .eq('produk_id', parseInt(values.produk_id, 10));
 
       if (updateError) throw updateError;
 

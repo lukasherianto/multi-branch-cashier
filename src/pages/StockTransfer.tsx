@@ -22,10 +22,12 @@ const StockTransfer = () => {
       const { data } = await supabase
         .from('transfer_stok')
         .select(`
-          *,
+          transfer_id,
+          transfer_date,
+          quantity,
           produk:produk_id (product_name),
-          cabang_from:cabang_id_from (branch_name),
-          cabang_to:cabang_id_to (branch_name)
+          cabang_from:cabang_id_from (*)!inner,
+          cabang_to:cabang_id_to (*)!inner
         `)
         .order('transfer_date', { ascending: false });
 
