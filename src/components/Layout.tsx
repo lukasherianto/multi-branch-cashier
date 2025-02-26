@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import clsx from "clsx";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/hooks/useAuth";
 
 const menuItems = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -42,6 +44,7 @@ const Layout = () => {
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
+  const { user } = useAuth();
 
   const handleNavigate = (path: string) => {
     navigate(path);
@@ -128,6 +131,17 @@ const Layout = () => {
     </div>
   );
 
+  const AppHeader = () => (
+    <div className="flex flex-col">
+      <Link to="/" className="font-semibold text-sm">
+        Xaviera POS
+      </Link>
+      <span className="text-xs text-muted-foreground mt-1">
+        Login Sebagai: {user?.email}
+      </span>
+    </div>
+  );
+
   if (isMobile) {
     return (
       <div className="min-h-screen">
@@ -140,12 +154,11 @@ const Layout = () => {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-56">
+                <AppHeader />
                 <MenuContent />
               </SheetContent>
             </Sheet>
-            <Link to="/" className="font-semibold text-sm">
-              Lovable POS
-            </Link>
+            <AppHeader />
           </div>
         </header>
         <main className="p-4">
@@ -158,9 +171,7 @@ const Layout = () => {
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[200px_1fr]">
       <aside className="fixed top-0 z-50 h-screen w-48 border-r bg-background p-3 lg:static">
-        <Link to="/" className="mb-2 block font-semibold text-sm">
-          Lovable POS
-        </Link>
+        <AppHeader />
         <MenuContent />
       </aside>
       <main className="p-4 lg:p-6 ml-48 lg:ml-0">
