@@ -16,10 +16,10 @@ import PrintPreview from "@/pages/PrintPreview";
 import Kas from "@/pages/Kas";
 import KasPurchases from "@/pages/KasPurchases";
 import Attendance from "@/pages/Attendance";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, AuthProvider } from "@/hooks/useAuth";
 import { useEffect } from "react";
 
-function App() {
+function AppRoutes() {
   const { isLoading, user } = useAuth();
   
   useEffect(() => {
@@ -32,37 +32,43 @@ function App() {
 
   if (!user) {
     return (
-      <BrowserRouter>
-        <Routes>
-          <Route path="/auth" element={<Auth />} />
-          <Route path="*" element={<Navigate to="/auth" replace />} />
-        </Routes>
-      </BrowserRouter>
+      <Routes>
+        <Route path="/auth" element={<Auth />} />
+        <Route path="*" element={<Navigate to="/auth" replace />} />
+      </Routes>
     );
   }
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Index />} />
-          <Route path="pos" element={<POS />} />
-          <Route path="products" element={<Products />} />
-          <Route path="products/categories" element={<ProductCategories />} />
-          <Route path="products/transfer" element={<StockTransfer />} />
-          <Route path="history" element={<History />} />
-          <Route path="returns" element={<Returns />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="kas" element={<Kas />} />
-          <Route path="kas/purchases" element={<KasPurchases />} />
-          <Route path="branches" element={<Branches />} />
-          <Route path="attendance" element={<Attendance />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="print/:transactionId" element={<PrintPreview />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        <Route index element={<Index />} />
+        <Route path="pos" element={<POS />} />
+        <Route path="products" element={<Products />} />
+        <Route path="products/categories" element={<ProductCategories />} />
+        <Route path="products/transfer" element={<StockTransfer />} />
+        <Route path="history" element={<History />} />
+        <Route path="returns" element={<Returns />} />
+        <Route path="reports" element={<Reports />} />
+        <Route path="kas" element={<Kas />} />
+        <Route path="kas/purchases" element={<KasPurchases />} />
+        <Route path="branches" element={<Branches />} />
+        <Route path="attendance" element={<Attendance />} />
+        <Route path="settings" element={<Settings />} />
+        <Route path="print/:transactionId" element={<PrintPreview />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Route>
+    </Routes>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
