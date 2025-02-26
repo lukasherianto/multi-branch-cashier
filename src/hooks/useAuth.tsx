@@ -10,6 +10,7 @@ interface AuthContextType {
   cabangList: any[];
   selectedCabangId: number | null;
   setSelectedCabangId: (id: number | null) => void;
+  isLoading: boolean; // Added this line
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,6 +21,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [cabangList, setCabangList] = useState<any[]>([]);
   const [cabang, setCabang] = useState<any>(null);
   const [selectedCabangId, setSelectedCabangId] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true); // Added this line
 
   useEffect(() => {
     // Check active session on mount
@@ -28,6 +30,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("Active session found:", session.user.id);
         setUser(session.user);
       }
+      setIsLoading(false); // Added this line
     });
 
     // Set up real-time subscription to auth changes
@@ -129,7 +132,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       cabang,
       cabangList,
       selectedCabangId,
-      setSelectedCabangId
+      setSelectedCabangId,
+      isLoading // Added this line
     }}>
       {children}
     </AuthContext.Provider>
