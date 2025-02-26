@@ -118,7 +118,7 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
 
       toast({
         title: "Sukses",
-        description: `Produk ${values.product_name} berhasil ditambahkan ke database`,
+        description: "Produk berhasil ditambahkan",
       });
       
       form.reset();
