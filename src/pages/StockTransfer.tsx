@@ -22,32 +22,63 @@ interface Transfer {
 }
 
 const StockTransfer = () => {
-  // Fetch transfer history
-  const { data: transfers = [] } = useQuery<Transfer[]>({
+  const { data: transfers = [] } = useQuery({
     queryKey: ['transfers'],
     queryFn: async () => {
-      const { data: pelakuUsaha } = await supabase
-        .from('pelaku_usaha')
-        .select('pelaku_usaha_id')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
+      try {
+        const { data: pelakuUsaha } = await supabase
+          .from('pelaku_usaha')
+          .select('pelaku_usaha_id')
+          .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+          .single();
 
-      if (!pelakuUsaha) return [];
+        if (!pelakuUsaha) return [];
 
-      const { data } = await supabase
-        .from('transfer_stok')
-        .select(`
-          transfer_id,
-          transfer_date,
-          quantity,
-          produk:produk_id(product_name),
-          cabang_from:cabang_id_from(branch_name),
-          cabang_to:cabang_id_to(branch_name)
-        `)
-        .order('transfer_date', { ascending: false });
+        // Fetch transfers with proper joins
+        const { data: transferData, error } = await supabase
+          .from('transfer_stok')
+          .select(`
+            transfer_id,
+            transfer_date,
+            quantity,
+            produk:produk_id (
+              product_name
+            ),
+            cabang_from:cabang (
+              branch_name
+            ),
+            cabang_to:cabang (
+              branch_name
+            )
+          `)
+          .eq('cabang.pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id)
+          .order('transfer_date', { ascending: false });
 
-      return data || [];
-    },
+        if (error) {
+          console.error('Error fetching transfers:', error);
+          return [];
+        }
+
+        // Transform the data to match the Transfer interface
+        const formattedTransfers: Transfer[] = (transferData || []).map(transfer => ({
+          transfer_id: transfer.transfer_id,
+          transfer_date: transfer.transfer_date,
+          quantity: transfer.quantity,
+          produk: transfer.produk,
+          cabang_from: {
+            branch_name: transfer.cabang_from?.branch_name || 'Unknown'
+          },
+          cabang_to: {
+            branch_name: transfer.cabang_to?.branch_name || 'Unknown'
+          }
+        }));
+
+        return formattedTransfers;
+      } catch (error) {
+        console.error('Error in transfer query:', error);
+        return [];
+      }
+    }
   });
 
   return (
@@ -73,7 +104,7 @@ const StockTransfer = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {transfers.length > 0 ? (
+              {transfers && transfers.length > 0 ? (
                 transfers.map((transfer) => (
                   <TableRow key={transfer.transfer_id}>
                     <TableCell>
