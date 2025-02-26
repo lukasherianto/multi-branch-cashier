@@ -72,7 +72,7 @@ const Layout = () => {
             <Button
               variant="ghost"
               className={clsx(
-                "w-full justify-start gap-2",
+                "w-full justify-start gap-2 h-8 px-2 text-sm",
                 isActive && "bg-accent text-accent-foreground"
               )}
             >
@@ -80,13 +80,13 @@ const Layout = () => {
               {item.label}
             </Button>
           </CollapsibleTrigger>
-          <CollapsibleContent className="pl-6 space-y-1">
+          <CollapsibleContent className="pl-4 space-y-1">
             {item.subItems.map((subItem) => (
               <Button
                 key={subItem.path}
                 variant="ghost"
                 className={clsx(
-                  "w-full justify-start",
+                  "w-full justify-start h-7 px-2 text-sm",
                   location.pathname === subItem.path && "bg-accent text-accent-foreground"
                 )}
                 onClick={() => handleNavigate(subItem.path)}
@@ -103,7 +103,7 @@ const Layout = () => {
       <Button
         variant="ghost"
         className={clsx(
-          "w-full justify-start gap-2",
+          "w-full justify-start gap-2 h-8 px-2 text-sm",
           isActive && "bg-accent text-accent-foreground"
         )}
         onClick={() => handleNavigate(item.path)}
@@ -115,7 +115,7 @@ const Layout = () => {
   };
 
   const MenuContent = () => (
-    <div className="space-y-1 py-2">
+    <div className="space-y-0.5 py-2">
       {menuItems.map((item) => (
         <MenuItem key={item.path} item={item} />
       ))}
@@ -125,19 +125,19 @@ const Layout = () => {
   if (isMobile) {
     return (
       <div className="min-h-screen">
-        <header className="bg-background border-b px-4 py-3 sticky top-0 z-50">
+        <header className="bg-background border-b px-4 py-2 sticky top-0 z-50">
           <div className="flex items-center gap-2">
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <MenuIcon className="h-5 w-5" />
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MenuIcon className="h-4 w-4" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-64">
+              <SheetContent side="left" className="w-56">
                 <MenuContent />
               </SheetContent>
             </Sheet>
-            <Link to="/" className="font-semibold">
+            <Link to="/" className="font-semibold text-sm">
               Lovable POS
             </Link>
           </div>
@@ -150,14 +150,14 @@ const Layout = () => {
   }
 
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[240px_1fr]">
-      <aside className="fixed top-0 z-50 h-screen w-60 border-r bg-background p-4 lg:static">
-        <Link to="/" className="mb-4 block font-semibold">
+    <div className="min-h-screen lg:grid lg:grid-cols-[200px_1fr]">
+      <aside className="fixed top-0 z-50 h-screen w-48 border-r bg-background p-3 lg:static">
+        <Link to="/" className="mb-2 block font-semibold text-sm">
           Lovable POS
         </Link>
         <MenuContent />
       </aside>
-      <main className="p-4 lg:p-8">
+      <main className="p-4 lg:p-6 ml-48 lg:ml-0">
         <Outlet />
       </main>
     </div>
