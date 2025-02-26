@@ -2,12 +2,14 @@
 import { useState, useEffect } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Store, Package2, History, FileBarChart2, Settings, ArrowLeftRight, Banknote, Building2, UserRound, MenuIcon } from "lucide-react";
+import { LayoutDashboard, Store, Package2, History, FileBarChart2, Settings, ArrowLeftRight, Banknote, Building2, UserRound, MenuIcon, LogOut } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useToast } from "@/hooks/use-toast";
 import clsx from "clsx";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const menuItems = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -45,6 +47,7 @@ const Layout = () => {
   const [open, setOpen] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const handleNavigate = (path: string) => {
     navigate(path);
@@ -57,6 +60,24 @@ const Layout = () => {
         ? prev.filter(p => p !== path)
         : [...prev, path]
     );
+  };
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Berhasil keluar",
+        description: "Anda telah keluar dari sistem",
+      });
+      navigate("/auth");
+    } catch (error) {
+      console.error("Error logging out:", error);
+      toast({
+        title: "Gagal keluar",
+        description: "Terjadi kesalahan saat mencoba keluar",
+        variant: "destructive",
+      });
+    }
   };
 
   useEffect(() => {
@@ -124,10 +145,22 @@ const Layout = () => {
   };
 
   const MenuContent = () => (
-    <div className="space-y-0.5 py-2">
-      {menuItems.map((item) => (
-        <MenuItem key={item.path} item={item} />
-      ))}
+    <div className="flex flex-col h-full">
+      <div className="flex-grow space-y-0.5 py-2">
+        {menuItems.map((item) => (
+          <MenuItem key={item.path} item={item} />
+        ))}
+      </div>
+      <div className="p-2 border-t">
+        <Button
+          variant="ghost"
+          className="w-full justify-start gap-2 text-red-500 hover:text-red-600 hover:bg-red-50"
+          onClick={handleLogout}
+        >
+          <LogOut className="h-4 w-4" />
+          Keluar
+        </Button>
+      </div>
     </div>
   );
 
