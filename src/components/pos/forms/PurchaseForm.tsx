@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -24,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const purchaseFormSchema = z.object({
   kategori_id: z.string().min(1, "Kategori produk harus dipilih"),
@@ -34,6 +34,8 @@ const purchaseFormSchema = z.object({
   total_price: z.number().optional(),
   cabang_id: z.string().min(1, "Cabang harus dipilih"),
   payment_status: z.string().min(1, "Status pembayaran harus dipilih"),
+  price_notes: z.string().optional(),
+  is_price_change: z.boolean().default(false),
 });
 
 type PurchaseFormData = z.infer<typeof purchaseFormSchema>;
@@ -47,6 +49,8 @@ export const PurchaseForm = () => {
     defaultValues: {
       quantity: 0,
       unit_price: 0,
+      is_price_change: false,
+      price_notes: '',
     }
   });
 
@@ -128,7 +132,7 @@ export const PurchaseForm = () => {
           pelaku_usaha_id: pelakuUsahaData.pelaku_usaha_id,
           kategori_id: parseInt(data.kategori_id),
           product_name: data.product_name,
-          barcode: data.barcode || null, // Set null jika barcode kosong
+          barcode: data.barcode || null,
           cost_price: data.unit_price,
           retail_price: data.unit_price * 1.2, // Example markup
           stock: data.quantity
@@ -167,6 +171,8 @@ export const PurchaseForm = () => {
           produk_id: newProduct.produk_id,
           cost_price: data.unit_price,
           stock: data.quantity,
+          notes: data.price_notes || 'Pembelian baru',
+          adjustment_type: data.is_price_change ? 'price_change' : 'initial'
         });
 
       if (historyError) {
@@ -343,6 +349,46 @@ export const PurchaseForm = () => {
                     <SelectItem value="0">Belum Lunas</SelectItem>
                   </SelectContent>
                 </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="is_price_change"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>
+                    Perubahan Harga
+                  </FormLabel>
+                  <FormDescription>
+                    Centang jika ada perubahan harga dari pembelian sebelumnya
+                  </FormDescription>
+                </div>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="price_notes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Catatan Perubahan Harga</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="Contoh: Kenaikan harga supplier"
+                    {...field}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
