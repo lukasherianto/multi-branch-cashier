@@ -17,33 +17,36 @@ import Kas from "./pages/Kas";
 import Branches from "./pages/Branches";
 import Attendance from "./pages/Attendance";
 import PrintPreview from "./pages/PrintPreview";
+import { AuthProvider } from "@/hooks/useAuth";
 
 const queryClient = new QueryClient();
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router>
-        <Routes>
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/print-preview" element={<PrintPreview />} />
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Index />} />
-            <Route path="pos" element={<POS />} />
-            <Route path="products" element={<Products />} />
-            <Route path="products/categories" element={<ProductCategories />} />
-            <Route path="history" element={<History />} />
-            <Route path="returns" element={<Returns />} />
-            <Route path="reports" element={<Reports />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="kas" element={<Kas />} />
-            <Route path="branches" element={<Branches />} />
-            <Route path="attendance" element={<Attendance />} />
-          </Route>
-        </Routes>
-      </Router>
-      <Toaster />
-      <ReactQueryDevtools initialIsOpen={false} />
+      <AuthProvider>
+        <Router>
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/print-preview" element={<PrintPreview />} />
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Index />} />
+              <Route path="pos" element={<POS />} />
+              <Route path="products" element={<Products />} />
+              <Route path="products/categories" element={<ProductCategories />} />
+              <Route path="history" element={<History />} />
+              <Route path="returns" element={<Returns />} />
+              <Route path="reports" element={<Reports />} />
+              <Route path="settings" element={<Settings />} />
+              <Route path="kas" element={<Kas />} />
+              <Route path="branches" element={<Branches />} />
+              <Route path="attendance" element={<Attendance />} />
+            </Route>
+          </Routes>
+        </Router>
+        <Toaster />
+        <ReactQueryDevtools initialIsOpen={false} />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
