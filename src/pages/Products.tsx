@@ -1,21 +1,18 @@
-import { useState, useEffect } from "react";
+
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductSearch } from "@/components/pos/ProductSearch";
 import { ProductList } from "@/components/pos/ProductList";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { ProductFormModal } from "@/components/pos/forms/ProductFormModal";
 
 const Products = () => {
   const { toast } = useToast();
   const [products, setProducts] = useState<any[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
-
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  useEffect(() => {
-    setFilteredProducts(products);
-  }, [products]);
+  const [showAddProduct, setShowAddProduct] = useState(false);
 
   const fetchProducts = async () => {
     try {
@@ -63,6 +60,7 @@ const Products = () => {
             cost_price: product.cost_price
           }));
           setProducts(mappedProducts);
+          setFilteredProducts(mappedProducts);
         }
       }
     } catch (error) {
@@ -92,7 +90,7 @@ const Products = () => {
     if (searchTerm.length > 5 && filtered.length === 0) {
       toast({
         title: "Produk Tidak Ditemukan",
-        description: "Tidak ada produk dengan barcode tersebut",
+        description: "Tidak ada produk dengan kata kunci tersebut",
         variant: "destructive",
       });
     }
@@ -102,6 +100,10 @@ const Products = () => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800">Produk</h2>
+        <Button onClick={() => setShowAddProduct(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Tambah Produk
+        </Button>
       </div>
 
       <ProductSearch onSearch={handleSearch} />
@@ -112,6 +114,12 @@ const Products = () => {
         isRegisteredCustomer={false}
         showStockAction={true}
         onRefresh={fetchProducts}
+      />
+
+      <ProductFormModal 
+        open={showAddProduct} 
+        onOpenChange={setShowAddProduct}
+        onSuccess={fetchProducts}
       />
     </div>
   );
