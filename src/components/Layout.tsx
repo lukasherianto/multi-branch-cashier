@@ -1,44 +1,16 @@
+
 import { useState, useEffect } from "react";
-import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Store, Package2, History, FileBarChart2, Settings, ArrowLeftRight, Banknote, Building2, UserRound, MenuIcon, LogOut } from "lucide-react";
+import { MenuIcon } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useToast } from "@/hooks/use-toast";
-import clsx from "clsx";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-
-const menuItems = [
-  { path: "/", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/pos", label: "POS", icon: Store },
-  { 
-    path: "/products",
-    label: "Produk",
-    icon: Package2,
-    subItems: [
-      { path: "/products", label: "Daftar Produk" },
-      { path: "/products/categories", label: "Kategori" },
-      { path: "/products/transfer", label: "Transfer Produk" }
-    ]
-  },
-  { path: "/history", label: "Riwayat", icon: History },
-  { path: "/returns", label: "Retur", icon: ArrowLeftRight },
-  { path: "/reports", label: "Laporan", icon: FileBarChart2 },
-  { 
-    path: "/kas",
-    label: "Kas",
-    icon: Banknote,
-    subItems: [
-      { path: "/kas", label: "Kas Masuk/Keluar" },
-      { path: "/kas/purchases", label: "Pembelian" }
-    ]
-  },
-  { path: "/branches", label: "Cabang", icon: Building2 },
-  { path: "/attendance", label: "Absensi", icon: UserRound },
-  { path: "/settings", label: "Pengaturan", icon: Settings },
-];
+import { AppHeader } from "./layout/AppHeader";
+import { MenuContent } from "./layout/MenuContent";
+import { menuItems } from "./layout/menuConfig";
 
 const Layout = () => {
   const location = useLocation();
@@ -89,92 +61,6 @@ const Layout = () => {
     }
   }, [location.pathname]);
 
-  const MenuItem = ({ item }: { item: typeof menuItems[0] }) => {
-    const isActive = location.pathname === item.path;
-    const Icon = item.icon;
-    const hasSubItems = item.subItems && item.subItems.length > 0;
-    const isExpanded = expandedMenus.includes(item.path);
-
-    if (hasSubItems) {
-      return (
-        <Collapsible open={isExpanded} onOpenChange={() => toggleSubmenu(item.path)}>
-          <CollapsibleTrigger asChild>
-            <Button
-              variant="ghost"
-              className={clsx(
-                "w-full justify-start gap-2 h-8 px-2 text-sm",
-                isActive && "bg-accent text-accent-foreground"
-              )}
-            >
-              <Icon className="h-4 w-4" />
-              {item.label}
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="pl-4 space-y-1">
-            {item.subItems.map((subItem) => (
-              <Button
-                key={subItem.path}
-                variant="ghost"
-                className={clsx(
-                  "w-full justify-start h-7 px-2 text-sm",
-                  location.pathname === subItem.path && "bg-accent text-accent-foreground"
-                )}
-                onClick={() => handleNavigate(subItem.path)}
-              >
-                {subItem.label}
-              </Button>
-            ))}
-          </CollapsibleContent>
-        </Collapsible>
-      );
-    }
-
-    return (
-      <Button
-        variant="ghost"
-        className={clsx(
-          "w-full justify-start gap-2 h-8 px-2 text-sm",
-          isActive && "bg-accent text-accent-foreground"
-        )}
-        onClick={() => handleNavigate(item.path)}
-      >
-        <Icon className="h-4 w-4" />
-        {item.label}
-      </Button>
-    );
-  };
-
-  const MenuContent = () => (
-    <div className="flex flex-col h-full">
-      <div className="flex-grow space-y-0.5 py-2">
-        {menuItems.map((item) => (
-          <MenuItem key={item.path} item={item} />
-        ))}
-      </div>
-      <div className="mt-auto p-2 border-t">
-        <Button
-          variant="ghost"
-          className="w-full justify-start gap-2 text-red-500 hover:text-red-600 hover:bg-red-50"
-          onClick={handleLogout}
-        >
-          <LogOut className="h-4 w-4" />
-          Keluar
-        </Button>
-      </div>
-    </div>
-  );
-
-  const AppHeader = () => (
-    <div className="flex flex-col">
-      <Link to="/" className="font-semibold text-sm">
-        Xaviera POS
-      </Link>
-      <span className="text-xs text-muted-foreground mt-1">
-        Login Sebagai: {user?.email}
-      </span>
-    </div>
-  );
-
   if (isMobile) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -187,13 +73,19 @@ const Layout = () => {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-56 flex flex-col">
-                <AppHeader />
+                <AppHeader userEmail={user?.email} />
                 <div className="flex-1 mt-4">
-                  <MenuContent />
+                  <MenuContent 
+                    expandedMenus={expandedMenus}
+                    location={location}
+                    onNavigate={handleNavigate}
+                    onToggleSubmenu={toggleSubmenu}
+                    onLogout={handleLogout}
+                  />
                 </div>
               </SheetContent>
             </Sheet>
-            <AppHeader />
+            <AppHeader userEmail={user?.email} />
           </div>
         </header>
         <main className="flex-1 p-4">
@@ -206,9 +98,15 @@ const Layout = () => {
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[200px_1fr]">
       <aside className="fixed top-0 z-50 h-screen w-48 border-r bg-background p-3 lg:static flex flex-col">
-        <AppHeader />
+        <AppHeader userEmail={user?.email} />
         <div className="flex-1 mt-4">
-          <MenuContent />
+          <MenuContent 
+            expandedMenus={expandedMenus}
+            location={location}
+            onNavigate={handleNavigate}
+            onToggleSubmenu={toggleSubmenu}
+            onLogout={handleLogout}
+          />
         </div>
       </aside>
       <main className="p-4 lg:p-6 ml-48 lg:ml-0">
