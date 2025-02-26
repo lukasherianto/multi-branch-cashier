@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductSearch } from "@/components/pos/ProductSearch";
@@ -72,6 +72,11 @@ const Products = () => {
       });
     }
   };
+
+  // Tambahkan useEffect untuk memanggil fetchProducts saat komponen dimount
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
   const handleSearch = (searchTerm: string) => {
     console.log("Searching for:", searchTerm);

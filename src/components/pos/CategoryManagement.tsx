@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,15 +26,12 @@ export const CategoryManagement = ({ onSuccess }: CategoryManagementProps) => {
   const [categories, setCategories] = useState<Array<{ kategori_id: number; kategori_name: string }>>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
   const fetchCategories = async () => {
     try {
       const { data: pelakuUsahaData } = await supabase
         .from('pelaku_usaha')
         .select('pelaku_usaha_id')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
         .single();
 
       if (pelakuUsahaData) {
@@ -43,6 +41,7 @@ export const CategoryManagement = ({ onSuccess }: CategoryManagementProps) => {
           .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id);
 
         if (categoriesData) {
+          console.log('Fetched categories:', categoriesData);
           setCategories(categoriesData);
         }
       }
@@ -55,6 +54,11 @@ export const CategoryManagement = ({ onSuccess }: CategoryManagementProps) => {
       });
     }
   };
+
+  // Tambahkan useEffect untuk memanggil fetchCategories saat komponen dimount
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   const handleSubmit = async (formData: { categoryName: string }) => {
     setIsSubmitting(true);
@@ -88,6 +92,7 @@ export const CategoryManagement = ({ onSuccess }: CategoryManagementProps) => {
       });
 
       fetchCategories();
+      setIsOpen(false);
       onSuccess?.();
     } catch (error) {
       console.error('Error adding category:', error);

@@ -18,12 +18,12 @@ const productFormSchema = z.object({
   kategori_id: z.string().min(1, "Kategori harus dipilih"),
   description: z.string().optional(),
   purchase_number: z.string().optional(),
-  stock: z.number().min(0, "Stok tidak boleh negatif"),
+  stock: z.coerce.number().min(0, "Stok tidak boleh negatif"),
   unit: z.string().min(1, "Satuan harus diisi"),
-  cost_price: z.number().min(0, "Harga modal tidak boleh negatif"),
-  retail_price: z.number().min(0, "Harga jual tidak boleh negatif"),
-  member_price_1: z.number().min(0, "Harga member 1 tidak boleh negatif"),
-  member_price_2: z.number().min(0, "Harga member 2 tidak boleh negatif"),
+  cost_price: z.coerce.number().min(0, "Harga modal tidak boleh negatif"),
+  retail_price: z.coerce.number().min(0, "Harga jual tidak boleh negatif"),
+  member_price_1: z.coerce.number().min(0, "Harga member 1 tidak boleh negatif"),
+  member_price_2: z.coerce.number().min(0, "Harga member 2 tidak boleh negatif"),
 });
 
 type ProductFormValues = z.infer<typeof productFormSchema>;
@@ -55,6 +55,7 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
       const { data: pelakuUsahaData } = await supabase
         .from('pelaku_usaha')
         .select('pelaku_usaha_id')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
         .single();
 
       if (pelakuUsahaData) {
@@ -68,21 +69,25 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
     },
   });
 
-  async function onSubmit(data: ProductFormValues) {
+  console.log('Available categories:', categories);
+
+  async function onSubmit(values: ProductFormValues) {
     try {
+      console.log('Form values:', values);
       const { data: pelakuUsahaData } = await supabase
         .from('pelaku_usaha')
         .select('pelaku_usaha_id')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
         .single();
 
       if (!pelakuUsahaData) throw new Error("Data pelaku usaha tidak ditemukan");
 
       // Check if barcode already exists
-      if (data.barcode) {
+      if (values.barcode) {
         const { data: existingProduct } = await supabase
           .from('produk')
           .select('product_name')
-          .eq('barcode', data.barcode)
+          .eq('barcode', values.barcode)
           .single();
 
         if (existingProduct) {
@@ -99,15 +104,15 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
         .from('produk')
         .insert({
           pelaku_usaha_id: pelakuUsahaData.pelaku_usaha_id,
-          kategori_id: parseInt(data.kategori_id),
-          product_name: data.product_name,
-          barcode: data.barcode || null,
-          cost_price: data.cost_price,
-          retail_price: data.retail_price,
-          member_price_1: data.member_price_1,
-          member_price_2: data.member_price_2,
-          stock: data.stock,
-          unit: data.unit,
+          kategori_id: parseInt(values.kategori_id),
+          product_name: values.product_name,
+          barcode: values.barcode || null,
+          cost_price: values.cost_price,
+          retail_price: values.retail_price,
+          member_price_1: values.member_price_1,
+          member_price_2: values.member_price_2,
+          stock: values.stock,
+          unit: values.unit,
         });
 
       if (error) throw error;
