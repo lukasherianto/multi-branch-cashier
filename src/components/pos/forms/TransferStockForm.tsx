@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const transferStockSchema = z.object({
   cabang_id_from: z.string(),
@@ -34,11 +34,14 @@ interface ProductTransfer {
   stock: number;
 }
 
+const ITEMS_PER_PAGE = 100;
+
 export function TransferStockForm() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
   const [selectedProducts, setSelectedProducts] = useState<ProductTransfer[]>([]);
+  const [currentPage, setCurrentPage] = useState(0);
 
   const form = useForm<TransferStockFormValues>({
     resolver: zodResolver(transferStockSchema),
@@ -47,7 +50,6 @@ export function TransferStockForm() {
     }
   });
 
-  // Fetch pelaku usaha first
   const { data: pelakuUsaha } = useQuery({
     queryKey: ['pelakuUsaha', user?.id],
     queryFn: async () => {
@@ -62,7 +64,6 @@ export function TransferStockForm() {
     enabled: !!user,
   });
 
-  // Fetch branches
   const { data: branches = [] } = useQuery({
     queryKey: ['branches', pelakuUsaha?.pelaku_usaha_id],
     queryFn: async () => {
@@ -76,7 +77,6 @@ export function TransferStockForm() {
     enabled: !!pelakuUsaha,
   });
 
-  // Fetch products
   const { data: products = [] } = useQuery({
     queryKey: ['products', pelakuUsaha?.pelaku_usaha_id],
     queryFn: async () => {
@@ -84,7 +84,8 @@ export function TransferStockForm() {
       const { data } = await supabase
         .from('produk')
         .select('*')
-        .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id);
+        .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id)
+        .order('product_name', { ascending: true });
       
       if (data) {
         setSelectedProducts(data.map(product => ({
@@ -113,6 +114,20 @@ export function TransferStockForm() {
     ));
   };
 
+  const handlePreviousPage = () => {
+    setCurrentPage(prev => Math.max(0, prev - 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage(prev => Math.min(totalPages - 1, prev + 1));
+  };
+
+  const totalPages = Math.ceil(selectedProducts.length / ITEMS_PER_PAGE);
+  const paginatedProducts = selectedProducts.slice(
+    currentPage * ITEMS_PER_PAGE,
+    (currentPage + 1) * ITEMS_PER_PAGE
+  );
+
   async function onSubmit(values: TransferStockFormValues) {
     try {
       setIsSubmitting(true);
@@ -128,7 +143,6 @@ export function TransferStockForm() {
         return;
       }
 
-      // Validate stock for all selected products
       for (const product of productsToTransfer) {
         if (product.quantity > product.stock) {
           toast({
@@ -140,9 +154,7 @@ export function TransferStockForm() {
         }
       }
 
-      // Create transfer records for each selected product
       for (const product of productsToTransfer) {
-        // Create transfer record
         const { error: transferError } = await supabase
           .from('transfer_stok')
           .insert({
@@ -154,7 +166,6 @@ export function TransferStockForm() {
 
         if (transferError) throw transferError;
 
-        // Update stock at source
         const { error: updateError } = await supabase
           .from('produk')
           .update({ stock: product.stock - product.quantity })
@@ -168,7 +179,6 @@ export function TransferStockForm() {
         description: "Transfer stok berhasil dilakukan",
       });
 
-      // Reset selections
       setSelectedProducts(prev => prev.map(p => ({ ...p, selected: false, quantity: 0 })));
       form.reset();
     } catch (error) {
@@ -249,7 +259,7 @@ export function TransferStockForm() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {selectedProducts.map((product) => (
+              {paginatedProducts.map((product) => (
                 <TableRow key={product.produk_id}>
                   <TableCell>
                     <Checkbox
@@ -277,6 +287,30 @@ export function TransferStockForm() {
               ))}
             </TableBody>
           </Table>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-gray-500">
+            Menampilkan {currentPage * ITEMS_PER_PAGE + 1}-{Math.min((currentPage + 1) * ITEMS_PER_PAGE, selectedProducts.length)} dari {selectedProducts.length} produk
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={handlePreviousPage}
+              disabled={currentPage === 0}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={handleNextPage}
+              disabled={currentPage >= totalPages - 1}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         <Button type="submit" disabled={isSubmitting || selectedProducts.filter(p => p.selected).length === 0}>
