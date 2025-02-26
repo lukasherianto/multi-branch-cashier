@@ -25,6 +25,15 @@ const Purchase = () => {
     queryKey: ['purchases'],
     queryFn: async () => {
       console.log('Fetching purchases data...');
+      const { data: pelakuUsahaData } = await supabase
+        .from('pelaku_usaha')
+        .select('pelaku_usaha_id')
+        .single();
+
+      if (!pelakuUsahaData) {
+        throw new Error('Pelaku usaha tidak ditemukan');
+      }
+
       const { data, error } = await supabase
         .from('pembelian')
         .select(`
@@ -47,6 +56,15 @@ const Purchase = () => {
   const { data: stockHistory } = useQuery({
     queryKey: ['stock-history'],
     queryFn: async () => {
+      const { data: pelakuUsahaData } = await supabase
+        .from('pelaku_usaha')
+        .select('pelaku_usaha_id')
+        .single();
+
+      if (!pelakuUsahaData) {
+        throw new Error('Pelaku usaha tidak ditemukan');
+      }
+
       const { data, error } = await supabase
         .from('produk_history')
         .select(`
@@ -56,6 +74,7 @@ const Purchase = () => {
         .order('entry_date', { ascending: false });
 
       if (error) throw error;
+      console.log('Stock history:', data);
       return data;
     },
   });
