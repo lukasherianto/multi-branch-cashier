@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -23,7 +22,15 @@ const menuItems = [
   { path: "/history", label: "Riwayat", icon: History },
   { path: "/returns", label: "Retur", icon: ArrowLeftRight },
   { path: "/reports", label: "Laporan", icon: FileBarChart2 },
-  { path: "/kas", label: "Kas", icon: Banknote },
+  { 
+    path: "/kas",
+    label: "Kas",
+    icon: Banknote,
+    subItems: [
+      { path: "/kas", label: "Kas Masuk/Keluar" },
+      { path: "/kas/purchases", label: "Pembelian" }
+    ]
+  },
   { path: "/branches", label: "Cabang", icon: Building2 },
   { path: "/attendance", label: "Absensi", icon: UserRound },
   { path: "/settings", label: "Pengaturan", icon: Settings },
@@ -50,7 +57,6 @@ const Layout = () => {
   };
 
   useEffect(() => {
-    // Find parent menu of current route and expand it
     const parentMenu = menuItems.find(item => 
       item.subItems?.some(sub => location.pathname === sub.path)
     );

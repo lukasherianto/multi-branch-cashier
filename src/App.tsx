@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -17,11 +16,12 @@ import Kas from "./pages/Kas";
 import Branches from "./pages/Branches";
 import Attendance from "./pages/Attendance";
 import PrintPreview from "./pages/PrintPreview";
+import KasPurchases from "@/pages/KasPurchases";
 import { AuthProvider } from "@/hooks/useAuth";
 
 const queryClient = new QueryClient();
 
-function App() {
+const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -29,7 +29,7 @@ function App() {
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/print-preview" element={<PrintPreview />} />
-            <Route path="/" element={<Layout />}>
+            <Route element={<Layout />}>
               <Route index element={<Index />} />
               <Route path="pos" element={<POS />} />
               <Route path="products" element={<Products />} />
@@ -39,6 +39,7 @@ function App() {
               <Route path="reports" element={<Reports />} />
               <Route path="settings" element={<Settings />} />
               <Route path="kas" element={<Kas />} />
+              <Route path="kas/purchases" element={<KasPurchases />} />
               <Route path="branches" element={<Branches />} />
               <Route path="attendance" element={<Attendance />} />
             </Route>
@@ -49,6 +50,6 @@ function App() {
       </AuthProvider>
     </QueryClientProvider>
   );
-}
+};
 
 export default App;
