@@ -44,14 +44,13 @@ const StockTransfer = () => {
             produk:produk_id (
               product_name
             ),
-            cabang_from:cabang (
+            cabang_from:cabang!cabang_id_from (
               branch_name
             ),
-            cabang_to:cabang (
+            cabang_to:cabang!cabang_id_to (
               branch_name
             )
           `)
-          .eq('cabang.pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id)
           .order('transfer_date', { ascending: false });
 
         if (error) {
