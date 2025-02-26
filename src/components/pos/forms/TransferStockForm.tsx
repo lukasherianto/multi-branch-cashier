@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
 
 const transferStockSchema = z.object({
   produk_id: z.string(),
@@ -23,6 +24,7 @@ type TransferStockFormValues = z.infer<typeof transferStockSchema>;
 export function TransferStockForm() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { pelakuUsaha } = useAuth();
 
   const form = useForm<TransferStockFormValues>({
     resolver: zodResolver(transferStockSchema),
@@ -32,12 +34,6 @@ export function TransferStockForm() {
   const { data: branches = [] } = useQuery({
     queryKey: ['branches'],
     queryFn: async () => {
-      const { data: pelakuUsaha } = await supabase
-        .from('pelaku_usaha')
-        .select('pelaku_usaha_id')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
-
       if (!pelakuUsaha) return [];
 
       const { data } = await supabase
@@ -47,18 +43,13 @@ export function TransferStockForm() {
 
       return data || [];
     },
+    enabled: !!pelakuUsaha,
   });
 
   // Fetch products
   const { data: products = [] } = useQuery({
     queryKey: ['products'],
     queryFn: async () => {
-      const { data: pelakuUsaha } = await supabase
-        .from('pelaku_usaha')
-        .select('pelaku_usaha_id')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
-
       if (!pelakuUsaha) return [];
 
       const { data } = await supabase
@@ -68,6 +59,7 @@ export function TransferStockForm() {
 
       return data || [];
     },
+    enabled: !!pelakuUsaha,
   });
 
   async function onSubmit(values: TransferStockFormValues) {
