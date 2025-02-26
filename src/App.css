@@ -1,3 +1,4 @@
+
 @media print {
   @page {
     margin: 0;
@@ -15,4 +16,86 @@
   .print\:space-y-2 > :not([hidden]) ~ :not([hidden]) {
     margin-top: 0.5rem;
   }
+}
+
+/* Modern Cow Theme Gradients */
+.bg-cow-pattern {
+  background: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%);
+}
+
+.bg-milk-pattern {
+  background: linear-gradient(to right, #fff5f5 0%, #ffffff 100%);
+}
+
+/* Glassmorphism Effects */
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* Modern Hover Effects */
+.hover-lift {
+  transition: transform 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+}
+
+/* Custom Animations */
+.fade-in-up {
+  animation: fadeInUp 0.5s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Modern Shadows */
+.shadow-soft {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+              0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.shadow-hover {
+  transition: box-shadow 0.3s ease;
+}
+
+.shadow-hover:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+              0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Color Palette */
+.text-milk {
+  color: #FDFCFB;
+}
+
+.text-coffee {
+  color: #8B4513;
+}
+
+.text-cream {
+  color: #E2D1C3;
+}
+
+.bg-milk {
+  background-color: #FDFCFB;
+}
+
+.bg-coffee {
+  background-color: #8B4513;
+}
+
+.bg-cream {
+  background-color: #E2D1C3;
 }
