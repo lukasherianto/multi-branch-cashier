@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import POS from "./pages/POS";
 import Products from "./pages/Products";
+import ProductCategories from "./pages/ProductCategories";
 import Settings from "./pages/Settings";
 import History from "./pages/History";
 import Reports from "./pages/Reports";
@@ -30,6 +31,7 @@ function App() {
             <Route index element={<Index />} />
             <Route path="pos" element={<POS />} />
             <Route path="products" element={<Products />} />
+            <Route path="products/categories" element={<ProductCategories />} />
             <Route path="history" element={<History />} />
             <Route path="returns" element={<Returns />} />
             <Route path="reports" element={<Reports />} />
