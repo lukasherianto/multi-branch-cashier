@@ -18,13 +18,17 @@
   }
 }
 
-/* Modern Cow Theme Gradients */
-.bg-cow-pattern {
-  background: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%);
+/* Soft Modern Theme */
+.bg-soft-gradient {
+  background: linear-gradient(to right, #D3E0EA, #F1F6F9);
 }
 
-.bg-milk-pattern {
-  background: linear-gradient(to right, #fff5f5 0%, #ffffff 100%);
+.bg-soft-blue {
+  background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+}
+
+.bg-soft-purple {
+  background: linear-gradient(135deg, #E8EAF6 0%, #C5CAE9 100%);
 }
 
 /* Glassmorphism Effects */
@@ -32,16 +36,17 @@
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
 }
 
 /* Modern Hover Effects */
 .hover-lift {
-  transition: transform 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .hover-lift:hover {
   transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
 /* Custom Animations */
@@ -60,10 +65,9 @@
   }
 }
 
-/* Modern Shadows */
+/* Soft Shadows */
 .shadow-soft {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-              0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
 .shadow-hover {
@@ -71,31 +75,44 @@
 }
 
 .shadow-hover:hover {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-              0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
 }
 
-/* Color Palette */
-.text-milk {
-  color: #FDFCFB;
+/* Soft Color Palette */
+.text-soft-blue {
+  color: #64B5F6;
 }
 
-.text-coffee {
-  color: #8B4513;
+.text-soft-purple {
+  color: #9FA8DA;
 }
 
-.text-cream {
-  color: #E2D1C3;
+.text-soft-gray {
+  color: #90A4AE;
 }
 
-.bg-milk {
-  background-color: #FDFCFB;
+.bg-soft-white {
+  background-color: rgba(255, 255, 255, 0.9);
 }
 
-.bg-coffee {
-  background-color: #8B4513;
+.border-soft {
+  border-color: rgba(0, 0, 0, 0.05);
 }
 
-.bg-cream {
-  background-color: #E2D1C3;
+/* Modern Button States */
+.btn-soft {
+  @apply px-4 py-2 rounded-lg transition-all duration-300;
+  background: linear-gradient(135deg, #64B5F6 0%, #42A5F5 100%);
+  color: white;
+  box-shadow: 0 2px 10px rgba(100, 181, 246, 0.2);
+}
+
+.btn-soft:hover {
+  box-shadow: 0 4px 15px rgba(100, 181, 246, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-soft:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(100, 181, 246, 0.2);
 }
