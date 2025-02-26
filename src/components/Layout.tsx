@@ -1,165 +1,100 @@
 
-import React from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Building, Home, ShoppingCart, History, Settings, Package, FileText, Clock, DollarSign, Store, Users, LogOut } from "lucide-react";
-import { Button } from "./ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
+import { useState } from "react";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { LayoutDashboard, Store, Package2, History, FileBarChart2, Settings, ArrowLeftRight, Banknote, Building2, UserRound, MenuIcon } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import clsx from "clsx";
+import { useMobile } from "@/hooks/use-mobile";
 
-interface LayoutProps {
-  children: React.ReactNode;
-}
+const menuItems = [
+  { path: "/", label: "Dashboard", icon: LayoutDashboard },
+  { path: "/pos", label: "POS", icon: Store },
+  { path: "/products", label: "Produk", icon: Package2 },
+  { path: "/history", label: "Riwayat", icon: History },
+  { path: "/returns", label: "Retur", icon: ArrowLeftRight },
+  { path: "/reports", label: "Laporan", icon: FileBarChart2 },
+  { path: "/kas", label: "Kas", icon: Banknote },
+  { path: "/branches", label: "Cabang", icon: Building2 },
+  { path: "/attendance", label: "Absensi", icon: UserRound },
+  { path: "/settings", label: "Pengaturan", icon: Settings },
+];
 
-interface NavItem {
-  icon: any;
-  label: string;
-  path: string;
-  show?: boolean;
-  subItems?: { label: string; path: string }[];
-}
-
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const { user } = useAuth();
-  
-  const isActive = (path: string) => location.pathname.startsWith(path);
+  const isMobile = useMobile();
+  const [open, setOpen] = useState(false);
 
-  const handleLogout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      
-      toast({
-        title: "Berhasil keluar",
-        description: "Anda telah keluar dari akun",
-      });
-      navigate("/auth");
-    } catch (error: any) {
-      console.error("Error logging out:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Gagal keluar dari akun",
-      });
-    }
+  const handleNavigate = (path: string) => {
+    navigate(path);
+    setOpen(false);
   };
 
-  const isEmployee = user?.user_metadata?.is_employee || false;
+  const MenuItem = ({ path, label, icon: Icon }: { path: string; label: string; icon: any }) => {
+    const isActive = location.pathname === path;
 
-  const mainNavItems: NavItem[] = [
-    { icon: Home, label: "Dasbor", path: "/" },
-    { icon: Building, label: "Cabang", path: "/branches", show: !isEmployee },
-    { icon: Package, label: "Produk", path: "/products" },
-    { icon: ShoppingCart, label: "Kasir", path: "/pos" },
-    { icon: Clock, label: "Absensi", path: "/attendance" },
-    { icon: History, label: "Riwayat", path: "/history" },
-    { icon: FileText, label: "Laporan", path: "/reports", show: !isEmployee },
-    { icon: DollarSign, label: "Kas", path: "/kas", show: !isEmployee },
-    { icon: Settings, label: "Pengaturan", path: "/settings", show: !isEmployee },
-    { 
-      icon: Store, 
-      label: "Supplier", 
-      path: "/supplier",
-      show: !isEmployee,
-      subItems: [
-        { label: "Daftar Supplier", path: "/supplier" },
-        { label: "Transaksi Pembelian", path: "/purchase" }
-      ]
-    },
-  ].filter(item => item.show !== false);
-
-  const renderNavItem = (item: NavItem) => (
-    <div key={item.path} className="space-y-1">
-      <Link
-        to={item.path}
-        className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 ${
-          isActive(item.path) ? "bg-mint-50 text-mint-600" : "text-gray-600 hover:bg-gray-50"
-        }`}
+    return (
+      <Button
+        variant="ghost"
+        className={clsx(
+          "w-full justify-start gap-2",
+          isActive && "bg-accent text-accent-foreground"
+        )}
+        onClick={() => handleNavigate(path)}
       >
-        <item.icon className="w-5 h-5" />
-        <span>{item.label}</span>
-      </Link>
-      
-      {item.subItems && (
-        <div className="ml-7 space-y-1">
-          {item.subItems.map(subItem => (
-            <Link
-              key={subItem.path}
-              to={subItem.path}
-              className={`block px-3 py-2 text-sm rounded-lg transition-all duration-200 ${
-                isActive(subItem.path) ? "bg-mint-50 text-mint-600" : "text-gray-600 hover:bg-gray-50"
-              }`}
-            >
-              {subItem.label}
-            </Link>
-          ))}
-        </div>
-      )}
+        <Icon className="h-4 w-4" />
+        {label}
+      </Button>
+    );
+  };
+
+  const MenuContent = () => (
+    <div className="space-y-1 py-2">
+      {menuItems.map((item) => (
+        <MenuItem key={item.path} {...item} />
+      ))}
     </div>
   );
 
-  const mobileNavItems = mainNavItems.slice(0, 4);
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="flex h-screen">
-        <nav className="hidden md:flex flex-col w-48 bg-white border-r border-gray-200 p-3">
-          <div className="mb-8">
-            <h1 className="text-2xl font-semibold text-mint-600">KasirBengkulu</h1>
-            {user && (
-              <p className="text-sm text-gray-600 mt-1">
-                Login sebagai: {user.user_metadata?.full_name || user.email}
-              </p>
-            )}
+  if (isMobile) {
+    return (
+      <div className="min-h-screen">
+        <header className="bg-background border-b px-4 py-3 sticky top-0 z-50">
+          <div className="flex items-center gap-2">
+            <Sheet open={open} onOpenChange={setOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MenuIcon className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-64">
+                <MenuContent />
+              </SheetContent>
+            </Sheet>
+            <Link to="/" className="font-semibold">
+              Lovable POS
+            </Link>
           </div>
-          
-          <div className="flex-1 space-y-2">
-            {mainNavItems.map(renderNavItem)}
-          </div>
-          
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 mt-4"
-            onClick={handleLogout}
-          >
-            <LogOut className="w-5 h-5 mr-2" />
-            Keluar
-          </Button>
-        </nav>
-
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden">
-          <div className="flex justify-around">
-            {mobileNavItems.map(item => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex flex-col items-center py-3 ${
-                  isActive(item.path) ? "text-mint-600" : "text-gray-600"
-                }`}
-              >
-                <item.icon className="w-6 h-6" />
-                <span className="text-xs mt-1">{item.label}</span>
-              </Link>
-            ))}
-            <button
-              onClick={handleLogout}
-              className="flex flex-col items-center py-3 text-red-600"
-            >
-              <LogOut className="w-6 h-6" />
-              <span className="text-xs mt-1">Keluar</span>
-            </button>
-          </div>
-        </div>
-
-        <main className="flex-1 overflow-y-auto p-8 pb-20 md:pb-8">
-          <div className="animate-fadeIn">
-            {children}
-          </div>
+        </header>
+        <main className="p-4">
+          <Outlet />
         </main>
       </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen lg:grid lg:grid-cols-[240px_1fr]">
+      <aside className="fixed top-0 z-50 h-screen w-60 border-r bg-background p-4 lg:static">
+        <Link to="/" className="mb-4 block font-semibold">
+          Lovable POS
+        </Link>
+        <MenuContent />
+      </aside>
+      <main className="p-4 lg:p-8">
+        <Outlet />
+      </main>
     </div>
   );
 };
