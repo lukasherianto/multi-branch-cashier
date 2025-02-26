@@ -117,8 +117,9 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
       if (error) throw error;
 
       toast({
-        title: "Sukses",
-        description: "Produk berhasil ditambahkan",
+        title: "Berhasil",
+        description: `Data produk "${values.product_name}" telah berhasil disimpan`,
+        duration: 3000,
       });
       
       form.reset();
