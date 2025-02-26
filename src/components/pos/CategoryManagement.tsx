@@ -15,6 +15,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { CategoryForm } from "./forms/CategoryForm";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface CategoryManagementProps {
   onSuccess?: () => void;
@@ -23,7 +31,7 @@ interface CategoryManagementProps {
 export const CategoryManagement = ({ onSuccess }: CategoryManagementProps) => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
-  const [categories, setCategories] = useState<Array<{ kategori_id: number; kategori_name: string }>>([]);
+  const [categories, setCategories] = useState<Array<{ kategori_id: number; kategori_name: string; description: string | null }>>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchCategories = async () => {
@@ -37,7 +45,7 @@ export const CategoryManagement = ({ onSuccess }: CategoryManagementProps) => {
       if (pelakuUsahaData) {
         const { data: categoriesData } = await supabase
           .from('kategori_produk')
-          .select('kategori_id, kategori_name')
+          .select('kategori_id, kategori_name, description')
           .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id);
 
         if (categoriesData) {
@@ -55,17 +63,17 @@ export const CategoryManagement = ({ onSuccess }: CategoryManagementProps) => {
     }
   };
 
-  // Tambahkan useEffect untuk memanggil fetchCategories saat komponen dimount
   useEffect(() => {
     fetchCategories();
   }, []);
 
-  const handleSubmit = async (formData: { categoryName: string }) => {
+  const handleSubmit = async (formData: { categoryName: string; description: string }) => {
     setIsSubmitting(true);
     try {
       const { data: pelakuUsahaData } = await supabase
         .from('pelaku_usaha')
         .select('pelaku_usaha_id')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
         .single();
 
       if (!pelakuUsahaData) {
@@ -82,6 +90,7 @@ export const CategoryManagement = ({ onSuccess }: CategoryManagementProps) => {
         .insert({
           pelaku_usaha_id: pelakuUsahaData.pelaku_usaha_id,
           kategori_name: formData.categoryName,
+          description: formData.description || null,
         });
 
       if (error) throw error;
@@ -107,52 +116,55 @@ export const CategoryManagement = ({ onSuccess }: CategoryManagementProps) => {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <Plus className="h-4 w-4" />
-          Tambah Kategori
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Tambah Kategori Baru</DialogTitle>
-          <DialogDescription>
-            Isi informasi kategori dengan lengkap
-          </DialogDescription>
-        </DialogHeader>
+    <div className="space-y-4">
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-2">
+            <Plus className="h-4 w-4" />
+            Tambah Kategori
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Tambah Kategori Baru</DialogTitle>
+            <DialogDescription>
+              Isi informasi kategori dengan lengkap
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="space-y-4">
           <CategoryForm 
             onSubmit={handleSubmit}
             isSubmitting={isSubmitting}
           />
+        </DialogContent>
+      </Dialog>
 
-          <Separator className="my-4" />
-          
-          <div>
-            <h4 className="mb-4 text-sm font-medium">Daftar Kategori</h4>
-            <ScrollArea className="h-[200px] rounded-md border p-4">
-              {categories.length > 0 ? (
-                <div className="space-y-2">
-                  {categories.map((category) => (
-                    <div
-                      key={category.kategori_id}
-                      className="flex items-center justify-between rounded-lg border p-2"
-                    >
-                      <span className="text-sm">{category.kategori_name}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nama Kategori</TableHead>
+              <TableHead>Deskripsi</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {categories.length > 0 ? (
+              categories.map((category) => (
+                <TableRow key={category.kategori_id}>
+                  <TableCell className="font-medium">{category.kategori_name}</TableCell>
+                  <TableCell>{category.description || "-"}</TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={2} className="text-center text-muted-foreground">
                   Belum ada kategori yang ditambahkan
-                </p>
-              )}
-            </ScrollArea>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
   );
 };
