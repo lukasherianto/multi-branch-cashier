@@ -24,23 +24,36 @@ type TransferStockFormValues = z.infer<typeof transferStockSchema>;
 export function TransferStockForm() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { pelakuUsaha } = useAuth();
+  const { user } = useAuth();
 
   const form = useForm<TransferStockFormValues>({
     resolver: zodResolver(transferStockSchema),
   });
 
+  // Fetch pelaku usaha first
+  const { data: pelakuUsaha } = useQuery({
+    queryKey: ['pelakuUsaha', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from('pelaku_usaha')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      return data;
+    },
+    enabled: !!user,
+  });
+
   // Fetch branches
   const { data: branches = [] } = useQuery({
-    queryKey: ['branches'],
+    queryKey: ['branches', pelakuUsaha?.pelaku_usaha_id],
     queryFn: async () => {
       if (!pelakuUsaha) return [];
-
       const { data } = await supabase
         .from('cabang')
         .select('*')
         .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id);
-
       return data || [];
     },
     enabled: !!pelakuUsaha,
@@ -48,15 +61,13 @@ export function TransferStockForm() {
 
   // Fetch products
   const { data: products = [] } = useQuery({
-    queryKey: ['products'],
+    queryKey: ['products', pelakuUsaha?.pelaku_usaha_id],
     queryFn: async () => {
       if (!pelakuUsaha) return [];
-
       const { data } = await supabase
         .from('produk')
         .select('*')
         .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id);
-
       return data || [];
     },
     enabled: !!pelakuUsaha,
