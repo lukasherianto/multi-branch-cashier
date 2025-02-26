@@ -1,4 +1,3 @@
-
 import * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -119,7 +118,7 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
 
       toast({
         title: "Sukses",
-        description: "Produk berhasil ditambahkan",
+        description: `Produk ${values.product_name} berhasil ditambahkan ke database`,
       });
       
       form.reset();
