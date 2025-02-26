@@ -6,9 +6,24 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { format } from "date-fns";
 import { id } from 'date-fns/locale';
 
+interface Transfer {
+  transfer_id: number;
+  transfer_date: string;
+  quantity: number;
+  produk: {
+    product_name: string;
+  } | null;
+  cabang_from: {
+    branch_name: string;
+  } | null;
+  cabang_to: {
+    branch_name: string;
+  } | null;
+}
+
 const StockTransfer = () => {
   // Fetch transfer history
-  const { data: transfers = [] } = useQuery({
+  const { data: transfers = [] } = useQuery<Transfer[]>({
     queryKey: ['transfers'],
     queryFn: async () => {
       const { data: pelakuUsaha } = await supabase
@@ -25,9 +40,9 @@ const StockTransfer = () => {
           transfer_id,
           transfer_date,
           quantity,
-          produk:produk_id (product_name),
-          cabang_from:cabang_id_from (*)!inner,
-          cabang_to:cabang_id_to (*)!inner
+          produk:produk_id(product_name),
+          cabang_from:cabang_id_from(branch_name),
+          cabang_to:cabang_id_to(branch_name)
         `)
         .order('transfer_date', { ascending: false });
 
