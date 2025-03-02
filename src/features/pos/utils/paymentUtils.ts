@@ -17,6 +17,24 @@ export const createTransactions = async (
 ): Promise<boolean> => {
   console.log("Creating transactions for items:", cartItems.length);
   
+  // Jika memberId bukan null tapi juga bukan ID yang valid, kita set menjadi null
+  // untuk menghindari foreign key constraint error
+  let validMemberId = memberId;
+  
+  if (memberId !== null) {
+    // Periksa apakah member dengan ID ini benar-benar ada di database
+    const { data: memberData, error: memberError } = await supabase
+      .from('member')
+      .select('member_id')
+      .eq('member_id', memberId)
+      .maybeSingle();
+      
+    if (memberError || !memberData) {
+      console.log(`Member dengan ID ${memberId} tidak ditemukan, mengatur pelanggan_id ke null`);
+      validMemberId = null;
+    }
+  }
+  
   const transactionPromises = cartItems.map(async (item) => {
     const pointsForItem = pointsToUse > 0 
       ? Math.floor((item.price * item.quantity / totalBeforePoints) * pointsToUse) 
@@ -33,9 +51,9 @@ export const createTransactions = async (
         quantity: item.quantity,
         total_price: item.price * item.quantity,
         points_used: pointsForItem,
-        pelanggan_id: memberId,
+        pelanggan_id: validMemberId, // Menggunakan memberId yang sudah divalidasi
         transaction_date: new Date().toISOString(),
-        payment_method: paymentMethod // Sekarang kita menggunakan kolom payment_method
+        payment_method: paymentMethod
       })
       .select();
       

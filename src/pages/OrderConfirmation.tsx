@@ -9,6 +9,7 @@ import { ArrowLeft, Receipt } from "lucide-react";
 import { usePaymentHandler } from "@/features/pos/components/PaymentHandler";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { supabase } from "@/integrations/supabase/client";
 
 const OrderConfirmation = () => {
   const location = useLocation();
@@ -48,13 +49,33 @@ const OrderConfirmation = () => {
     return null;
   }
 
+  const validateMemberId = async (id: number | null) => {
+    if (id === null) return true; // Null memberId is valid (non-member transaction)
+    
+    const { data, error } = await supabase
+      .from('member')
+      .select('member_id')
+      .eq('member_id', id)
+      .maybeSingle();
+      
+    if (error || !data) {
+      console.error("Member validation failed:", error || "Member not found");
+      return false;
+    }
+    
+    return true;
+  };
+
   const handleConfirmPayment = async () => {
     try {
       setIsProcessing(true);
       setErrorMessage(null);
       
-      if (!memberId && memberId !== null) {
-        throw new Error("Member ID tidak valid");
+      if (isRegisteredCustomer && memberId) {
+        const isValidMember = await validateMemberId(memberId);
+        if (!isValidMember) {
+          throw new Error("Data member tidak valid. Silakan periksa kembali pelanggan.");
+        }
       }
       
       // Pass the payment method to the handlePayment function
