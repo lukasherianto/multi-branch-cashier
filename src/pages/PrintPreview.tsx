@@ -2,7 +2,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Printer, MessageSquare } from "lucide-react";
+import { Printer, MessageSquare, ArrowLeft } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
 import { id } from "date-fns/locale";
 
@@ -16,7 +16,19 @@ interface TransactionItem {
 const PrintPreview = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { items, total, pointsUsed, pointsEarned, businessName, branchName } = location.state || {};
+  const { 
+    items, 
+    total, 
+    pointsUsed, 
+    pointsEarned, 
+    businessName, 
+    branchName,
+    customerName,
+    whatsappNumber
+  } = location.state || {};
+  
+  // Generate a random invoice number with format INV-YYYYMMDD-XXXX
+  const invoiceNumber = `INV-${formatInTimeZone(new Date(), 'Asia/Jakarta', 'yyyyMMdd')}-${Math.floor(1000 + Math.random() * 9000)}`;
   
   const handlePrint = () => {
     window.print();
@@ -27,9 +39,11 @@ const PrintPreview = () => {
       `${item.name} x${item.quantity} = Rp ${(item.price * item.quantity).toLocaleString('id-ID')}`
     ).join('\n');
 
-    let message = `*Struk Pembayaran*\n\n` +
+    let message = `*Invoice ${invoiceNumber}*\n\n` +
       `*${businessName}*\n` +
       `${branchName}\n\n` +
+      `Pelanggan: ${customerName}\n` +
+      `WhatsApp: ${whatsappNumber}\n\n` +
       `Tanggal: ${formatInTimeZone(new Date(), 'Asia/Jakarta', 'dd MMMM yyyy HH:mm', { locale: id })}\n\n` +
       `${itemsList}\n\n`;
 
@@ -45,7 +59,11 @@ const PrintPreview = () => {
 
     message += `Terima kasih atas kunjungan Anda!`;
 
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    // Use the provided WhatsApp number if available, otherwise open without a number
+    const whatsappUrl = whatsappNumber 
+      ? `https://wa.me/${whatsappNumber.replace(/^0/, '62').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(message)}`
+      : `https://wa.me/?text=${encodeURIComponent(message)}`;
+      
     window.open(whatsappUrl, '_blank');
   };
 
@@ -64,7 +82,17 @@ const PrintPreview = () => {
             <p className="text-sm text-gray-500">
               {formatInTimeZone(new Date(), 'Asia/Jakarta', 'dd MMMM yyyy HH:mm', { locale: id })}
             </p>
+            <div className="my-3 p-2 bg-gray-50 rounded-md">
+              <p className="font-bold">Invoice: {invoiceNumber}</p>
+            </div>
           </div>
+
+          {customerName && (
+            <div className="text-sm">
+              <p><strong>Pelanggan:</strong> {customerName}</p>
+              {whatsappNumber && <p><strong>WhatsApp:</strong> {whatsappNumber}</p>}
+            </div>
+          )}
 
           <div className="border-t border-b py-4 space-y-2">
             {items.map((item: TransactionItem) => (
@@ -104,11 +132,18 @@ const PrintPreview = () => {
         <div className="flex gap-4 justify-center print:hidden">
           <Button onClick={handlePrint} className="w-40">
             <Printer className="mr-2 h-4 w-4" />
-            Print Struk
+            Print Invoice
           </Button>
           <Button onClick={handleWhatsApp} className="w-40">
             <MessageSquare className="mr-2 h-4 w-4" />
             Kirim WhatsApp
+          </Button>
+        </div>
+        
+        <div className="print:hidden text-center mt-4">
+          <Button variant="outline" onClick={() => navigate("/pos")} className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Kembali ke POS
           </Button>
         </div>
       </Card>
