@@ -301,6 +301,7 @@ export type Database = {
       pelanggan: {
         Row: {
           created_at: string
+          member_type: string | null
           nama: string
           pelaku_usaha_id: number
           pelanggan_id: number
@@ -309,6 +310,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          member_type?: string | null
           nama: string
           pelaku_usaha_id: number
           pelanggan_id?: number
@@ -317,6 +319,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          member_type?: string | null
           nama?: string
           pelaku_usaha_id?: number
           pelanggan_id?: number
