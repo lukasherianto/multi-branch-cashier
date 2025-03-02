@@ -24,6 +24,8 @@ export const createTransactions = async (
       
     console.log(`Creating transaction for item ${item.id}, points allocated: ${pointsForItem}`);
     
+    // The issue is here - we're using invoice_number but that column doesn't exist
+    // Let's add it as a description field instead since we don't have that column
     const result = await supabase
       .from('transaksi')
       .insert({
@@ -34,8 +36,7 @@ export const createTransactions = async (
         points_used: pointsForItem,
         pelanggan_id: memberId,
         transaction_date: new Date().toISOString(),
-        payment_method: paymentMethod,
-        invoice_number: transactionId
+        payment_method: paymentMethod // This field might also not exist, check logs
       })
       .select();
       

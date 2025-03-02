@@ -8,12 +8,14 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Receipt } from "lucide-react";
 import { usePaymentHandler } from "@/features/pos/components/PaymentHandler";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const OrderConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "qris">("cash");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const {
     cartItems,
@@ -49,12 +51,24 @@ const OrderConfirmation = () => {
   const handleConfirmPayment = async () => {
     try {
       setIsProcessing(true);
+      setErrorMessage(null);
       // Pass the payment method to the handlePayment function
       await handlePayment(pointsToUse || 0, customerName, whatsappNumber, paymentMethod);
       // Navigation to print-preview is handled inside handlePayment
     } catch (error) {
       console.error("Payment error:", error);
-      toast.error("Gagal memproses pembayaran");
+      
+      let message = "Gagal memproses pembayaran";
+      if (error instanceof Error) {
+        if (error.message.includes("invoice_number")) {
+          message = "Kolom invoice_number tidak ditemukan dalam database. Silakan periksa struktur tabel transaksi.";
+        } else {
+          message = `Error: ${error.message}`;
+        }
+      }
+      
+      setErrorMessage(message);
+      toast.error(message);
     } finally {
       setIsProcessing(false);
     }
@@ -71,6 +85,12 @@ const OrderConfirmation = () => {
           <ArrowLeft className="h-4 w-4 mr-2" />
           Kembali ke POS
         </Button>
+        
+        {errorMessage && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
+        )}
         
         <Card>
           <CardHeader>
