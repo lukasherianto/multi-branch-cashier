@@ -52,6 +52,11 @@ const OrderConfirmation = () => {
     try {
       setIsProcessing(true);
       setErrorMessage(null);
+      
+      if (!memberId && memberId !== null) {
+        throw new Error("Member ID tidak valid");
+      }
+      
       // Pass the payment method to the handlePayment function
       await handlePayment(pointsToUse || 0, customerName, whatsappNumber, paymentMethod);
       // Navigation to print-preview is handled inside handlePayment
@@ -60,8 +65,8 @@ const OrderConfirmation = () => {
       
       let message = "Gagal memproses pembayaran";
       if (error instanceof Error) {
-        if (error.message.includes("payment_method")) {
-          message = "Kolom payment_method tidak ditemukan dalam database. Silakan periksa struktur tabel transaksi.";
+        if (error.message.includes("violates foreign key constraint")) {
+          message = "Data pelanggan tidak valid. Pastikan pelanggan sudah terdaftar.";
         } else if (error.message.includes("Failed to process")) {
           message = "Gagal memproses transaksi. Silakan coba lagi atau hubungi admin.";
         } else {

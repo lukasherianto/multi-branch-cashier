@@ -34,8 +34,8 @@ export const createTransactions = async (
         total_price: item.price * item.quantity,
         points_used: pointsForItem,
         pelanggan_id: memberId,
-        transaction_date: new Date().toISOString()
-        // We removed payment_method since it doesn't exist in the database
+        transaction_date: new Date().toISOString(),
+        payment_method: paymentMethod // Sekarang kita menggunakan kolom payment_method
       })
       .select();
       

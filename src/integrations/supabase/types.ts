@@ -623,6 +623,7 @@ export type Database = {
         Row: {
           cabang_id: number
           created_at: string
+          payment_method: string | null
           payment_status: number
           pelanggan_id: number | null
           points_earned: number | null
@@ -637,6 +638,7 @@ export type Database = {
         Insert: {
           cabang_id: number
           created_at?: string
+          payment_method?: string | null
           payment_status?: number
           pelanggan_id?: number | null
           points_earned?: number | null
@@ -651,6 +653,7 @@ export type Database = {
         Update: {
           cabang_id?: number
           created_at?: string
+          payment_method?: string | null
           payment_status?: number
           pelanggan_id?: number | null
           points_earned?: number | null
