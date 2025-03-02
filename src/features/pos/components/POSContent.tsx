@@ -1,4 +1,3 @@
-
 import { ProductSearch } from "@/components/pos/ProductSearch";
 import { ProductList } from "@/components/pos/ProductList";
 import { CustomerInfo } from "@/components/pos/CustomerInfo";
@@ -10,6 +9,7 @@ import { useCustomerManagement } from "../hooks/useCustomerManagement";
 import { ShoppingCart } from "@/components/pos/ShoppingCart";
 import { usePaymentHandler } from "./PaymentHandler";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export const POSContent = () => {
   const navigate = useNavigate();
@@ -61,11 +61,9 @@ export const POSContent = () => {
       return;
     }
 
-    // Calculate final total
     const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const finalTotal = total - (pointsToUse * 1000);
 
-    // Navigate to confirmation page
     navigate('/order-confirmation', {
       state: {
         cartItems,

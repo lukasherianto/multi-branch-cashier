@@ -60,7 +60,13 @@ const MemberList = ({ refreshTrigger = 0 }: MemberListProps) => {
         
         if (error) throw error;
         
-        setMembers(data || []);
+        // Cast the member_type to the expected type
+        const typedMembers = (data || []).map(member => ({
+          ...member,
+          member_type: member.member_type as "member1" | "member2" | "none"
+        }));
+        
+        setMembers(typedMembers);
       } catch (err: any) {
         console.error('Error fetching members:', err);
         setError(err.message || 'Gagal memuat daftar member');

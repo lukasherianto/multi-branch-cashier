@@ -17,8 +17,8 @@ export const TransactionStatus = ({ status, onStatusChange }: TransactionStatusP
       onClick={() => onStatusChange(status)}
     >
       <Badge 
-        variant={status === 1 ? "success" : "destructive"}
-        className="flex items-center gap-1"
+        variant={status === 1 ? "default" : "destructive"}
+        className={`flex items-center gap-1 ${status === 1 ? "bg-green-500" : ""}`}
       >
         {status === 1 ? (
           <>
