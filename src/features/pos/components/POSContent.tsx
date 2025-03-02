@@ -9,8 +9,10 @@ import { useCart } from "@/hooks/useCart";
 import { useCustomerManagement } from "../hooks/useCustomerManagement";
 import { ShoppingCart } from "@/components/pos/ShoppingCart";
 import { usePaymentHandler } from "./PaymentHandler";
+import { useNavigate } from "react-router-dom";
 
 export const POSContent = () => {
+  const navigate = useNavigate();
   const { pelakuUsaha, cabang, cabangList, selectedCabangId, setSelectedCabangId } = useAuth();
   const { filteredProducts, handleSearch, fetchProducts } = useProducts();
   const { cartItems, addToCart, updateQuantity, removeItem, clearCart } = useCart();
@@ -42,6 +44,40 @@ export const POSContent = () => {
     fetchProducts,
     pelakuUsaha
   });
+
+  const handleProceedToCheckout = (pointsToUse: number) => {
+    if (!cabang) {
+      toast.error("Silakan pilih cabang terlebih dahulu");
+      return;
+    }
+
+    if (cartItems.length === 0) {
+      toast.error("Tambahkan produk ke keranjang terlebih dahulu");
+      return;
+    }
+
+    if (!selectedCabangId) {
+      toast.error("ID cabang tidak valid");
+      return;
+    }
+
+    // Calculate final total
+    const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const finalTotal = total - (pointsToUse * 1000);
+
+    // Navigate to confirmation page
+    navigate('/order-confirmation', {
+      state: {
+        cartItems,
+        finalTotal,
+        pointsToUse,
+        handlePayment,
+        customerName,
+        whatsappNumber,
+        isRegisteredCustomer
+      }
+    });
+  };
 
   return (
     <div className="h-[calc(100vh-2rem)] flex gap-6">
@@ -98,7 +134,7 @@ export const POSContent = () => {
         items={cartItems}
         onUpdateQuantity={updateQuantity}
         onRemoveItem={removeItem}
-        onCheckout={handlePayment}
+        onCheckout={handleProceedToCheckout}
         customerPoints={memberPoints}
       />
     </div>

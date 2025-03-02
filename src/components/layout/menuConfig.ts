@@ -31,3 +31,9 @@ export const menuItems = [
   { path: "/attendance", label: "Absensi", icon: UserRound },
   { path: "/settings", label: "Pengaturan", icon: Settings },
 ];
+
+// Define hidden routes that don't appear in the menu
+export const hiddenRoutes = [
+  { path: "/order-confirmation", label: "Konfirmasi Pesanan" },
+  { path: "/print-preview", label: "Print Preview" }
+];

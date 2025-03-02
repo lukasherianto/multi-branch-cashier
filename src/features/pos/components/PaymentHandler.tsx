@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,7 +17,11 @@ export const usePaymentHandler = ({
 }: PaymentHandlerProps) => {
   const navigate = useNavigate();
 
-  const handlePayment = async (pointsToUse: number) => {
+  const handlePayment = async (pointsToUse: number, confirmedName?: string, confirmedWhatsapp?: string) => {
+    // Use confirmed values from order confirmation if available, otherwise use original values
+    const finalCustomerName = confirmedName || customerName;
+    const finalWhatsappNumber = confirmedWhatsapp || whatsappNumber;
+    
     if (!cabang) {
       toast.error("Silakan pilih cabang terlebih dahulu");
       return;
@@ -144,7 +147,6 @@ export const usePaymentHandler = ({
       await Promise.all(stockUpdatePromises);
 
       // Create a manual kas entry for the transaction
-      // This is a fallback in case the database trigger doesn't work
       console.log("Creating manual kas entry with amount:", finalTotal);
       const { error: kasError } = await supabase
         .from('kas')
@@ -158,7 +160,6 @@ export const usePaymentHandler = ({
       
       if (kasError) {
         console.error('Error creating kas entry:', kasError);
-        // We'll continue even if the kas entry fails, as the transaction is already completed
         toast.warning("Transaksi berhasil, tetapi gagal mencatat di buku kas. Silakan periksa log.");
       } else {
         console.log("Kas entry created successfully");
@@ -199,8 +200,8 @@ export const usePaymentHandler = ({
           pointsEarned: Math.floor(finalTotal / 1000),
           businessName: pelakuUsaha?.business_name,
           branchName: cabang?.branch_name,
-          customerName: customerName,
-          whatsappNumber: whatsappNumber
+          customerName: finalCustomerName,
+          whatsappNumber: finalWhatsappNumber
         }
       });
 

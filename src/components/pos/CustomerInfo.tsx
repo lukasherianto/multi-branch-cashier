@@ -1,8 +1,6 @@
 
 import { useState } from "react";
 import { User } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { WhatsAppInput } from "@/components/settings/WhatsAppInput";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -77,7 +75,7 @@ export const CustomerInfo = ({
         onNewCustomer();
         toast({
           title: "Pelanggan Baru",
-          description: "Silakan lengkapi data pelanggan",
+          description: "Pelanggan tidak ditemukan. Transaksi akan menggunakan harga retail.",
         });
       }
     } catch (error: any) {
@@ -90,100 +88,23 @@ export const CustomerInfo = ({
     }
   };
 
-  const handleSaveCustomer = async () => {
-    if (whatsappNumber.length < 10) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Nomor WhatsApp tidak valid",
-      });
-      return;
-    }
-
-    if (!customerName) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Nama pelanggan harus diisi",
-      });
-      return;
-    }
-
-    try {
-      const { data: pelakuUsaha } = await supabase
-        .from('pelaku_usaha')
-        .select('pelaku_usaha_id')
-        .single();
-
-      if (!pelakuUsaha) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Data pelaku usaha tidak ditemukan",
-        });
-        return;
-      }
-
-      const { error } = await supabase
-        .from('pelanggan')
-        .insert({
-          pelaku_usaha_id: pelakuUsaha.pelaku_usaha_id,
-          nama: customerName,
-          whatsapp: whatsappNumber,
-          member_type: memberType
-        });
-
-      if (error) throw error;
-
-      // Ambil data pelanggan yang baru dibuat
-      const { data: newCustomer, error: fetchError } = await supabase
-        .from('pelanggan')
-        .select('*')
-        .eq('whatsapp', whatsappNumber)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      onCustomerFound(newCustomer);
-      toast({
-        title: "Sukses",
-        description: "Data pelanggan berhasil disimpan",
-      });
-    } catch (error: any) {
-      console.error('Error saving customer data:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Gagal menyimpan data pelanggan",
-      });
-    }
-  };
-
   return (
     <div className="space-y-4">
       <WhatsAppInput
         value={whatsappNumber}
         onChange={setWhatsappNumber}
         onCheck={handleCheckCustomer}
-        onSave={handleSaveCustomer}
+        onSave={null}
       />
-      <div className="grid grid-cols-1 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="customerName" className="flex items-center gap-2">
-            <User className="h-4 w-4" />
-            Nama Pelanggan
-          </Label>
-          <Input
-            id="customerName"
-            placeholder="Nama Pelanggan"
-            value={customerName}
-            onChange={(e) => setCustomerName(e.target.value)}
-            className="text-sm"
-          />
-        </div>
-      </div>
 
-      {(isRegisteredCustomer || customerName) && (
+      {isRegisteredCustomer && (
+        <div className="p-3 bg-gray-100 rounded-md">
+          <p className="font-medium">Pelanggan: {customerName}</p>
+          <p className="text-sm text-gray-600">Tipe Member: {memberType === "none" ? "Non-Member" : memberType === "member1" ? "Member 1" : "Member 2"}</p>
+        </div>
+      )}
+
+      {isRegisteredCustomer && (
         <Form {...form}>
           <FormField
             control={form.control}
