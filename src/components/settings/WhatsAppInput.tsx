@@ -1,3 +1,4 @@
+
 import { Phone, Check, Save } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,7 +8,7 @@ interface WhatsAppInputProps {
   value: string;
   onChange: (value: string) => void;
   onCheck?: () => void;
-  onSave?: () => void;
+  onSave?: (() => void) | null;
 }
 
 export const WhatsAppInput = ({ value, onChange, onCheck, onSave }: WhatsAppInputProps) => {
@@ -33,14 +34,16 @@ export const WhatsAppInput = ({ value, onChange, onCheck, onSave }: WhatsAppInpu
         >
           <Check className="h-4 w-4" />
         </Button>
-        <Button 
-          variant="outline" 
-          size="icon"
-          onClick={onSave}
-          className="shrink-0"
-        >
-          <Save className="h-4 w-4" />
-        </Button>
+        {onSave && (
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={onSave}
+            className="shrink-0"
+          >
+            <Save className="h-4 w-4" />
+          </Button>
+        )}
       </div>
       <p className="text-sm text-gray-500">
         Format: 08xx atau 628xx (opsional)
