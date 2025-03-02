@@ -94,6 +94,25 @@ export const usePaymentHandler = ({
 
       await Promise.all(stockUpdatePromises);
 
+      // Create a manual kas entry for the entire transaction if needed
+      // This is a fallback in case the database trigger doesn't work
+      if (pointsToUse === 0) {
+        const { error: kasError } = await supabase
+          .from('kas')
+          .insert({
+            cabang_id: selectedCabangId,
+            amount: finalTotal,
+            transaction_type: 'masuk',
+            description: `Penjualan - ${new Date().toLocaleString()}`,
+            transaction_date: new Date().toISOString()
+          });
+        
+        if (kasError) {
+          console.error('Error creating kas entry:', kasError);
+          // Transaction already completed, so just log this error
+        }
+      }
+
       // Clear cart and refresh products
       clearCart();
       fetchProducts();
