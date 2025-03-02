@@ -60,8 +60,10 @@ const OrderConfirmation = () => {
       
       let message = "Gagal memproses pembayaran";
       if (error instanceof Error) {
-        if (error.message.includes("invoice_number")) {
-          message = "Kolom invoice_number tidak ditemukan dalam database. Silakan periksa struktur tabel transaksi.";
+        if (error.message.includes("payment_method")) {
+          message = "Kolom payment_method tidak ditemukan dalam database. Silakan periksa struktur tabel transaksi.";
+        } else if (error.message.includes("Failed to process")) {
+          message = "Gagal memproses transaksi. Silakan coba lagi atau hubungi admin.";
         } else {
           message = `Error: ${error.message}`;
         }
