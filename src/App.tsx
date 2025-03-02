@@ -1,4 +1,3 @@
-
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import Auth from "@/pages/Auth";
@@ -17,6 +16,7 @@ import Kas from "@/pages/Kas";
 import KasPurchases from "@/pages/KasPurchases";
 import Attendance from "@/pages/Attendance";
 import Members from "@/pages/Members";
+import OrderConfirmation from "@/pages/OrderConfirmation";
 import { useAuth, AuthProvider } from "@/hooks/useAuth";
 import { useEffect } from "react";
 
@@ -58,6 +58,7 @@ function AppRoutes() {
         <Route path="attendance" element={<Attendance />} />
         <Route path="settings" element={<Settings />} />
         <Route path="print/:transactionId" element={<PrintPreview />} />
+        <Route path="order-confirmation" element={<OrderConfirmation />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

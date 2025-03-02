@@ -17,7 +17,7 @@ export const usePaymentHandler = ({
 }: PaymentHandlerProps) => {
   const navigate = useNavigate();
 
-  const handlePayment = async (pointsToUse: number, confirmedName?: string, confirmedWhatsapp?: string) => {
+  const handlePayment = async (pointsToUse: number, confirmedName?: string, confirmedWhatsapp?: string, paymentMethod: "cash" | "qris" = "cash") => {
     // Use confirmed values from order confirmation if available, otherwise use original values
     const finalCustomerName = confirmedName || customerName;
     const finalWhatsappNumber = confirmedWhatsapp || whatsappNumber;
@@ -40,6 +40,7 @@ export const usePaymentHandler = ({
     try {
       console.log("Starting payment process with points:", pointsToUse);
       console.log("Selected branch ID:", selectedCabangId);
+      console.log("Payment method:", paymentMethod);
       
       // Validate stock for all items
       for (const item of cartItems) {
@@ -86,7 +87,8 @@ export const usePaymentHandler = ({
             total_price: item.price * item.quantity,
             points_used: pointsForItem,
             pelanggan_id: memberId,
-            transaction_date: new Date().toISOString()
+            transaction_date: new Date().toISOString(),
+            payment_method: paymentMethod
           })
           .select();
           
@@ -201,7 +203,8 @@ export const usePaymentHandler = ({
           businessName: pelakuUsaha?.business_name,
           branchName: cabang?.branch_name,
           customerName: finalCustomerName,
-          whatsappNumber: finalWhatsappNumber
+          whatsappNumber: finalWhatsappNumber,
+          paymentMethod
         }
       });
 
