@@ -15,12 +15,12 @@ export const useCustomerManagement = () => {
   const handleCustomerFound = (customer: any) => {
     console.log('Customer found:', customer);
     setIsRegisteredCustomer(true);
-    setMemberId(customer.member_id);
+    setMemberId(customer.pelanggan_id);
     setMemberPoints(customer.loyalty_points || 0);
     
-    // Set member type based on database value or default to member1
-    const type = customer.member_type || "member1";
-    setMemberType(type);
+    // Set member type based on database value or default to none
+    const type = customer.member_type || "none";
+    setMemberType(type as "none" | "member1" | "member2");
   };
 
   const handleNewCustomer = () => {

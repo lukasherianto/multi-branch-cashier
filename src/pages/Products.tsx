@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -73,7 +72,6 @@ const Products = () => {
     }
   };
 
-  // Tambahkan useEffect untuk memanggil fetchProducts saat komponen dimount
   useEffect(() => {
     fetchProducts();
   }, []);
@@ -117,6 +115,7 @@ const Products = () => {
         products={filteredProducts}
         onAddToCart={() => {}}
         isRegisteredCustomer={false}
+        memberType="none"
         showStockAction={true}
         onRefresh={fetchProducts}
       />
