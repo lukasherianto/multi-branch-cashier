@@ -25,8 +25,10 @@ export const POSContent = () => {
     isRegisteredCustomer,
     memberId,
     memberPoints,
+    memberType,
     handleCustomerFound,
-    handleNewCustomer
+    handleNewCustomer,
+    handleChangeMemberType
   } = useCustomerManagement();
 
   const { handlePayment } = usePaymentHandler({
@@ -77,6 +79,9 @@ export const POSContent = () => {
           setBirthDate={setBirthDate}
           onCustomerFound={handleCustomerFound}
           onNewCustomer={handleNewCustomer}
+          memberType={memberType}
+          onChangeMemberType={handleChangeMemberType}
+          isRegisteredCustomer={isRegisteredCustomer}
         />
 
         <ProductSearch onSearch={handleSearch} />
@@ -85,6 +90,7 @@ export const POSContent = () => {
           products={filteredProducts}
           onAddToCart={addToCart}
           isRegisteredCustomer={isRegisteredCustomer}
+          memberType={memberType}
         />
       </div>
 

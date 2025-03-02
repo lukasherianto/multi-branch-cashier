@@ -17,6 +17,7 @@ interface ProductListProps {
   products: CartItem[];
   onAddToCart: (product: CartItem) => void;
   isRegisteredCustomer: boolean;
+  memberType: "none" | "member1" | "member2";
   showStockAction?: boolean;
   onRefresh?: () => void;
 }
@@ -25,13 +26,15 @@ export const ProductList = ({
   products, 
   onAddToCart, 
   isRegisteredCustomer,
+  memberType,
   showStockAction,
   onRefresh 
 }: ProductListProps) => {
   const { handleAddToCart } = useProductList({
     products,
     onAddToCart,
-    isRegisteredCustomer
+    isRegisteredCustomer,
+    memberType
   });
 
   return (
