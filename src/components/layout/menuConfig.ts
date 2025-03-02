@@ -1,5 +1,5 @@
 
-import { LayoutDashboard, Store, Package2, History, FileBarChart2, Settings, ArrowLeftRight, Banknote, Building2, UserRound } from "lucide-react";
+import { LayoutDashboard, Store, Package2, History, FileBarChart2, Settings, ArrowLeftRight, Banknote, Building2, UserRound, Users } from "lucide-react";
 
 export const menuItems = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -17,6 +17,7 @@ export const menuItems = [
   { path: "/history", label: "Riwayat", icon: History },
   { path: "/returns", label: "Retur", icon: ArrowLeftRight },
   { path: "/reports", label: "Laporan", icon: FileBarChart2 },
+  { path: "/members", label: "Member", icon: Users },
   { 
     path: "/kas",
     label: "Kas",

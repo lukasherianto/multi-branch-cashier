@@ -16,6 +16,7 @@ import PrintPreview from "@/pages/PrintPreview";
 import Kas from "@/pages/Kas";
 import KasPurchases from "@/pages/KasPurchases";
 import Attendance from "@/pages/Attendance";
+import Members from "@/pages/Members";
 import { useAuth, AuthProvider } from "@/hooks/useAuth";
 import { useEffect } from "react";
 
@@ -50,6 +51,7 @@ function AppRoutes() {
         <Route path="history" element={<History />} />
         <Route path="returns" element={<Returns />} />
         <Route path="reports" element={<Reports />} />
+        <Route path="members" element={<Members />} />
         <Route path="kas" element={<Kas />} />
         <Route path="kas/purchases" element={<KasPurchases />} />
         <Route path="branches" element={<Branches />} />
