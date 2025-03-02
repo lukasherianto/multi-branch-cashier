@@ -25,11 +25,12 @@ const PrintPreview = () => {
     branchName,
     customerName,
     whatsappNumber,
-    paymentMethod
+    paymentMethod,
+    transactionId
   } = location.state || {};
   
-  // Generate a random invoice number with format INV-YYYYMMDD-XXXX
-  const invoiceNumber = `INV-${formatInTimeZone(new Date(), 'Asia/Jakarta', 'yyyyMMdd')}-${Math.floor(1000 + Math.random() * 9000)}`;
+  // Generate a random invoice number with format INV-YYYYMMDD-XXXX if not provided
+  const invoiceNumber = transactionId || `INV-${formatInTimeZone(new Date(), 'Asia/Jakarta', 'yyyyMMdd')}-${Math.floor(1000 + Math.random() * 9000)}`;
   
   const handlePrint = () => {
     window.print();
@@ -143,7 +144,7 @@ const PrintPreview = () => {
         <div className="flex gap-4 justify-center print:hidden">
           <Button onClick={handlePrint} className="w-40">
             <Printer className="mr-2 h-4 w-4" />
-            Print Invoice
+            Cetak Struk
           </Button>
           <Button onClick={handleWhatsApp} className="w-40">
             <MessageSquare className="mr-2 h-4 w-4" />

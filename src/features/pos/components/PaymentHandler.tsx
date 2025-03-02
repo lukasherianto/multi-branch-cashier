@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PaymentHandlerProps } from "../types";
+import { formatInTimeZone } from "date-fns-tz";
 
 export const usePaymentHandler = ({
   cartItems,
@@ -41,6 +42,10 @@ export const usePaymentHandler = ({
       console.log("Starting payment process with points:", pointsToUse);
       console.log("Selected branch ID:", selectedCabangId);
       console.log("Payment method:", paymentMethod);
+      
+      // Generate transaction ID
+      const transactionId = `INV-${formatInTimeZone(new Date(), 'Asia/Jakarta', 'yyyyMMdd')}-${Math.floor(1000 + Math.random() * 9000)}`;
+      console.log("Generated transaction ID:", transactionId);
       
       // Validate stock for all items
       for (const item of cartItems) {
@@ -88,7 +93,8 @@ export const usePaymentHandler = ({
             points_used: pointsForItem,
             pelanggan_id: memberId,
             transaction_date: new Date().toISOString(),
-            payment_method: paymentMethod
+            payment_method: paymentMethod,
+            invoice_number: transactionId
           })
           .select();
           
@@ -156,7 +162,7 @@ export const usePaymentHandler = ({
           cabang_id: selectedCabangId,
           amount: finalTotal,
           transaction_type: 'masuk',
-          description: `Penjualan - ${new Date().toLocaleString()}`,
+          description: `Penjualan - ${transactionId}`,
           transaction_date: new Date().toISOString()
         });
       
@@ -176,7 +182,7 @@ export const usePaymentHandler = ({
             cabang_id: selectedCabangId,
             amount: pointsToUse * 1000,
             transaction_type: 'keluar',
-            description: `Penukaran Poin - ${new Date().toLocaleString()}`,
+            description: `Penukaran Poin - ${transactionId}`,
             transaction_date: new Date().toISOString()
           });
           
@@ -204,7 +210,8 @@ export const usePaymentHandler = ({
           branchName: cabang?.branch_name,
           customerName: finalCustomerName,
           whatsappNumber: finalWhatsappNumber,
-          paymentMethod
+          paymentMethod,
+          transactionId // Pass the generated transaction ID
         }
       });
 
