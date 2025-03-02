@@ -1,3 +1,6 @@
+
+import { Button } from "@/components/ui/button";
+import { ShoppingCart, Plus } from "lucide-react";
 import { StockManagement } from "./StockManagement";
 import {
   Table,
@@ -94,12 +97,14 @@ export const ProductList = ({
                     onSuccess={onRefresh}
                   />
                 ) : (
-                  <button
+                  <Button
                     onClick={() => handleAddToCart(product)}
-                    className="bg-mint-500 text-white px-4 py-2 rounded hover:bg-mint-600 transition-colors"
+                    size="sm"
+                    className="flex items-center gap-1"
                   >
+                    <ShoppingCart className="h-4 w-4" />
                     Add
-                  </button>
+                  </Button>
                 )}
               </TableCell>
             </TableRow>
