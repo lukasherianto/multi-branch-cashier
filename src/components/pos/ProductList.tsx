@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Plus } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { StockManagement } from "./StockManagement";
 import {
   Table,
@@ -10,22 +10,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { CartItem } from "@/types/pos";
+import { useProductList } from "@/features/pos/hooks/useProductList";
 
 interface ProductListProps {
-  products: Array<{
-    id: number;
-    name: string;
-    price: number;
-    member_price_1?: number | null;
-    member_price_2?: number | null;
-    quantity: number;
-    category?: string;
-    stock: number;
-    barcode?: string;
-    unit: string;
-    cost_price: number;
-  }>;
-  onAddToCart: (product: any) => void;
+  products: CartItem[];
+  onAddToCart: (product: CartItem) => void;
   isRegisteredCustomer: boolean;
   showStockAction?: boolean;
   onRefresh?: () => void;
@@ -38,17 +28,11 @@ export const ProductList = ({
   showStockAction,
   onRefresh 
 }: ProductListProps) => {
-  const handleAddToCart = (product: any) => {
-    // If customer is registered and member price exists, use member price
-    const priceToUse = isRegisteredCustomer && product.member_price_1 
-      ? product.member_price_1 
-      : product.price;
-
-    onAddToCart({
-      ...product,
-      price: priceToUse
-    });
-  };
+  const { handleAddToCart } = useProductList({
+    products,
+    onAddToCart,
+    isRegisteredCustomer
+  });
 
   return (
     <div className="w-full">
