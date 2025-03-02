@@ -65,8 +65,7 @@ export const POSContent = () => {
     const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const finalTotal = total - (pointsToUse * 1000);
 
-    // Instead of passing the function directly, we'll navigate to OrderConfirmation
-    // and handle payment there through a direct checkout button
+    // Navigate to order confirmation page with all required data
     navigate('/order-confirmation', {
       state: {
         cartItems,
@@ -76,8 +75,10 @@ export const POSContent = () => {
         whatsappNumber,
         isRegisteredCustomer,
         memberId,
+        memberPoints,
         selectedCabangId,
-        pelakuUsahaId: pelakuUsaha?.pelaku_usaha_id
+        pelakuUsahaId: pelakuUsaha?.pelaku_usaha_id,
+        memberType
       }
     });
   };

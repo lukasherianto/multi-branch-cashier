@@ -1,301 +1,251 @@
 
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { ArrowLeft, CreditCard, Wallet } from "lucide-react";
-import { useState } from "react";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { CartItem } from "@/types/pos";
+import { CreditCard, Wallet } from "lucide-react";
+import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const OrderConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'qris'>('cash');
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "qris">("cash");
   const [isProcessing, setIsProcessing] = useState(false);
-  
   const {
     cartItems,
     finalTotal,
-    pointsToUse,
+    pointsToUse = 0,
     customerName,
     whatsappNumber,
     isRegisteredCustomer,
     memberId,
+    memberPoints = 0,
     selectedCabangId,
-    pelakuUsahaId
+    pelakuUsahaId,
+    memberType = "none"
   } = location.state || {};
 
-  if (!cartItems || finalTotal === undefined) {
-    navigate('/pos');
-    return null;
-  }
+  useEffect(() => {
+    // If we don't have the needed data, go back to POS
+    if (!cartItems || !selectedCabangId) {
+      toast.error("Data transaksi tidak lengkap");
+      navigate("/pos");
+    }
+  }, [cartItems, selectedCabangId, navigate]);
 
   const handleConfirmPayment = async () => {
-    if (isProcessing) return;
-    
-    setIsProcessing(true);
-    
     try {
-      // Validate stock for all items
+      setIsProcessing(true);
+      
+      // Check stock for each product before processing
       for (const item of cartItems) {
-        const { data: productData, error: productError } = await supabase
+        const { data: stockData } = await supabase
           .from('produk')
           .select('stock')
           .eq('produk_id', item.id)
           .single();
-
-        if (productError) {
-          console.error("Error fetching product stock:", productError);
-          throw new Error(`Error validating stock for ${item.name}: ${productError.message}`);
-        }
-
-        if (!productData || productData.stock < item.quantity) {
-          throw new Error(`Stok tidak cukup untuk produk: ${item.name}`);
+          
+        if (!stockData || stockData.stock < item.quantity) {
+          toast.error(`Stok tidak mencukupi untuk produk ${item.name}`);
+          setIsProcessing(false);
+          return;
         }
       }
 
-      // Calculate total before points
-      const totalBeforePoints = cartItems.reduce((sum: number, item: CartItem) => sum + (item.price * item.quantity), 0);
+      // Create transaction record for each item
+      const transactionDate = new Date();
+      const formattedDate = format(transactionDate, "yyyy-MM-dd'T'HH:mm:ss");
       
-      // Create transactions for each item
-      console.log("Creating transactions for items:", cartItems.length);
-      const transactionPromises = cartItems.map(async (item: CartItem) => {
-        const pointsForItem = pointsToUse > 0 
-          ? Math.floor((item.price * item.quantity / totalBeforePoints) * pointsToUse) 
-          : 0;
-          
-        console.log(`Creating transaction for item ${item.id}, points allocated: ${pointsForItem}`);
-        
-        const result = await supabase
+      // Generate invoice number
+      const invoiceNumber = `INV-${format(transactionDate, 'yyyyMMddHHmmss')}`;
+      
+      // Process each item in the cart
+      const transactionIds = [];
+      
+      for (const item of cartItems) {
+        // Insert transaction record
+        const { data: transactionData, error: transactionError } = await supabase
           .from('transaksi')
           .insert({
             cabang_id: selectedCabangId,
             produk_id: item.id,
             quantity: item.quantity,
             total_price: item.price * item.quantity,
-            points_used: pointsForItem,
+            transaction_date: formattedDate,
+            payment_status: 1, // paid
             pelanggan_id: memberId,
-            transaction_date: new Date().toISOString()
+            points_used: pointsToUse > 0 ? pointsToUse : 0,
           })
-          .select();
-          
-        if (result.error) {
-          console.error(`Error creating transaction for item ${item.id}:`, result.error);
-          throw result.error;
-        }
-        
-        return result;
-      });
-
-      await Promise.all(transactionPromises);
-
-      // Update product stock
-      const stockUpdatePromises = cartItems.map(async (item: CartItem) => {
-        const { data: currentProduct, error: fetchError } = await supabase
-          .from('produk')
-          .select('stock')
-          .eq('produk_id', item.id)
+          .select()
           .single();
-        
-        if (fetchError) {
-          console.error(`Error fetching current stock for product ${item.id}:`, fetchError);
-          throw fetchError;
-        }
-        
-        if (currentProduct) {
-          const newStock = currentProduct.stock - item.quantity;
           
-          const { error: updateError } = await supabase
-            .from('produk')
-            .update({ 
-              stock: newStock 
-            })
-            .eq('produk_id', item.id);
-            
-          if (updateError) {
-            console.error(`Error updating stock for product ${item.id}:`, updateError);
-            throw updateError;
-          }
+        if (transactionError) throw transactionError;
+        
+        // Update product stock
+        const { error: stockError } = await supabase
+          .from('produk')
+          .update({ 
+            stock: supabase.rpc('decrement', { x: item.quantity })
+          })
+          .eq('produk_id', item.id);
+          
+        if (stockError) throw stockError;
+        
+        if (transactionData) {
+          transactionIds.push(transactionData.transaksi_id);
         }
-      });
-
-      await Promise.all(stockUpdatePromises);
-
-      // Create a manual kas entry for the transaction
-      const { error: kasError } = await supabase
-        .from('kas')
-        .insert({
-          cabang_id: selectedCabangId,
-          amount: finalTotal,
-          transaction_type: 'masuk',
-          description: `Penjualan - ${paymentMethod.toUpperCase()} - ${new Date().toLocaleString()}`,
-          transaction_date: new Date().toISOString()
-        });
+      }
       
-      if (kasError) {
-        console.error('Error creating kas entry:', kasError);
-        toast.warning("Transaksi berhasil, tetapi gagal mencatat di buku kas.");
-      }
-
-      // If points were used, create a matching kas entry for the redemption
-      if (pointsToUse > 0) {
-        const { error: pointsKasError } = await supabase
-          .from('kas')
-          .insert({
-            cabang_id: selectedCabangId,
-            amount: pointsToUse * 1000,
-            transaction_type: 'keluar',
-            description: `Penukaran Poin - ${new Date().toLocaleString()}`,
-            transaction_date: new Date().toISOString()
-          });
-          
-        if (pointsKasError) {
-          console.error('Error creating kas entry for points redemption:', pointsKasError);
-        }
-      }
-
-      // Get business information for the invoice
-      const { data: pelakuUsahaData } = await supabase
-        .from('pelaku_usaha')
-        .select('business_name')
-        .eq('pelaku_usaha_id', pelakuUsahaId)
-        .single();
-
-      const { data: cabangData } = await supabase
-        .from('cabang')
-        .select('branch_name')
-        .eq('cabang_id', selectedCabangId)
-        .single();
-
-      // Navigate to print preview
+      // Navigate to invoice/receipt page
       navigate('/print-preview', {
         state: {
-          items: cartItems,
-          total: finalTotal,
-          pointsUsed: pointsToUse,
-          pointsEarned: Math.floor(finalTotal / 1000),
-          businessName: pelakuUsahaData?.business_name,
-          branchName: cabangData?.branch_name,
+          invoiceNumber,
+          transactionDate: formattedDate,
+          cartItems,
+          finalTotal,
+          pointsToUse,
           customerName,
           whatsappNumber,
-          paymentMethod
+          isRegisteredCustomer,
+          paymentMethod,
+          transactionIds,
+          memberPoints,
+          remainingPoints: memberPoints - pointsToUse,
         }
       });
-
+      
     } catch (error) {
-      console.error('Error processing payment:', error);
-      toast.error("Gagal memproses pembayaran: " + (error instanceof Error ? error.message : String(error)));
+      console.error('Payment processing error:', error);
+      toast.error("Gagal memproses pembayaran");
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const calculateTotal = () => {
-    return cartItems.reduce((sum: number, item: CartItem) => sum + (item.price * item.quantity), 0);
-  };
+  if (!cartItems) {
+    return <div>Loading...</div>;
+  }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <Card className="max-w-2xl mx-auto p-6 space-y-6">
-        <div className="space-y-4">
-          <h1 className="text-2xl font-bold text-center">Konfirmasi Pesanan</h1>
-          
-          {/* Customer Info */}
-          <div className="bg-gray-50 p-4 rounded-md">
-            <h2 className="font-semibold mb-2">Informasi Pelanggan</h2>
-            <p><span className="font-medium">Nama:</span> {customerName || 'Pelanggan Umum'}</p>
+    <div className="container max-w-4xl py-8">
+      <h1 className="text-2xl font-bold mb-6">Konfirmasi Pesanan</h1>
+      
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Detail Pelanggan</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div>
+              <p className="text-sm font-medium">Nama</p>
+              <p>{customerName || "Pelanggan Umum"}</p>
+            </div>
             {whatsappNumber && (
-              <p><span className="font-medium">WhatsApp:</span> {whatsappNumber}</p>
-            )}
-            {isRegisteredCustomer && (
-              <p><span className="font-medium">Status:</span> Pelanggan Terdaftar</p>
-            )}
-          </div>
-          
-          {/* Order Items */}
-          <div>
-            <h2 className="font-semibold mb-2">Rincian Produk</h2>
-            <div className="border rounded-md overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produk</th>
-                    <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah</th>
-                    <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Harga</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {cartItems.map((item: CartItem) => (
-                    <tr key={item.id}>
-                      <td className="px-4 py-3">{item.name}</td>
-                      <td className="px-4 py-3 text-center">{item.quantity}</td>
-                      <td className="px-4 py-3 text-right">Rp {(item.price * item.quantity).toLocaleString('id-ID')}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            
-            {/* Payment Summary */}
-            <div className="mt-4 space-y-2">
-              <div className="flex justify-between font-medium">
-                <span>Subtotal</span>
-                <span>Rp {calculateTotal().toLocaleString('id-ID')}</span>
+              <div>
+                <p className="text-sm font-medium">WhatsApp</p>
+                <p>{whatsappNumber}</p>
               </div>
-              
-              {pointsToUse > 0 && (
-                <div className="flex justify-between text-red-500">
-                  <span>Poin Digunakan ({pointsToUse} poin)</span>
-                  <span>- Rp {(pointsToUse * 1000).toLocaleString('id-ID')}</span>
-                </div>
-              )}
-              
-              <div className="flex justify-between font-bold text-lg pt-2 border-t">
-                <span>Total</span>
-                <span>Rp {finalTotal.toLocaleString('id-ID')}</span>
-              </div>
+            )}
+            <div>
+              <p className="text-sm font-medium">Status Member</p>
+              <p>{isRegisteredCustomer 
+                  ? memberType === "member1" 
+                    ? "Member 1" 
+                    : memberType === "member2" 
+                      ? "Member 2" 
+                      : "Terdaftar" 
+                  : "Non-Member"}
+              </p>
             </div>
-          </div>
-          
-          {/* Payment Method Selection */}
-          <div>
-            <h2 className="font-semibold mb-2">Metode Pembayaran</h2>
+            {isRegisteredCustomer && memberPoints > 0 && (
+              <div>
+                <p className="text-sm font-medium">Poin</p>
+                <p>{memberPoints} poin</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Metode Pembayaran</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <Button 
-                variant={paymentMethod === 'cash' ? 'default' : 'outline'} 
-                className="flex items-center justify-center gap-2 py-6"
-                onClick={() => setPaymentMethod('cash')}
+                variant={paymentMethod === "cash" ? "default" : "outline"}
+                className="flex-col h-20 w-full"
+                onClick={() => setPaymentMethod("cash")}
               >
-                <Wallet />
+                <Wallet className="h-6 w-6 mb-1" />
                 <span>Tunai</span>
               </Button>
               <Button 
-                variant={paymentMethod === 'qris' ? 'default' : 'outline'} 
-                className="flex items-center justify-center gap-2 py-6"
-                onClick={() => setPaymentMethod('qris')}
+                variant={paymentMethod === "qris" ? "default" : "outline"}
+                className="flex-col h-20 w-full"
+                onClick={() => setPaymentMethod("qris")}
               >
-                <CreditCard />
+                <CreditCard className="h-6 w-6 mb-1" />
                 <span>QRIS</span>
               </Button>
             </div>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Daftar Produk</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {cartItems.map((item: CartItem, idx: number) => (
+              <div key={idx} className="flex justify-between py-2">
+                <div>
+                  <p className="font-medium">{item.name}</p>
+                  <p className="text-sm text-gray-500">{item.quantity} x Rp {item.price.toLocaleString('id-ID')}</p>
+                </div>
+                <p className="font-medium">Rp {(item.price * item.quantity).toLocaleString('id-ID')}</p>
+              </div>
+            ))}
           </div>
           
-          {/* Actions */}
-          <div className="flex gap-4 pt-4">
-            <Button variant="outline" className="w-1/2" onClick={() => navigate('/pos')}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Kembali
-            </Button>
-            <Button 
-              className="w-1/2" 
-              onClick={handleConfirmPayment}
-              disabled={isProcessing}
-            >
-              {isProcessing ? 'Memproses...' : 'Konfirmasi Pembayaran'}
-            </Button>
+          <Separator className="my-4" />
+          
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <p>Subtotal</p>
+              <p>Rp {cartItems.reduce((sum: number, item: CartItem) => sum + (item.price * item.quantity), 0).toLocaleString('id-ID')}</p>
+            </div>
+            
+            {pointsToUse > 0 && (
+              <div className="flex justify-between text-red-500">
+                <p>Poin Digunakan ({pointsToUse} poin)</p>
+                <p>- Rp {(pointsToUse * 1000).toLocaleString('id-ID')}</p>
+              </div>
+            )}
+            
+            <div className="flex justify-between font-bold text-lg">
+              <p>Total</p>
+              <p>Rp {finalTotal.toLocaleString('id-ID')}</p>
+            </div>
           </div>
-        </div>
+        </CardContent>
+        <CardFooter className="flex justify-between">
+          <Button variant="outline" onClick={() => navigate('/pos')}>
+            Kembali
+          </Button>
+          <Button 
+            onClick={handleConfirmPayment}
+            disabled={isProcessing}
+          >
+            {isProcessing ? "Memproses..." : "Konfirmasi Pembayaran"}
+          </Button>
+        </CardFooter>
       </Card>
     </div>
   );
