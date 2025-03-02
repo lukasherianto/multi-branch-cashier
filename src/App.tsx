@@ -1,3 +1,4 @@
+
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import Auth from "@/pages/Auth";
@@ -57,7 +58,7 @@ function AppRoutes() {
         <Route path="branches" element={<Branches />} />
         <Route path="attendance" element={<Attendance />} />
         <Route path="settings" element={<Settings />} />
-        <Route path="print/:transactionId" element={<PrintPreview />} />
+        <Route path="print-preview" element={<PrintPreview />} />
         <Route path="order-confirmation" element={<OrderConfirmation />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

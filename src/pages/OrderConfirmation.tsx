@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Receipt, ArrowRight } from "lucide-react";
+import { ArrowLeft, Receipt } from "lucide-react";
 import { usePaymentHandler } from "@/features/pos/components/PaymentHandler";
 import { toast } from "sonner";
 
@@ -49,7 +49,8 @@ const OrderConfirmation = () => {
   const handleConfirmPayment = async () => {
     try {
       setIsProcessing(true);
-      await handlePayment(pointsToUse || 0, customerName, whatsappNumber);
+      // Pass the payment method to the handlePayment function
+      await handlePayment(pointsToUse || 0, customerName, whatsappNumber, paymentMethod);
       // Navigation to print-preview is handled inside handlePayment
     } catch (error) {
       console.error("Payment error:", error);
