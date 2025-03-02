@@ -1,198 +1,301 @@
 
-import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { ArrowLeft, CreditCard, Wallet } from "lucide-react";
+import { useState } from "react";
+import { CartItem } from "@/types/pos";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CreditCard, QrCode, Receipt, ChevronsRight, User } from "lucide-react";
-import { format } from "date-fns";
-
-interface OrderConfirmationProps {}
 
 const OrderConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { 
-    cartItems, 
-    finalTotal, 
-    pointsToUse, 
-    handlePayment, 
-    customerName, 
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'qris'>('cash');
+  const [isProcessing, setIsProcessing] = useState(false);
+  
+  const {
+    cartItems,
+    finalTotal,
+    pointsToUse,
+    customerName,
     whatsappNumber,
-    isRegisteredCustomer
+    isRegisteredCustomer,
+    memberId,
+    selectedCabangId,
+    pelakuUsahaId
   } = location.state || {};
 
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "qris">("cash");
-  const [confirmedName, setConfirmedName] = useState(customerName || "");
-  const [confirmedWhatsapp, setConfirmedWhatsapp] = useState(whatsappNumber || "");
-
-  if (!cartItems || cartItems.length === 0) {
-    navigate("/pos");
+  if (!cartItems || finalTotal === undefined) {
+    navigate('/pos');
     return null;
   }
 
-  const handleConfirmOrder = () => {
-    if (!confirmedName.trim()) {
-      toast.error("Nama pelanggan harus diisi");
-      return;
-    }
+  const handleConfirmPayment = async () => {
+    if (isProcessing) return;
+    
+    setIsProcessing(true);
+    
+    try {
+      // Validate stock for all items
+      for (const item of cartItems) {
+        const { data: productData, error: productError } = await supabase
+          .from('produk')
+          .select('stock')
+          .eq('produk_id', item.id)
+          .single();
 
-    if (!confirmedWhatsapp.trim() || confirmedWhatsapp.length < 10) {
-      toast.error("Nomor WhatsApp tidak valid");
-      return;
-    }
+        if (productError) {
+          console.error("Error fetching product stock:", productError);
+          throw new Error(`Error validating stock for ${item.name}: ${productError.message}`);
+        }
 
-    // Call the payment handler with the confirmed customer info
-    if (handlePayment) {
-      handlePayment(pointsToUse, confirmedName, confirmedWhatsapp);
-    } else {
-      toast.error("Error: Payment handler not available");
-      navigate("/pos");
+        if (!productData || productData.stock < item.quantity) {
+          throw new Error(`Stok tidak cukup untuk produk: ${item.name}`);
+        }
+      }
+
+      // Calculate total before points
+      const totalBeforePoints = cartItems.reduce((sum: number, item: CartItem) => sum + (item.price * item.quantity), 0);
+      
+      // Create transactions for each item
+      console.log("Creating transactions for items:", cartItems.length);
+      const transactionPromises = cartItems.map(async (item: CartItem) => {
+        const pointsForItem = pointsToUse > 0 
+          ? Math.floor((item.price * item.quantity / totalBeforePoints) * pointsToUse) 
+          : 0;
+          
+        console.log(`Creating transaction for item ${item.id}, points allocated: ${pointsForItem}`);
+        
+        const result = await supabase
+          .from('transaksi')
+          .insert({
+            cabang_id: selectedCabangId,
+            produk_id: item.id,
+            quantity: item.quantity,
+            total_price: item.price * item.quantity,
+            points_used: pointsForItem,
+            pelanggan_id: memberId,
+            transaction_date: new Date().toISOString()
+          })
+          .select();
+          
+        if (result.error) {
+          console.error(`Error creating transaction for item ${item.id}:`, result.error);
+          throw result.error;
+        }
+        
+        return result;
+      });
+
+      await Promise.all(transactionPromises);
+
+      // Update product stock
+      const stockUpdatePromises = cartItems.map(async (item: CartItem) => {
+        const { data: currentProduct, error: fetchError } = await supabase
+          .from('produk')
+          .select('stock')
+          .eq('produk_id', item.id)
+          .single();
+        
+        if (fetchError) {
+          console.error(`Error fetching current stock for product ${item.id}:`, fetchError);
+          throw fetchError;
+        }
+        
+        if (currentProduct) {
+          const newStock = currentProduct.stock - item.quantity;
+          
+          const { error: updateError } = await supabase
+            .from('produk')
+            .update({ 
+              stock: newStock 
+            })
+            .eq('produk_id', item.id);
+            
+          if (updateError) {
+            console.error(`Error updating stock for product ${item.id}:`, updateError);
+            throw updateError;
+          }
+        }
+      });
+
+      await Promise.all(stockUpdatePromises);
+
+      // Create a manual kas entry for the transaction
+      const { error: kasError } = await supabase
+        .from('kas')
+        .insert({
+          cabang_id: selectedCabangId,
+          amount: finalTotal,
+          transaction_type: 'masuk',
+          description: `Penjualan - ${paymentMethod.toUpperCase()} - ${new Date().toLocaleString()}`,
+          transaction_date: new Date().toISOString()
+        });
+      
+      if (kasError) {
+        console.error('Error creating kas entry:', kasError);
+        toast.warning("Transaksi berhasil, tetapi gagal mencatat di buku kas.");
+      }
+
+      // If points were used, create a matching kas entry for the redemption
+      if (pointsToUse > 0) {
+        const { error: pointsKasError } = await supabase
+          .from('kas')
+          .insert({
+            cabang_id: selectedCabangId,
+            amount: pointsToUse * 1000,
+            transaction_type: 'keluar',
+            description: `Penukaran Poin - ${new Date().toLocaleString()}`,
+            transaction_date: new Date().toISOString()
+          });
+          
+        if (pointsKasError) {
+          console.error('Error creating kas entry for points redemption:', pointsKasError);
+        }
+      }
+
+      // Get business information for the invoice
+      const { data: pelakuUsahaData } = await supabase
+        .from('pelaku_usaha')
+        .select('business_name')
+        .eq('pelaku_usaha_id', pelakuUsahaId)
+        .single();
+
+      const { data: cabangData } = await supabase
+        .from('cabang')
+        .select('branch_name')
+        .eq('cabang_id', selectedCabangId)
+        .single();
+
+      // Navigate to print preview
+      navigate('/print-preview', {
+        state: {
+          items: cartItems,
+          total: finalTotal,
+          pointsUsed: pointsToUse,
+          pointsEarned: Math.floor(finalTotal / 1000),
+          businessName: pelakuUsahaData?.business_name,
+          branchName: cabangData?.branch_name,
+          customerName,
+          whatsappNumber,
+          paymentMethod
+        }
+      });
+
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      toast.error("Gagal memproses pembayaran: " + (error instanceof Error ? error.message : String(error)));
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  const subtotal = cartItems.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
+  const calculateTotal = () => {
+    return cartItems.reduce((sum: number, item: CartItem) => sum + (item.price * item.quantity), 0);
+  };
 
   return (
-    <div className="container max-w-5xl py-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Konfirmasi Pesanan</h1>
-        <p className="text-gray-500">Tanggal: {format(new Date(), "dd MMMM yyyy, HH:mm")}</p>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User size={20} />
-              Informasi Pelanggan
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {isRegisteredCustomer ? (
-              <div className="space-y-2">
-                <p><strong>Nama:</strong> {confirmedName}</p>
-                <p><strong>WhatsApp:</strong> {confirmedWhatsapp}</p>
-                <p><strong>Status:</strong> Pelanggan Terdaftar</p>
-                {pointsToUse > 0 && (
-                  <p><strong>Poin Digunakan:</strong> {pointsToUse} poin</p>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="customerName">Nama Pelanggan</Label>
-                  <Input 
-                    id="customerName" 
-                    value={confirmedName} 
-                    onChange={(e) => setConfirmedName(e.target.value)} 
-                    placeholder="Masukkan nama pelanggan"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="whatsappNumber">Nomor WhatsApp</Label>
-                  <Input 
-                    id="whatsappNumber" 
-                    value={confirmedWhatsapp} 
-                    onChange={(e) => setConfirmedWhatsapp(e.target.value)} 
-                    placeholder="Contoh: 08123456789"
-                  />
-                </div>
-              </div>
+    <div className="min-h-screen bg-gray-100 p-8">
+      <Card className="max-w-2xl mx-auto p-6 space-y-6">
+        <div className="space-y-4">
+          <h1 className="text-2xl font-bold text-center">Konfirmasi Pesanan</h1>
+          
+          {/* Customer Info */}
+          <div className="bg-gray-50 p-4 rounded-md">
+            <h2 className="font-semibold mb-2">Informasi Pelanggan</h2>
+            <p><span className="font-medium">Nama:</span> {customerName || 'Pelanggan Umum'}</p>
+            {whatsappNumber && (
+              <p><span className="font-medium">WhatsApp:</span> {whatsappNumber}</p>
             )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard size={20} />
-              Metode Pembayaran
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <RadioGroup 
-              value={paymentMethod} 
-              onValueChange={(value) => setPaymentMethod(value as "cash" | "qris")}
-              className="space-y-4"
-            >
-              <div className="flex items-center space-x-2 border p-3 rounded-md">
-                <RadioGroupItem value="cash" id="cash" />
-                <Label htmlFor="cash" className="flex items-center gap-2 cursor-pointer">
-                  <Receipt className="h-5 w-5" />
-                  Tunai
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2 border p-3 rounded-md">
-                <RadioGroupItem value="qris" id="qris" />
-                <Label htmlFor="qris" className="flex items-center gap-2 cursor-pointer">
-                  <QrCode className="h-5 w-5" />
-                  QRIS
-                </Label>
-              </div>
-            </RadioGroup>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Rincian Pesanan</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Produk</TableHead>
-                <TableHead className="text-right">Harga</TableHead>
-                <TableHead className="text-right">Qty</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {cartItems.map((item: any) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.name}</TableCell>
-                  <TableCell className="text-right">Rp {item.price.toLocaleString('id-ID')}</TableCell>
-                  <TableCell className="text-right">{item.quantity}</TableCell>
-                  <TableCell className="text-right">Rp {(item.price * item.quantity).toLocaleString('id-ID')}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-
-          <div className="mt-6 space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Subtotal</span>
-              <span>Rp {subtotal.toLocaleString('id-ID')}</span>
+            {isRegisteredCustomer && (
+              <p><span className="font-medium">Status:</span> Pelanggan Terdaftar</p>
+            )}
+          </div>
+          
+          {/* Order Items */}
+          <div>
+            <h2 className="font-semibold mb-2">Rincian Produk</h2>
+            <div className="border rounded-md overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produk</th>
+                    <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah</th>
+                    <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Harga</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {cartItems.map((item: CartItem) => (
+                    <tr key={item.id}>
+                      <td className="px-4 py-3">{item.name}</td>
+                      <td className="px-4 py-3 text-center">{item.quantity}</td>
+                      <td className="px-4 py-3 text-right">Rp {(item.price * item.quantity).toLocaleString('id-ID')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
             
-            {pointsToUse > 0 && (
-              <div className="flex justify-between text-sm text-red-500">
-                <span>Poin Digunakan</span>
-                <span>- Rp {(pointsToUse * 1000).toLocaleString('id-ID')}</span>
+            {/* Payment Summary */}
+            <div className="mt-4 space-y-2">
+              <div className="flex justify-between font-medium">
+                <span>Subtotal</span>
+                <span>Rp {calculateTotal().toLocaleString('id-ID')}</span>
               </div>
-            )}
-            
-            <div className="flex justify-between font-bold pt-2 border-t">
-              <span>Total Pembayaran</span>
-              <span>Rp {finalTotal.toLocaleString('id-ID')}</span>
+              
+              {pointsToUse > 0 && (
+                <div className="flex justify-between text-red-500">
+                  <span>Poin Digunakan ({pointsToUse} poin)</span>
+                  <span>- Rp {(pointsToUse * 1000).toLocaleString('id-ID')}</span>
+                </div>
+              )}
+              
+              <div className="flex justify-between font-bold text-lg pt-2 border-t">
+                <span>Total</span>
+                <span>Rp {finalTotal.toLocaleString('id-ID')}</span>
+              </div>
             </div>
           </div>
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={() => navigate("/pos")}>
-            Kembali
-          </Button>
-          <Button onClick={handleConfirmOrder} className="gap-2">
-            Konfirmasi Pembayaran
-            <ChevronsRight className="h-4 w-4" />
-          </Button>
-        </CardFooter>
+          
+          {/* Payment Method Selection */}
+          <div>
+            <h2 className="font-semibold mb-2">Metode Pembayaran</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <Button 
+                variant={paymentMethod === 'cash' ? 'default' : 'outline'} 
+                className="flex items-center justify-center gap-2 py-6"
+                onClick={() => setPaymentMethod('cash')}
+              >
+                <Wallet />
+                <span>Tunai</span>
+              </Button>
+              <Button 
+                variant={paymentMethod === 'qris' ? 'default' : 'outline'} 
+                className="flex items-center justify-center gap-2 py-6"
+                onClick={() => setPaymentMethod('qris')}
+              >
+                <CreditCard />
+                <span>QRIS</span>
+              </Button>
+            </div>
+          </div>
+          
+          {/* Actions */}
+          <div className="flex gap-4 pt-4">
+            <Button variant="outline" className="w-1/2" onClick={() => navigate('/pos')}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Kembali
+            </Button>
+            <Button 
+              className="w-1/2" 
+              onClick={handleConfirmPayment}
+              disabled={isProcessing}
+            >
+              {isProcessing ? 'Memproses...' : 'Konfirmasi Pembayaran'}
+            </Button>
+          </div>
+        </div>
       </Card>
     </div>
   );

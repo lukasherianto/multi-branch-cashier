@@ -1,3 +1,4 @@
+
 import { ProductSearch } from "@/components/pos/ProductSearch";
 import { ProductList } from "@/components/pos/ProductList";
 import { CustomerInfo } from "@/components/pos/CustomerInfo";
@@ -64,15 +65,19 @@ export const POSContent = () => {
     const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const finalTotal = total - (pointsToUse * 1000);
 
+    // Instead of passing the function directly, we'll navigate to OrderConfirmation
+    // and handle payment there through a direct checkout button
     navigate('/order-confirmation', {
       state: {
         cartItems,
         finalTotal,
         pointsToUse,
-        handlePayment,
         customerName,
         whatsappNumber,
-        isRegisteredCustomer
+        isRegisteredCustomer,
+        memberId,
+        selectedCabangId,
+        pelakuUsahaId: pelakuUsaha?.pelaku_usaha_id
       }
     });
   };

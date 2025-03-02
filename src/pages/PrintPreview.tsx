@@ -24,7 +24,8 @@ const PrintPreview = () => {
     businessName, 
     branchName,
     customerName,
-    whatsappNumber
+    whatsappNumber,
+    paymentMethod
   } = location.state || {};
   
   // Generate a random invoice number with format INV-YYYYMMDD-XXXX
@@ -51,13 +52,17 @@ const PrintPreview = () => {
       message += `Poin Digunakan: ${pointsUsed} (Rp ${(pointsUsed * 1000).toLocaleString('id-ID')})\n`;
     }
 
-    message += `*Total: Rp ${total.toLocaleString('id-ID')}*\n\n`;
-
-    if (pointsEarned > 0) {
-      message += `Poin Diperoleh: ${pointsEarned}\n\n`;
+    message += `*Total: Rp ${total.toLocaleString('id-ID')}*\n`;
+    
+    if (paymentMethod) {
+      message += `Metode Pembayaran: ${paymentMethod === 'cash' ? 'Tunai' : 'QRIS'}\n`;
     }
 
-    message += `Terima kasih atas kunjungan Anda!`;
+    if (pointsEarned > 0) {
+      message += `\nPoin Diperoleh: ${pointsEarned}\n`;
+    }
+
+    message += `\nTerima kasih atas kunjungan Anda!`;
 
     // Use the provided WhatsApp number if available, otherwise open without a number
     const whatsappUrl = whatsappNumber 
@@ -117,6 +122,12 @@ const PrintPreview = () => {
             <span>Total</span>
             <span>Rp {total.toLocaleString('id-ID')}</span>
           </div>
+
+          {paymentMethod && (
+            <div className="text-sm text-center">
+              <p><strong>Metode Pembayaran:</strong> {paymentMethod === 'cash' ? 'Tunai' : 'QRIS'}</p>
+            </div>
+          )}
 
           {pointsEarned > 0 && (
             <div className="text-sm text-mint-600 text-center">
