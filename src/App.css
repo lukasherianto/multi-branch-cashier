@@ -2,11 +2,13 @@
 @media print {
   @page {
     margin: 0;
-    size: 80mm 297mm;
+    size: 80mm 297mm; /* Standard thermal receipt width (80mm) */
   }
   
   body {
     margin: 1cm;
+    font-size: 12px;
+    width: 80mm;
   }
 
   .print\:hidden {

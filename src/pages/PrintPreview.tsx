@@ -53,61 +53,71 @@ const PrintPreview = () => {
           body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 20px;
-            font-size: 12px;
+            padding: 10px;
+            font-size: 10px;
+            width: 80mm; /* Thermal receipt width */
           }
           .receipt {
-            max-width: 300px;
+            width: 100%;
+            max-width: 80mm;
             margin: 0 auto;
           }
           .header {
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
           }
           .business-name {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
           }
           .invoice-number {
             background-color: #f8f8f8;
-            padding: 5px;
-            margin: 10px 0;
+            padding: 3px;
+            margin: 6px 0;
             text-align: center;
           }
           .customer-info {
-            margin: 10px 0;
+            margin: 6px 0;
           }
           .items {
-            border-top: 1px solid #ddd;
-            border-bottom: 1px solid #ddd;
-            padding: 10px 0;
-            margin: 10px 0;
+            border-top: 1px dashed #ddd;
+            border-bottom: 1px dashed #ddd;
+            padding: 5px 0;
+            margin: 5px 0;
           }
           .item {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
           }
           .total {
             font-weight: bold;
             display: flex;
             justify-content: space-between;
-            margin: 10px 0;
+            margin: 8px 0;
           }
           .footer {
             text-align: center;
-            margin-top: 20px;
-            font-size: 10px;
+            margin-top: 10px;
+            font-size: 9px;
             color: #666;
           }
           .payment-method {
             text-align: center;
-            margin: 10px 0;
+            margin: 5px 0;
           }
           .points {
             text-align: center;
-            margin: 10px 0;
+            margin: 5px 0;
             color: #4caf50;
+          }
+          .divider {
+            border-bottom: 1px dashed #ddd;
+            margin: 5px 0;
+          }
+          .timestamp {
+            font-size: 8px;
+            text-align: center;
           }
         </style>
       </head>
@@ -116,7 +126,7 @@ const PrintPreview = () => {
           <div class="header">
             <div class="business-name">${businessName}</div>
             <div>${branchName}</div>
-            <div>${formatInTimeZone(new Date(), 'Asia/Jakarta', 'dd MMMM yyyy HH:mm', { locale: id })}</div>
+            <div class="timestamp">${formatInTimeZone(new Date(), 'Asia/Jakarta', 'dd MMMM yyyy HH:mm', { locale: id })}</div>
           </div>
           
           <div class="invoice-number">
@@ -146,6 +156,8 @@ const PrintPreview = () => {
           </div>
           ` : ''}
           
+          <div class="divider"></div>
+          
           <div class="total">
             <span>Total</span>
             <span>Rp ${total.toLocaleString('id-ID')}</span>
@@ -162,6 +174,8 @@ const PrintPreview = () => {
             Selamat! Anda mendapatkan ${pointsEarned} poin dari transaksi ini
           </div>
           ` : ''}
+          
+          <div class="divider"></div>
           
           <div class="footer">
             Terima kasih atas kunjungan Anda!
