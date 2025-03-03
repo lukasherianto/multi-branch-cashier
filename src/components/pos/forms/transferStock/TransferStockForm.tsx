@@ -3,6 +3,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ProductSearch } from "@/components/pos/ProductSearch";
 import { useTransferStock } from "./useTransferStock";
 import { ProductTable } from "./ProductTable";
 import { Pagination } from "./Pagination";
@@ -19,6 +20,7 @@ export function TransferStockForm() {
     paginatedProducts,
     currentPage,
     totalPages,
+    handleSearch,
     handleProductSelection,
     handleQuantityChange,
     handlePreviousPage,
@@ -76,6 +78,10 @@ export function TransferStockForm() {
               </FormItem>
             )}
           />
+        </div>
+
+        <div className="mb-4">
+          <ProductSearch onSearch={handleSearch} />
         </div>
 
         <ProductTable 

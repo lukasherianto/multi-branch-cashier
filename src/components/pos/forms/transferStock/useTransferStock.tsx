@@ -13,8 +13,10 @@ export function useTransferStock() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
   const [selectedProducts, setSelectedProducts] = useState<ProductTransfer[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<ProductTransfer[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [centralBranchId, setCentralBranchId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const form = useForm<TransferStockFormValues>({
     resolver: zodResolver(transferStockSchema),
@@ -68,19 +70,42 @@ export function useTransferStock() {
         .order('product_name', { ascending: true });
       
       if (data) {
-        setSelectedProducts(data.map(product => ({
+        const productTransfers = data.map(product => ({
           produk_id: product.produk_id,
           quantity: 0,
           selected: false,
           product_name: product.product_name,
           stock: product.stock
-        })));
+        }));
+        setSelectedProducts(productTransfers);
+        setFilteredProducts(productTransfers);
       }
       
       return data || [];
     },
     enabled: !!pelakuUsaha && !!centralBranchId,
   });
+
+  useEffect(() => {
+    handleSearch(searchTerm);
+  }, [selectedProducts, searchTerm]);
+
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    
+    if (!term.trim()) {
+      setFilteredProducts(selectedProducts);
+      setCurrentPage(0);
+      return;
+    }
+
+    const filtered = selectedProducts.filter(product => 
+      product.product_name.toLowerCase().includes(term.toLowerCase())
+    );
+    
+    setFilteredProducts(filtered);
+    setCurrentPage(0);
+  };
 
   const handleProductSelection = (produk_id: number, checked: boolean) => {
     setSelectedProducts(prev => prev.map(p => 
@@ -107,8 +132,8 @@ export function useTransferStock() {
     branch.cabang_id.toString() !== centralBranchId
   );
 
-  const totalPages = Math.ceil(selectedProducts.length / ITEMS_PER_PAGE);
-  const paginatedProducts = selectedProducts.slice(
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+  const paginatedProducts = filteredProducts.slice(
     currentPage * ITEMS_PER_PAGE,
     (currentPage + 1) * ITEMS_PER_PAGE
   );
@@ -197,9 +222,12 @@ export function useTransferStock() {
     centralBranch,
     destinationBranches,
     selectedProducts,
+    filteredProducts,
     paginatedProducts,
     currentPage,
     totalPages,
+    searchTerm,
+    handleSearch,
     handleProductSelection,
     handleQuantityChange,
     handlePreviousPage,
