@@ -43,14 +43,16 @@ const OrderConfirmation = () => {
     setPaymentMethod,
     isProcessing,
     errorMessage,
-    handleConfirmPayment
+    handleConfirmPayment,
+    pointsEnabled
   } = useOrderConfirmation({
     handlePayment,
     isRegisteredCustomer,
     memberId,
     pointsToUse: pointsToUse || 0,
     customerName: customerName || "",
-    whatsappNumber: whatsappNumber || ""
+    whatsappNumber: whatsappNumber || "",
+    pelakuUsahaId
   });
 
   if (!cartItems || cartItems.length === 0) {
@@ -84,10 +86,11 @@ const OrderConfirmation = () => {
             memberType={memberType}
             memberPoints={memberPoints}
             cartItems={cartItems}
-            pointsToUse={pointsToUse || 0}
+            pointsToUse={pointsEnabled ? (pointsToUse || 0) : 0}
             finalTotal={finalTotal}
             paymentMethod={paymentMethod}
             setPaymentMethod={setPaymentMethod}
+            pointsEnabled={pointsEnabled}
           />
           
           <CardFooter className="justify-end">

@@ -1,8 +1,8 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 import { validateMemberId } from "@/components/order/CustomerValidator";
+import { supabase } from "@/integrations/supabase/client";
 
 interface OrderConfirmationParams {
   handlePayment: (
@@ -16,6 +16,7 @@ interface OrderConfirmationParams {
   pointsToUse: number;
   customerName: string;
   whatsappNumber: string;
+  pelakuUsahaId?: number;
 }
 
 export const useOrderConfirmation = ({
@@ -24,11 +25,40 @@ export const useOrderConfirmation = ({
   memberId,
   pointsToUse,
   customerName,
-  whatsappNumber
+  whatsappNumber,
+  pelakuUsahaId
 }: OrderConfirmationParams) => {
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "qris">("cash");
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [pointsEnabled, setPointsEnabled] = useState(true);
+
+  useEffect(() => {
+    if (pelakuUsahaId) {
+      fetchPointsSettings();
+    }
+  }, [pelakuUsahaId]);
+
+  const fetchPointsSettings = async () => {
+    try {
+      if (!pelakuUsahaId) return;
+
+      const { data, error } = await supabase
+        .from('pelaku_usaha')
+        .select('points_enabled')
+        .eq('pelaku_usaha_id', pelakuUsahaId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching points settings:", error);
+        return;
+      }
+
+      setPointsEnabled(data?.points_enabled || false);
+    } catch (error) {
+      console.error("Error in fetchPointsSettings:", error);
+    }
+  };
   
   const handleConfirmPayment = async () => {
     try {
@@ -53,7 +83,9 @@ export const useOrderConfirmation = ({
       }
       
       // Pass the payment method to the handlePayment function
-      await handlePayment(pointsToUse || 0, customerName, whatsappNumber, paymentMethod);
+      // If points are not enabled, don't use any points
+      const actualPointsToUse = pointsEnabled ? (pointsToUse || 0) : 0;
+      await handlePayment(actualPointsToUse, customerName, whatsappNumber, paymentMethod);
       // Navigation to print-preview is handled inside handlePayment
     } catch (error) {
       console.error("Payment error:", error);
@@ -81,6 +113,7 @@ export const useOrderConfirmation = ({
     setPaymentMethod,
     isProcessing,
     errorMessage,
-    handleConfirmPayment
+    handleConfirmPayment,
+    pointsEnabled
   };
 };

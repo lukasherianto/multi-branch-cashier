@@ -16,6 +16,7 @@ interface BusinessDetails {
   logo_url?: string | null;
   instagram_url?: string | null;
   facebook_url?: string | null;
+  points_enabled?: boolean;
 }
 
 const PrintPreview = () => {
@@ -53,7 +54,8 @@ const PrintPreview = () => {
     logoUrl: businessDetails?.logo_url || null,
     instagramUrl: businessDetails?.instagram_url || null,
     facebookUrl: businessDetails?.facebook_url || null,
-    businessWhatsapp: businessDetails?.contact_whatsapp || null
+    businessWhatsapp: businessDetails?.contact_whatsapp || null,
+    pointsEnabled: businessDetails?.points_enabled || false
   };
   
   // Use the receipt hook for functionality (before useEffect)
@@ -111,6 +113,9 @@ const PrintPreview = () => {
     );
   }
 
+  // Only show points information if the feature is enabled
+  const showPointsInfo = businessDetails?.points_enabled && (pointsUsed > 0 || pointsEarned > 0);
+
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <ReceiptDisplay 
@@ -120,14 +125,15 @@ const PrintPreview = () => {
         customerName={customerName}
         whatsappNumber={whatsappNumber}
         items={items as TransactionItem[]}
-        pointsUsed={pointsUsed}
+        pointsUsed={showPointsInfo ? pointsUsed : 0}
         total={total}
         paymentMethod={paymentMethod}
-        pointsEarned={pointsEarned}
+        pointsEarned={showPointsInfo ? pointsEarned : 0}
         logoUrl={businessDetails?.logo_url}
         instagramUrl={businessDetails?.instagram_url}
         facebookUrl={businessDetails?.facebook_url}
         businessWhatsapp={businessDetails?.contact_whatsapp}
+        showPointsInfo={showPointsInfo}
       />
       
       <div className="mt-6">

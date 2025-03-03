@@ -9,6 +9,7 @@ import { BusinessFormSkeleton } from "./BusinessFormSkeleton";
 import { WhatsAppInput } from "./WhatsAppInput";
 import { LogoUpload } from "./LogoUpload";
 import { SocialMediaInputs } from "./SocialMediaInputs";
+import { PointsToggle } from "./PointsToggle";
 import { useBusinessForm } from "./useBusinessForm";
 
 export const BusinessForm = () => {
@@ -25,6 +26,8 @@ export const BusinessForm = () => {
     setFacebook,
     logoUrl,
     setLogoUrl,
+    pointsEnabled,
+    setPointsEnabled,
     handleSubmit
   } = useBusinessForm();
 
@@ -64,6 +67,11 @@ export const BusinessForm = () => {
             setInstagram={setInstagram}
             facebook={facebook}
             setFacebook={setFacebook}
+          />
+          
+          <PointsToggle 
+            pointsEnabled={pointsEnabled}
+            onChange={setPointsEnabled}
           />
           
           <Button type="submit" disabled={isSaving} className="w-full">

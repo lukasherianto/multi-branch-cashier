@@ -13,6 +13,7 @@ export interface BusinessData {
   logo_url?: string | null;
   instagram_url?: string | null;
   facebook_url?: string | null;
+  points_enabled?: boolean;
 }
 
 export const useBusinessForm = () => {
@@ -25,6 +26,7 @@ export const useBusinessForm = () => {
   const [facebook, setFacebook] = useState("");
   const [pelakuUsahaId, setPelakuUsahaId] = useState<number | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [pointsEnabled, setPointsEnabled] = useState(false);
 
   useEffect(() => {
     loadBusinessData();
@@ -56,6 +58,7 @@ export const useBusinessForm = () => {
           setInstagram(data.instagram_url || '');
           setFacebook(data.facebook_url || '');
           setLogoUrl(data.logo_url || null);
+          setPointsEnabled(data.points_enabled || false);
         }
       }
     } catch (error) {
@@ -112,6 +115,7 @@ export const useBusinessForm = () => {
         instagram_url: instagram,
         facebook_url: facebook,
         logo_url: logoUrl,
+        points_enabled: pointsEnabled,
         updated_at: new Date().toISOString(),
       };
 
@@ -166,6 +170,8 @@ export const useBusinessForm = () => {
     setFacebook,
     logoUrl,
     setLogoUrl,
+    pointsEnabled,
+    setPointsEnabled,
     handleSubmit,
     validateWhatsappNumber
   };
