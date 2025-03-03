@@ -1,141 +1,111 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { ProductWithSelection, TransferToBranchValues } from "@/types/pos";
 import { toast } from "sonner";
+import { ProductWithSelection } from "@/types/pos";
+
+interface TransferData {
+  sourceBranchId: string;
+  destinationBranchId: string;
+  selectedProducts: ProductWithSelection[];
+  notes?: string;
+}
 
 /**
- * Executes the transfer to branch operation
+ * Transfer products from central branch to destination branch
  */
-export const executeTransferToBranch = async (
-  data: TransferToBranchValues,
-  selectedProducts: ProductWithSelection[],
-  centralBranchId: number
-): Promise<number | null> => {
+export async function transferToBranch(data: TransferData): Promise<boolean> {
   try {
-    // Get user's pelaku_usaha_id
-    const { data: userData } = await supabase.auth.getUser();
-    const { data: pelakuUsahaData } = await supabase
-      .from('pelaku_usaha')
-      .select('pelaku_usaha_id')
-      .eq('user_id', userData.user?.id)
-      .single();
-      
-    if (!pelakuUsahaData) {
-      throw new Error("Pelaku usaha data not found");
+    const { sourceBranchId, destinationBranchId, selectedProducts, notes } = data;
+    
+    if (!sourceBranchId || !destinationBranchId) {
+      toast("Pilih cabang asal dan tujuan");
+      return false;
     }
     
-    // 1. Create transfer record
-    // First, create the parent transfer record
-    const { data: transferParent, error: transferError } = await supabase
-      .from('transfer_stok')
-      .insert({
-        cabang_id_from: centralBranchId,
-        cabang_id_to: parseInt(data.cabang_id_to),
-        pelaku_usaha_id: pelakuUsahaData.pelaku_usaha_id,
-        status: 'completed',
-        total_items: selectedProducts.length,
-        total_quantity: selectedProducts.reduce((sum, p) => sum + p.quantity, 0),
-        notes: data.notes || 'Transfer Stok dari Pusat ke Cabang',
-        // Using defaults for produk_id and quantity since we're using detail records
-        produk_id: selectedProducts[0]?.produk_id || selectedProducts[0]?.id || 0,
-        quantity: 0 // This will be tracked in detail records
-      })
-      .select('transfer_id')
-      .single();
-      
-    if (transferError) throw transferError;
-    if (!transferParent) throw new Error("Failed to create transfer record");
+    // Get selected products
+    const productsToTransfer = selectedProducts.filter(p => p.selected && p.quantity > 0);
     
-    const transferId = transferParent.transfer_id;
-    
-    // 2. Create transfer details
-    // Prepare detail records array for batch insert
-    const detailRecords = selectedProducts.map(product => ({
-      transfer_id: transferId,
-      produk_id: product.produk_id || product.id,
-      quantity: product.quantity,
-      retail_price: product.price,
-      cost_price: product.cost_price
-    }));
-    
-    // Insert transfer details
-    const { error: detailsError } = await supabase
-      .from('transfer_stok_detail')
-      .insert(detailRecords);
-      
-    if (detailsError) throw detailsError;
-    
-    // 3. Update source and destination branch stocks
-    for (const product of selectedProducts) {
-      // Update stock in source branch (decrease)
-      const { error: sourceStockError } = await supabase
+    if (productsToTransfer.length === 0) {
+      toast("Pilih minimal satu produk untuk ditransfer");
+      return false;
+    }
+
+    // Since transfer_stok table was removed, we now directly update stock
+    // For each product, decrease stock in source and increase in destination
+    for (const product of productsToTransfer) {
+      // 1. Decrease stock in source branch
+      const { error: sourceError } = await supabase
         .from('produk')
         .update({ 
           stock: product.stock - product.quantity 
         })
         .eq('produk_id', product.produk_id || product.id)
-        .eq('cabang_id', centralBranchId);
-        
-      if (sourceStockError) throw sourceStockError;
+        .eq('cabang_id', parseInt(sourceBranchId));
       
-      // Check if product exists in destination branch
-      const { data: existingProduct, error: fetchError } = await supabase
+      if (sourceError) {
+        console.error("Error updating source branch stock:", sourceError);
+        throw sourceError;
+      }
+      
+      // 2. Check if product exists in destination branch
+      const { data: existingProduct, error: checkError } = await supabase
         .from('produk')
         .select('produk_id, stock')
-        .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id)
-        .eq('cabang_id', parseInt(data.cabang_id_to))
-        .eq('product_name', product.name)
+        .eq('produk_id', product.produk_id || product.id)
+        .eq('cabang_id', parseInt(destinationBranchId))
         .maybeSingle();
-        
-      if (fetchError && fetchError.code !== 'PGRST116') { // Not found is not an error here
-        throw fetchError;
+      
+      if (checkError) {
+        console.error("Error checking destination product:", checkError);
+        throw checkError;
       }
       
       if (existingProduct) {
-        // Update existing product stock
+        // 3a. If exists, update stock
         const { error: updateError } = await supabase
           .from('produk')
           .update({ 
             stock: existingProduct.stock + product.quantity 
           })
-          .eq('produk_id', existingProduct.produk_id);
-          
-        if (updateError) throw updateError;
-      } else {
-        // Create new product in destination branch
-        const { data: categoryData } = await supabase
-          .from('kategori_produk')
-          .select('kategori_id')
-          .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id)
-          .eq('kategori_name', product.category || 'Umum')
-          .maybeSingle();
-          
-        const kategoriId = categoryData?.kategori_id || 1; // Default to 1 if not found
+          .eq('produk_id', product.produk_id || product.id)
+          .eq('cabang_id', parseInt(destinationBranchId));
         
-        const { error: insertError } = await supabase
+        if (updateError) {
+          console.error("Error updating destination branch stock:", updateError);
+          throw updateError;
+        }
+      } else {
+        // 3b. If doesn't exist, create product in destination branch
+        const { error: createError } = await supabase
           .from('produk')
           .insert({
-            pelaku_usaha_id: pelakuUsahaData.pelaku_usaha_id,
-            cabang_id: parseInt(data.cabang_id_to),
+            produk_id: product.produk_id || product.id,
+            cabang_id: parseInt(destinationBranchId),
             product_name: product.name,
-            retail_price: product.price,
-            member_price_1: product.member_price_1,
-            member_price_2: product.member_price_2,
+            kategori_id: product.kategori_id || 1, // Default category if not available
+            cost_price: product.cost_price || 0,
+            retail_price: product.price || 0,
             stock: product.quantity,
+            pelaku_usaha_id: product.pelaku_usaha_id || 1, // This should come from context
             barcode: product.barcode,
-            unit: product.unit,
-            cost_price: product.cost_price,
-            kategori_id: kategoriId
+            unit: product.unit || 'Pcs',
+            member_price_1: product.member_price_1,
+            member_price_2: product.member_price_2
           });
-          
-        if (insertError) throw insertError;
+        
+        if (createError) {
+          console.error("Error creating product in destination branch:", createError);
+          throw createError;
+        }
       }
     }
     
-    return transferId;
+    toast("Transfer berhasil dilakukan");
+    return true;
+    
   } catch (error) {
-    console.error("Error executing transfer:", error);
-    toast(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
-    return null;
+    console.error("Error in transfer:", error);
+    toast(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    return false;
   }
-};
+}

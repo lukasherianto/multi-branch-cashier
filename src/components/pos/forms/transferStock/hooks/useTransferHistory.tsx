@@ -27,45 +27,14 @@ export const useTransferHistory = () => {
       setIsLoading(true);
       setError(null);
       
-      let query = supabase
-        .from('transfer_stok')
-        .select(`
-          transfer_id,
-          cabang_id_from,
-          cabang_id_to,
-          produk_id,
-          quantity,
-          transfer_date,
-          cabang_from:cabang!cabang_id_from(branch_name),
-          cabang_to:cabang!cabang_id_to(branch_name),
-          produk:produk(product_name)
-        `)
-        .order('transfer_date', { ascending: false });
+      // Since the transfer_stok table was deleted, we'll create mock data
+      // In a real application, you would implement a different way to track transfers
+      const mockData: TransferHistoryItem[] = [];
       
-      if (branchId) {
-        // Filter by the selected branch (as either source or destination)
-        query = query.or(`cabang_id_from.eq.${branchId},cabang_id_to.eq.${branchId}`);
-      }
+      // In a real implementation, you would fetch this data from a database
+      // For now, we just display an empty list
+      setTransfers(mockData);
       
-      const { data, error } = await query;
-      
-      if (error) throw error;
-      
-      if (data) {
-        const formattedData = data.map(item => ({
-          transfer_id: item.transfer_id,
-          cabang_id_from: item.cabang_id_from,
-          cabang_id_to: item.cabang_id_to,
-          produk_id: item.produk_id,
-          quantity: item.quantity,
-          transfer_date: item.transfer_date,
-          from_branch_name: item.cabang_from?.branch_name || 'Unknown',
-          to_branch_name: item.cabang_to?.branch_name || 'Unknown',
-          product_name: item.produk?.product_name || 'Unknown Product'
-        }));
-        
-        setTransfers(formattedData);
-      }
     } catch (err) {
       console.error('Error fetching transfer history:', err);
       setError(err instanceof Error ? err : new Error('Failed to fetch transfer history'));

@@ -61,6 +61,7 @@ export type Database = {
           contact_whatsapp: string | null
           created_at: string
           pelaku_usaha_id: number
+          status: number | null
           updated_at: string
         }
         Insert: {
@@ -70,6 +71,7 @@ export type Database = {
           contact_whatsapp?: string | null
           created_at?: string
           pelaku_usaha_id: number
+          status?: number | null
           updated_at?: string
         }
         Update: {
@@ -79,6 +81,7 @@ export type Database = {
           contact_whatsapp?: string | null
           created_at?: string
           pelaku_usaha_id?: number
+          status?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -90,6 +93,21 @@ export type Database = {
             referencedColumns: ["pelaku_usaha_id"]
           },
         ]
+      }
+      cabang_status: {
+        Row: {
+          status_id: number
+          uraian: string
+        }
+        Insert: {
+          status_id: number
+          uraian: string
+        }
+        Update: {
+          status_id?: number
+          uraian?: string
+        }
+        Relationships: []
       }
       karyawan: {
         Row: {

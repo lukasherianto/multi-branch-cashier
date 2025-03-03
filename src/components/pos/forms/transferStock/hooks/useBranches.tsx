@@ -8,7 +8,7 @@ export type Branch = {
   branch_name: string;
   address?: string;
   contact_whatsapp?: string;
-  status?: number; // Added status field
+  status?: number;
 };
 
 export const useBranches = () => {
