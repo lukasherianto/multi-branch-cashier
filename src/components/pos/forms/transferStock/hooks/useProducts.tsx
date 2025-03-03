@@ -4,77 +4,122 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { type ProductTransfer } from "../schema";
 
-export function useProducts(pelakuUsaha: any, centralBranchId: string | null) {
+export function useProducts(branchId: string | null) {
   const [selectedProducts, setSelectedProducts] = useState<ProductTransfer[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<ProductTransfer[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { data: products = [] } = useQuery({
-    queryKey: ['products', pelakuUsaha?.pelaku_usaha_id, centralBranchId],
-    queryFn: async () => {
-      if (!pelakuUsaha || !centralBranchId) return [];
-      const { data } = await supabase
-        .from('produk')
-        .select('*')
-        .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id)
-        .order('product_name', { ascending: true });
-      
-      if (data) {
-        const productTransfers = data.map(product => ({
-          produk_id: product.produk_id,
-          quantity: 0,
-          selected: false,
-          product_name: product.product_name,
-          stock: product.stock
-        }));
-        setSelectedProducts(productTransfers);
-        setFilteredProducts(productTransfers);
-      }
-      
-      return data || [];
-    },
-    enabled: !!pelakuUsaha && !!centralBranchId,
-  });
-
+  // Fetch products when branch changes
   useEffect(() => {
-    handleSearch(searchTerm);
-  }, [selectedProducts, searchTerm]);
+    if (branchId) {
+      fetchProductsForBranch(branchId);
+    } else {
+      setSelectedProducts([]);
+    }
+  }, [branchId]);
 
+  // Fetch products for a specific branch
+  const fetchProductsForBranch = async (branchId: string) => {
+    try {
+      console.log(`Fetching products for branch ID: ${branchId}`);
+      const { data: user } = await supabase.auth.getUser();
+      
+      if (!user.user) {
+        console.error("No authenticated user found");
+        return;
+      }
+
+      const { data: pelakuUsaha, error: pelakuUsahaError } = await supabase
+        .from('pelaku_usaha')
+        .select('pelaku_usaha_id')
+        .eq('user_id', user.user.id)
+        .maybeSingle();
+
+      if (pelakuUsahaError || !pelakuUsaha) {
+        console.error("Error fetching pelaku usaha:", pelakuUsahaError);
+        return;
+      }
+
+      // Get all products for this branch with stock > 0
+      const { data: branchProducts, error: productsError } = await supabase
+        .from('produk')
+        .select(`
+          produk_id,
+          product_name,
+          stock
+        `)
+        .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id)
+        .gt('stock', 0);
+
+      if (productsError) {
+        console.error("Error fetching products:", productsError);
+        return;
+      }
+
+      console.log(`Found ${branchProducts?.length || 0} products for branch ${branchId}`);
+      
+      // Map products to the required format
+      const formattedProducts: ProductTransfer[] = (branchProducts || []).map(product => ({
+        produk_id: product.produk_id,
+        product_name: product.product_name,
+        stock: product.stock,
+        quantity: 0,
+        selected: false
+      }));
+
+      setSelectedProducts(formattedProducts);
+    } catch (error) {
+      console.error("Error in fetchProductsForBranch:", error);
+    }
+  };
+
+  // Handle product search
   const handleSearch = (term: string) => {
     setSearchTerm(term);
-    
-    if (!term.trim()) {
-      setFilteredProducts(selectedProducts);
-      return;
-    }
+  };
 
-    const filtered = selectedProducts.filter(product => 
-      product.product_name.toLowerCase().includes(term.toLowerCase())
+  // Filter products by search term
+  const filteredProducts = selectedProducts.filter(product =>
+    product.product_name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Toggle product selection
+  const handleProductSelection = (productId: number) => {
+    setSelectedProducts(prevProducts =>
+      prevProducts.map(product => {
+        if (product.produk_id === productId) {
+          return {
+            ...product,
+            selected: !product.selected,
+            quantity: !product.selected && product.quantity === 0 ? 1 : product.quantity
+          };
+        }
+        return product;
+      })
     );
-    
-    setFilteredProducts(filtered);
   };
 
-  const handleProductSelection = (produk_id: number, checked: boolean) => {
-    setSelectedProducts(prev => prev.map(p => 
-      p.produk_id === produk_id ? { ...p, selected: checked } : p
-    ));
-  };
-
-  const handleQuantityChange = (produk_id: number, quantity: number) => {
-    setSelectedProducts(prev => prev.map(p => 
-      p.produk_id === produk_id ? { ...p, quantity } : p
-    ));
+  // Update product quantity
+  const handleQuantityChange = (productId: number, newQuantity: number) => {
+    setSelectedProducts(prevProducts =>
+      prevProducts.map(product => {
+        if (product.produk_id === productId) {
+          return {
+            ...product,
+            quantity: Math.min(newQuantity, product.stock),
+            selected: newQuantity > 0
+          };
+        }
+        return product;
+      })
+    );
   };
 
   return {
-    products,
     selectedProducts,
+    setSelectedProducts,
     filteredProducts,
-    searchTerm,
     handleSearch,
     handleProductSelection,
-    handleQuantityChange,
-    setFilteredProducts
+    handleQuantityChange
   };
 }

@@ -11,7 +11,7 @@ export function useTransferSubmit() {
   async function submitTransfer(
     values: TransferStockFormValues, 
     selectedProducts: ProductTransfer[], 
-    centralBranchId: string | null,
+    sourceBranchId: string,
     resetForm: () => void
   ) {
     try {
@@ -28,10 +28,19 @@ export function useTransferSubmit() {
         return;
       }
 
-      if (!centralBranchId) {
+      if (!sourceBranchId) {
         toast({
           title: "Error",
-          description: "Cabang pusat tidak terdeteksi",
+          description: "Cabang asal tidak terdeteksi",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!values.cabang_id_to) {
+        toast({
+          title: "Error",
+          description: "Cabang tujuan tidak terdeteksi",
           variant: "destructive",
         });
         return;
@@ -53,7 +62,7 @@ export function useTransferSubmit() {
           .from('transfer_stok')
           .insert({
             produk_id: product.produk_id,
-            cabang_id_from: parseInt(centralBranchId),
+            cabang_id_from: parseInt(sourceBranchId),
             cabang_id_to: parseInt(values.cabang_id_to),
             quantity: product.quantity,
           });

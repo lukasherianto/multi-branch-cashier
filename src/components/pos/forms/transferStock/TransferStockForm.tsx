@@ -8,7 +8,8 @@ import { useTransferStock } from "./useTransferStock";
 import { ProductTable } from "./ProductTable";
 import { Pagination } from "./Pagination";
 import { useEffect, useState } from "react";
-import { AlertTriangle, Info } from "lucide-react";
+import { AlertTriangle, Info, ArrowUpDown } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 export function TransferStockForm() {
   const [renderError, setRenderError] = useState<Error | null>(null);
@@ -20,7 +21,10 @@ export function TransferStockForm() {
       branchesLoading,
       branches,
       centralBranch,
+      sourceBranches,
       destinationBranches,
+      fromCentralToBranch,
+      toggleDirection,
       selectedProducts,
       paginatedProducts,
       currentPage,
@@ -40,12 +44,13 @@ export function TransferStockForm() {
         console.log("TransferStockForm mounted");
         console.log("Branches loaded:", branches);
         console.log("Central branch:", centralBranch);
+        console.log("Source branches:", sourceBranches);
         console.log("Destination branches:", destinationBranches);
       } catch (error) {
         console.error("Error in TransferStockForm useEffect:", error);
         setRenderError(error as Error);
       }
-    }, [branches, centralBranch, destinationBranches]);
+    }, [branches, centralBranch, sourceBranches, destinationBranches]);
 
     // If there's a render error, show it
     if (renderError) {
@@ -100,13 +105,45 @@ export function TransferStockForm() {
     return (
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <div className="flex items-center justify-end mb-4">
+            <span className="text-sm mr-2">
+              {fromCentralToBranch ? "Pusat ke Cabang" : "Cabang ke Pusat"}
+            </span>
+            <div className="flex items-center space-x-2">
+              <Switch
+                checked={!fromCentralToBranch}
+                onCheckedChange={() => toggleDirection()}
+                aria-label="Toggle transfer direction"
+              />
+              <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormItem>
-              <FormLabel>Dari Cabang (Pusat)</FormLabel>
-              <div className="rounded-md border px-3 py-2 text-sm bg-gray-50">
-                {centralBranch?.branch_name || "Cabang Pusat"}
-              </div>
-            </FormItem>
+            <FormField
+              control={form.control}
+              name="cabang_id_from"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Dari Cabang</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih cabang asal" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {sourceBranches.map((branch) => (
+                        <SelectItem key={branch.cabang_id} value={branch.cabang_id.toString()}>
+                          {branch.branch_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
@@ -114,7 +151,7 @@ export function TransferStockForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Ke Cabang</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Pilih cabang tujuan" />
@@ -155,7 +192,9 @@ export function TransferStockForm() {
 
           <Button 
             type="submit" 
-            disabled={isSubmitting || selectedProducts.filter(p => p.selected).length === 0}
+            disabled={isSubmitting || form.getValues("cabang_id_from") === "" || 
+                      form.getValues("cabang_id_to") === "" || 
+                      selectedProducts.filter(p => p.selected).length === 0}
             className="w-full md:w-auto"
           >
             {isSubmitting ? "Memproses..." : "Transfer Stok"}
