@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -13,9 +14,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const transferStockSchema = z.object({
-  cabang_id_from: z.string(),
   cabang_id_to: z.string(),
   products: z.array(z.object({
     produk_id: z.number(),
@@ -42,6 +43,7 @@ export function TransferStockForm() {
   const { user } = useAuth();
   const [selectedProducts, setSelectedProducts] = useState<ProductTransfer[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
+  const [centralBranchId, setCentralBranchId] = useState<string | null>(null);
 
   const form = useForm<TransferStockFormValues>({
     resolver: zodResolver(transferStockSchema),
@@ -64,23 +66,30 @@ export function TransferStockForm() {
     enabled: !!user,
   });
 
-  const { data: branches = [] } = useQuery({
+  const { data: branches = [], isLoading: branchesLoading } = useQuery({
     queryKey: ['branches', pelakuUsaha?.pelaku_usaha_id],
     queryFn: async () => {
       if (!pelakuUsaha) return [];
       const { data } = await supabase
         .from('cabang')
         .select('*')
-        .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id);
+        .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id)
+        .order('cabang_id', { ascending: true });
+      
+      // Assuming the first branch is the central branch
+      if (data && data.length > 0) {
+        setCentralBranchId(data[0].cabang_id.toString());
+      }
+      
       return data || [];
     },
     enabled: !!pelakuUsaha,
   });
 
   const { data: products = [] } = useQuery({
-    queryKey: ['products', pelakuUsaha?.pelaku_usaha_id],
+    queryKey: ['products', pelakuUsaha?.pelaku_usaha_id, centralBranchId],
     queryFn: async () => {
-      if (!pelakuUsaha) return [];
+      if (!pelakuUsaha || !centralBranchId) return [];
       const { data } = await supabase
         .from('produk')
         .select('*')
@@ -99,7 +108,7 @@ export function TransferStockForm() {
       
       return data || [];
     },
-    enabled: !!pelakuUsaha,
+    enabled: !!pelakuUsaha && !!centralBranchId,
   });
 
   const handleProductSelection = (produk_id: number, checked: boolean) => {
@@ -122,6 +131,11 @@ export function TransferStockForm() {
     setCurrentPage(prev => Math.min(totalPages - 1, prev + 1));
   };
 
+  // Get destinations branches (excluding central branch)
+  const destinationBranches = branches.filter(branch => 
+    branch.cabang_id.toString() !== centralBranchId
+  );
+
   const totalPages = Math.ceil(selectedProducts.length / ITEMS_PER_PAGE);
   const paginatedProducts = selectedProducts.slice(
     currentPage * ITEMS_PER_PAGE,
@@ -143,6 +157,15 @@ export function TransferStockForm() {
         return;
       }
 
+      if (!centralBranchId) {
+        toast({
+          title: "Error",
+          description: "Cabang pusat tidak terdeteksi",
+          variant: "destructive",
+        });
+        return;
+      }
+
       for (const product of productsToTransfer) {
         if (product.quantity > product.stock) {
           toast({
@@ -159,7 +182,7 @@ export function TransferStockForm() {
           .from('transfer_stok')
           .insert({
             produk_id: product.produk_id,
-            cabang_id_from: parseInt(values.cabang_id_from),
+            cabang_id_from: parseInt(centralBranchId),
             cabang_id_to: parseInt(values.cabang_id_to),
             quantity: product.quantity,
           });
@@ -193,34 +216,32 @@ export function TransferStockForm() {
     }
   }
 
+  if (branchesLoading) {
+    return <div>Memuat data cabang...</div>;
+  }
+
+  if (branches.length < 2) {
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>
+          Minimal harus ada 2 cabang untuk melakukan transfer stok. Silakan tambahkan cabang terlebih dahulu.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  const centralBranch = branches.find(branch => branch.cabang_id.toString() === centralBranchId);
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="cabang_id_from"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Dari Cabang</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih cabang asal" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {branches.map((branch) => (
-                      <SelectItem key={branch.cabang_id} value={branch.cabang_id.toString()}>
-                        {branch.branch_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <FormItem>
+            <FormLabel>Dari Cabang (Pusat)</FormLabel>
+            <div className="rounded-md border px-3 py-2 text-sm bg-gray-50">
+              {centralBranch?.branch_name || "Cabang Pusat"}
+            </div>
+          </FormItem>
 
           <FormField
             control={form.control}
@@ -235,7 +256,7 @@ export function TransferStockForm() {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {branches.map((branch) => (
+                    {destinationBranches.map((branch) => (
                       <SelectItem key={branch.cabang_id} value={branch.cabang_id.toString()}>
                         {branch.branch_name}
                       </SelectItem>
