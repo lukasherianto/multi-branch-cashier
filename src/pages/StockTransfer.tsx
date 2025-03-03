@@ -24,6 +24,7 @@ interface Transfer {
   cabang_to: {
     branch_name: string;
   } | null;
+  batch_number?: string; // Add batch number field
 }
 
 const StockTransfer = () => {
@@ -115,19 +116,36 @@ const StockTransfer = () => {
 
           console.log("Transfer data fetched:", transferData);
 
-          // Transform the data to match the Transfer interface
-          const formattedTransfers: Transfer[] = (transferData || []).map(transfer => ({
-            transfer_id: transfer.transfer_id,
-            transfer_date: transfer.transfer_date,
-            quantity: transfer.quantity,
-            produk: transfer.produk,
-            cabang_from: {
-              branch_name: transfer.cabang_from?.branch_name || 'Unknown'
-            },
-            cabang_to: {
-              branch_name: transfer.cabang_to?.branch_name || 'Unknown'
+          // Generate batch numbers based on transfer date
+          // Transfers with the same date should have the same batch number
+          const batchMap = new Map<string, string>();
+          let batchCounter = 1;
+
+          // Transform the data to match the Transfer interface with batch numbers
+          const formattedTransfers: Transfer[] = (transferData || []).map(transfer => {
+            // Create a date key for grouping transfers (just the date part, not time)
+            const dateKey = new Date(transfer.transfer_date).toISOString().split('T')[0];
+            
+            // If we haven't seen this date before, assign a new batch number
+            if (!batchMap.has(dateKey)) {
+              batchMap.set(dateKey, `TRF-${dateKey.replace(/-/g, '')}-${batchCounter}`);
+              batchCounter++;
             }
-          }));
+            
+            return {
+              transfer_id: transfer.transfer_id,
+              transfer_date: transfer.transfer_date,
+              quantity: transfer.quantity,
+              produk: transfer.produk,
+              cabang_from: {
+                branch_name: transfer.cabang_from?.branch_name || 'Unknown'
+              },
+              cabang_to: {
+                branch_name: transfer.cabang_to?.branch_name || 'Unknown'
+              },
+              batch_number: batchMap.get(dateKey)
+            };
+          });
 
           return formattedTransfers;
         } catch (error) {
@@ -259,6 +277,7 @@ const StockTransfer = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>No. Transfer</TableHead>
                   <TableHead>Tanggal</TableHead>
                   <TableHead>Produk</TableHead>
                   <TableHead>Dari</TableHead>
@@ -270,6 +289,7 @@ const StockTransfer = () => {
                 {filteredTransfers && filteredTransfers.length > 0 ? (
                   filteredTransfers.map((transfer) => (
                     <TableRow key={transfer.transfer_id}>
+                      <TableCell>{transfer.batch_number}</TableCell>
                       <TableCell>
                         {format(new Date(transfer.transfer_date), 'PPpp', { locale: id })}
                       </TableCell>
@@ -281,7 +301,7 @@ const StockTransfer = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-4">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-4">
                       {branchFilter !== "all" 
                         ? `Belum ada riwayat transfer untuk cabang ${branchFilter}`
                         : "Belum ada riwayat transfer"}
