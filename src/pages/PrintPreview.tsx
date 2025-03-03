@@ -33,37 +33,197 @@ const PrintPreview = () => {
   const invoiceNumber = transactionId || `INV-${formatInTimeZone(new Date(), 'Asia/Jakarta', 'yyyyMMdd')}-${Math.floor(1000 + Math.random() * 9000)}`;
   
   const handlePrint = () => {
-    window.print();
+    // Create a new window with only the invoice content
+    const printWindow = window.open('', '_blank');
+    
+    if (!printWindow) {
+      alert('Please allow pop-ups to print the receipt.');
+      return;
+    }
+    
+    // Generate the receipt content
+    const receiptContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Receipt - ${invoiceNumber}</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            font-size: 12px;
+          }
+          .receipt {
+            max-width: 300px;
+            margin: 0 auto;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 10px;
+          }
+          .business-name {
+            font-size: 16px;
+            font-weight: bold;
+          }
+          .invoice-number {
+            background-color: #f8f8f8;
+            padding: 5px;
+            margin: 10px 0;
+            text-align: center;
+          }
+          .customer-info {
+            margin: 10px 0;
+          }
+          .items {
+            border-top: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
+            padding: 10px 0;
+            margin: 10px 0;
+          }
+          .item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+          }
+          .total {
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+          }
+          .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 10px;
+            color: #666;
+          }
+          .payment-method {
+            text-align: center;
+            margin: 10px 0;
+          }
+          .points {
+            text-align: center;
+            margin: 10px 0;
+            color: #4caf50;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="receipt">
+          <div class="header">
+            <div class="business-name">${businessName}</div>
+            <div>${branchName}</div>
+            <div>${formatInTimeZone(new Date(), 'Asia/Jakarta', 'dd MMMM yyyy HH:mm', { locale: id })}</div>
+          </div>
+          
+          <div class="invoice-number">
+            <strong>Invoice: ${invoiceNumber}</strong>
+          </div>
+          
+          ${customerName ? `
+          <div class="customer-info">
+            <div><strong>Pelanggan:</strong> ${customerName}</div>
+            ${whatsappNumber ? `<div><strong>WhatsApp:</strong> ${whatsappNumber}</div>` : ''}
+          </div>
+          ` : ''}
+          
+          <div class="items">
+            ${items.map((item: TransactionItem) => `
+              <div class="item">
+                <div>${item.name} x${item.quantity}</div>
+                <div>Rp ${(item.price * item.quantity).toLocaleString('id-ID')}</div>
+              </div>
+            `).join('')}
+          </div>
+          
+          ${pointsUsed > 0 ? `
+          <div class="item" style="color: #e53935;">
+            <div>Poin Digunakan</div>
+            <div>- Rp ${(pointsUsed * 1000).toLocaleString('id-ID')}</div>
+          </div>
+          ` : ''}
+          
+          <div class="total">
+            <span>Total</span>
+            <span>Rp ${total.toLocaleString('id-ID')}</span>
+          </div>
+          
+          ${paymentMethod ? `
+          <div class="payment-method">
+            <strong>Metode Pembayaran:</strong> ${paymentMethod === 'cash' ? 'Tunai' : 'QRIS'}
+          </div>
+          ` : ''}
+          
+          ${pointsEarned > 0 ? `
+          <div class="points">
+            Selamat! Anda mendapatkan ${pointsEarned} poin dari transaksi ini
+          </div>
+          ` : ''}
+          
+          <div class="footer">
+            Terima kasih atas kunjungan Anda!
+          </div>
+        </div>
+        <script>
+          window.onload = function() {
+            window.print();
+            setTimeout(function() {
+              window.close();
+            }, 500);
+          };
+        </script>
+      </body>
+      </html>
+    `;
+    
+    printWindow.document.open();
+    printWindow.document.write(receiptContent);
+    printWindow.document.close();
   };
 
   const handleWhatsApp = () => {
-    const itemsList = items.map((item: TransactionItem) => 
-      `${item.name} x${item.quantity} = Rp ${(item.price * item.quantity).toLocaleString('id-ID')}`
-    ).join('\n');
+    // Generate the same content as the printed receipt but in plain text format
+    let message = `*${businessName}*\n` +
+      `${branchName}\n` +
+      `${formatInTimeZone(new Date(), 'Asia/Jakarta', 'dd MMMM yyyy HH:mm', { locale: id })}\n\n` +
+      `*Invoice: ${invoiceNumber}*\n\n`;
 
-    let message = `*Invoice ${invoiceNumber}*\n\n` +
-      `*${businessName}*\n` +
-      `${branchName}\n\n` +
-      `Pelanggan: ${customerName}\n` +
-      `WhatsApp: ${whatsappNumber}\n\n` +
-      `Tanggal: ${formatInTimeZone(new Date(), 'Asia/Jakarta', 'dd MMMM yyyy HH:mm', { locale: id })}\n\n` +
-      `${itemsList}\n\n`;
-
-    if (pointsUsed > 0) {
-      message += `Poin Digunakan: ${pointsUsed} (Rp ${(pointsUsed * 1000).toLocaleString('id-ID')})\n`;
+    if (customerName) {
+      message += `*Pelanggan:* ${customerName}\n`;
+      if (whatsappNumber) {
+        message += `*WhatsApp:* ${whatsappNumber}\n`;
+      }
+      message += '\n';
     }
 
-    message += `*Total: Rp ${total.toLocaleString('id-ID')}*\n`;
+    // Add items
+    items.forEach((item: TransactionItem) => {
+      message += `${item.name} x${item.quantity}: Rp ${(item.price * item.quantity).toLocaleString('id-ID')}\n`;
+    });
+    
+    message += '\n';
+
+    // Add points used (if any)
+    if (pointsUsed > 0) {
+      message += `Poin Digunakan: - Rp ${(pointsUsed * 1000).toLocaleString('id-ID')}\n\n`;
+    }
+
+    // Add total and payment method
+    message += `*Total: Rp ${total.toLocaleString('id-ID')}*\n\n`;
     
     if (paymentMethod) {
-      message += `Metode Pembayaran: ${paymentMethod === 'cash' ? 'Tunai' : 'QRIS'}\n`;
+      message += `Metode Pembayaran: ${paymentMethod === 'cash' ? 'Tunai' : 'QRIS'}\n\n`;
     }
 
+    // Add points earned (if any)
     if (pointsEarned > 0) {
-      message += `\nPoin Diperoleh: ${pointsEarned}\n`;
+      message += `Selamat! Anda mendapatkan ${pointsEarned} poin dari transaksi ini\n\n`;
     }
 
-    message += `\nTerima kasih atas kunjungan Anda!`;
+    message += 'Terima kasih atas kunjungan Anda!';
 
     // Use the provided WhatsApp number if available, otherwise open without a number
     const whatsappUrl = whatsappNumber 
