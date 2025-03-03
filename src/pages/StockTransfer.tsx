@@ -1,5 +1,5 @@
 
-import { TransferStockForm } from "@/components/pos/forms/TransferStockForm";
+import { TransferStockForm } from "@/components/pos/forms/transferStock";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
