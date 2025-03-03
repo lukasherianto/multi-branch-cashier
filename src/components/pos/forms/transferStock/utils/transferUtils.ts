@@ -57,7 +57,12 @@ export function useTransferSubmit() {
         }
       }
 
+      console.log("Processing transfer with source branch ID:", sourceBranchId);
+      console.log("Destination branch ID:", values.cabang_id_to);
+      console.log("Products to transfer:", productsToTransfer);
+
       for (const product of productsToTransfer) {
+        // Create the transfer record
         const { error: transferError } = await supabase
           .from('transfer_stok')
           .insert({
@@ -67,14 +72,21 @@ export function useTransferSubmit() {
             quantity: product.quantity,
           });
 
-        if (transferError) throw transferError;
+        if (transferError) {
+          console.error("Transfer insertion error:", transferError);
+          throw transferError;
+        }
 
+        // Update the stock in the source branch
         const { error: updateError } = await supabase
           .from('produk')
           .update({ stock: product.stock - product.quantity })
           .eq('produk_id', product.produk_id);
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error("Stock update error:", updateError);
+          throw updateError;
+        }
       }
 
       toast({

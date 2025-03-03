@@ -20,7 +20,7 @@ export const DirectionToggle = ({
       <div className="flex items-center space-x-2">
         <Switch
           checked={!fromCentralToBranch}
-          onCheckedChange={() => toggleDirection()}
+          onCheckedChange={toggleDirection}
           aria-label="Toggle transfer direction"
         />
         <ArrowUpDown className="h-4 w-4 text-muted-foreground" />

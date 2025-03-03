@@ -129,6 +129,10 @@ export function useProducts(sourceBranchId: string | null) {
 
   // Handle quantity change
   const handleQuantityChange = (produk_id: number, quantity: number) => {
+    if (quantity < 0) {
+      return; // Don't allow negative quantities
+    }
+    
     setSelectedProducts((prev) =>
       prev.map((product) =>
         product.produk_id === produk_id
