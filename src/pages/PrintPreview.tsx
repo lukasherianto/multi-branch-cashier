@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ReceiptDisplay } from "@/components/receipt/ReceiptDisplay";
@@ -8,12 +9,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 
+// Define interface for business details
+interface BusinessDetails {
+  business_name: string;
+  contact_whatsapp?: string | null;
+  logo_url?: string | null;
+  instagram_url?: string | null;
+  facebook_url?: string | null;
+}
+
 const PrintPreview = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { pelakuUsaha } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-  const [businessDetails, setBusinessDetails] = useState<any>(null);
+  const [businessDetails, setBusinessDetails] = useState<BusinessDetails | null>(null);
   
   const { 
     items, 
@@ -55,7 +65,7 @@ const PrintPreview = () => {
         if (error) throw error;
         
         if (data) {
-          setBusinessDetails(data);
+          setBusinessDetails(data as BusinessDetails);
         }
       }
     } catch (error) {

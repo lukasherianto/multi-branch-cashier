@@ -12,6 +12,19 @@ import { BusinessFormSkeleton } from "./BusinessFormSkeleton";
 import { WhatsAppInput } from "./WhatsAppInput";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+// Define interface for business data to include the new fields
+interface BusinessData {
+  pelaku_usaha_id: number;
+  user_id: string;
+  business_name: string;
+  contact_whatsapp: string;
+  created_at: string;
+  updated_at: string;
+  logo_url?: string | null;
+  instagram_url?: string | null;
+  facebook_url?: string | null;
+}
+
 export const BusinessForm = () => {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
@@ -48,12 +61,13 @@ export const BusinessForm = () => {
         console.log("Business data loaded:", businessData);
 
         if (businessData) {
-          setPelakuUsahaId(businessData.pelaku_usaha_id);
-          setBusinessName(businessData.business_name || '');
-          setWhatsapp(businessData.contact_whatsapp || '');
-          setInstagram(businessData.instagram_url || '');
-          setFacebook(businessData.facebook_url || '');
-          setLogoUrl(businessData.logo_url || null);
+          const data = businessData as BusinessData;
+          setPelakuUsahaId(data.pelaku_usaha_id);
+          setBusinessName(data.business_name || '');
+          setWhatsapp(data.contact_whatsapp || '');
+          setInstagram(data.instagram_url || '');
+          setFacebook(data.facebook_url || '');
+          setLogoUrl(data.logo_url || null);
         }
       }
     } catch (error) {

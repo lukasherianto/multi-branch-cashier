@@ -276,6 +276,9 @@ export type Database = {
           business_name: string
           contact_whatsapp: string | null
           created_at: string
+          facebook_url: string | null
+          instagram_url: string | null
+          logo_url: string | null
           pelaku_usaha_id: number
           updated_at: string
           user_id: string
@@ -284,6 +287,9 @@ export type Database = {
           business_name: string
           contact_whatsapp?: string | null
           created_at?: string
+          facebook_url?: string | null
+          instagram_url?: string | null
+          logo_url?: string | null
           pelaku_usaha_id?: never
           updated_at?: string
           user_id: string
@@ -292,6 +298,9 @@ export type Database = {
           business_name?: string
           contact_whatsapp?: string | null
           created_at?: string
+          facebook_url?: string | null
+          instagram_url?: string | null
+          logo_url?: string | null
           pelaku_usaha_id?: never
           updated_at?: string
           user_id?: string
