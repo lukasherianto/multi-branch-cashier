@@ -25,6 +25,9 @@ const StockTransfer = () => {
     );
   } catch (error) {
     console.error("Uncaught error rendering StockTransfer:", error);
+    // Update state with the error so we can show the error boundary on next render
+    setRenderError(error instanceof Error ? error : new Error(String(error)));
+    
     return (
       <div className="p-8">
         <Alert variant="destructive">

@@ -23,6 +23,7 @@ import Attendance from "./pages/Attendance";
 import Settings from "./pages/Settings";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import PrintPreview from "./pages/PrintPreview";
+import StockTransfer from "./pages/StockTransfer"; // Import StockTransfer page
 
 // Layout and Auth components
 import Layout from "./components/Layout";
@@ -66,6 +67,7 @@ function App() {
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/order-confirmation" element={<OrderConfirmation />} />
                 <Route path="/print-preview" element={<PrintPreview />} />
+                <Route path="/stock-transfer" element={<StockTransfer />} /> {/* Add StockTransfer route */}
               </Route>
             </Routes>
           </BrowserRouter>

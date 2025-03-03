@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Form } from "@/components/ui/form";
 import { useTransferToBranch } from "./useTransferToBranch";
 import { Card, CardContent } from "@/components/ui/card";
-import BranchSelector from "./BranchSelector";
+import { BranchSelector } from "./BranchSelector"; // Fixed import syntax - no default export
 import { ProductSearch } from "@/components/pos/ProductSearch";
 import { ProductTable } from './ProductTable';
 import { Pagination } from "@/components/pos/forms/transferStock/Pagination";
