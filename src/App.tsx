@@ -28,7 +28,6 @@ import StockTransfer from "./pages/StockTransfer";
 // Layout and Auth components
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { UserRole } from "./types/auth";
 
 // Create a React Query client
 const queryClient = new QueryClient({
@@ -39,12 +38,6 @@ const queryClient = new QueryClient({
     }
   }
 });
-
-// Define role access for specific routes
-const allRoles: UserRole[] = ['pelaku_usaha', 'admin', 'kasir', 'pelayan'];
-const managerialRoles: UserRole[] = ['pelaku_usaha', 'admin'];
-const cashierRoles: UserRole[] = ['pelaku_usaha', 'kasir'];
-const attendanceRoles: UserRole[] = ['pelaku_usaha', 'admin', 'kasir', 'pelayan'];
 
 function App() {
   // Add debugging for app initialization
@@ -60,99 +53,21 @@ function App() {
               <Route path="/auth" element={<Auth />} />
               <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
                 <Route index element={<Index />} />
-                
-                {/* POS routes - accessible to Pelaku Usaha and Kasir */}
-                <Route path="/pos" element={
-                  <ProtectedRoute allowedRoles={cashierRoles}>
-                    <POS />
-                  </ProtectedRoute>
-                } />
-                
-                {/* Products routes - accessible to Pelaku Usaha and Admin */}
-                <Route path="/products" element={
-                  <ProtectedRoute allowedRoles={managerialRoles}>
-                    <Products />
-                  </ProtectedRoute>
-                } />
-                <Route path="/products/categories" element={
-                  <ProtectedRoute allowedRoles={managerialRoles}>
-                    <ProductCategories />
-                  </ProtectedRoute>
-                } />
-                
-                {/* Transaction routes - accessible to Pelaku Usaha, Admin, Kasir */}
-                <Route path="/history" element={
-                  <ProtectedRoute allowedRoles={[...managerialRoles, 'kasir']}>
-                    <History />
-                  </ProtectedRoute>
-                } />
-                <Route path="/returns" element={
-                  <ProtectedRoute allowedRoles={[...managerialRoles, 'kasir']}>
-                    <Returns />
-                  </ProtectedRoute>
-                } />
-                
-                {/* Financial routes - accessible to Pelaku Usaha and Admin */}
-                <Route path="/reports" element={
-                  <ProtectedRoute allowedRoles={managerialRoles}>
-                    <Reports />
-                  </ProtectedRoute>
-                } />
-                <Route path="/kas" element={
-                  <ProtectedRoute allowedRoles={managerialRoles}>
-                    <Kas />
-                  </ProtectedRoute>
-                } />
-                <Route path="/kas/purchases" element={
-                  <ProtectedRoute allowedRoles={managerialRoles}>
-                    <KasPurchases />
-                  </ProtectedRoute>
-                } />
-                
-                {/* Branch and Member routes - accessible to Pelaku Usaha and Admin */}
-                <Route path="/branches" element={
-                  <ProtectedRoute allowedRoles={managerialRoles}>
-                    <Branches />
-                  </ProtectedRoute>
-                } />
-                <Route path="/members" element={
-                  <ProtectedRoute allowedRoles={managerialRoles}>
-                    <Members />
-                  </ProtectedRoute>
-                } />
-                
-                {/* Attendance - accessible to all roles */}
-                <Route path="/attendance" element={
-                  <ProtectedRoute allowedRoles={attendanceRoles}>
-                    <Attendance />
-                  </ProtectedRoute>
-                } />
-                
-                {/* Settings - accessible to Pelaku Usaha and Admin */}
-                <Route path="/settings" element={
-                  <ProtectedRoute allowedRoles={managerialRoles}>
-                    <Settings />
-                  </ProtectedRoute>
-                } />
-                
-                {/* Order and Print routes - accessible to Pelaku Usaha and Kasir */}
-                <Route path="/order-confirmation" element={
-                  <ProtectedRoute allowedRoles={cashierRoles}>
-                    <OrderConfirmation />
-                  </ProtectedRoute>
-                } />
-                <Route path="/print-preview" element={
-                  <ProtectedRoute allowedRoles={cashierRoles}>
-                    <PrintPreview />
-                  </ProtectedRoute>
-                } />
-                
-                {/* Stock Transfer - accessible to Pelaku Usaha and Admin */}
-                <Route path="/stock-transfer" element={
-                  <ProtectedRoute allowedRoles={managerialRoles}>
-                    <StockTransfer />
-                  </ProtectedRoute>
-                } />
+                <Route path="/pos" element={<ProtectedRoute><POS /></ProtectedRoute>} />
+                <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
+                <Route path="/products/categories" element={<ProtectedRoute><ProductCategories /></ProtectedRoute>} />
+                <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
+                <Route path="/returns" element={<ProtectedRoute><Returns /></ProtectedRoute>} />
+                <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+                <Route path="/kas" element={<ProtectedRoute><Kas /></ProtectedRoute>} />
+                <Route path="/kas/purchases" element={<ProtectedRoute><KasPurchases /></ProtectedRoute>} />
+                <Route path="/branches" element={<ProtectedRoute><Branches /></ProtectedRoute>} />
+                <Route path="/members" element={<ProtectedRoute><Members /></ProtectedRoute>} />
+                <Route path="/attendance" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
+                <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                <Route path="/order-confirmation" element={<ProtectedRoute><OrderConfirmation /></ProtectedRoute>} />
+                <Route path="/print-preview" element={<ProtectedRoute><PrintPreview /></ProtectedRoute>} />
+                <Route path="/stock-transfer" element={<ProtectedRoute><StockTransfer /></ProtectedRoute>} />
               </Route>
             </Routes>
           </BrowserRouter>
