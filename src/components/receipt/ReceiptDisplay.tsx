@@ -21,6 +21,7 @@ interface ReceiptDisplayProps {
   instagramUrl?: string | null;
   facebookUrl?: string | null;
   businessWhatsapp?: string | null;
+  showPointsInfo?: boolean;
 }
 
 export const ReceiptDisplay: React.FC<ReceiptDisplayProps> = ({
@@ -37,7 +38,8 @@ export const ReceiptDisplay: React.FC<ReceiptDisplayProps> = ({
   logoUrl,
   instagramUrl,
   facebookUrl,
-  businessWhatsapp
+  businessWhatsapp,
+  showPointsInfo = true
 }) => {
   return (
     <Card className="max-w-2xl mx-auto p-6 space-y-6">
@@ -83,7 +85,7 @@ export const ReceiptDisplay: React.FC<ReceiptDisplayProps> = ({
           ))}
         </div>
 
-        {pointsUsed > 0 && (
+        {showPointsInfo && pointsUsed > 0 && (
           <div className="flex justify-between text-sm text-red-500">
             <span>Poin Digunakan</span>
             <span>- Rp {(pointsUsed * 1000).toLocaleString('id-ID')}</span>
@@ -101,7 +103,7 @@ export const ReceiptDisplay: React.FC<ReceiptDisplayProps> = ({
           </div>
         )}
 
-        {pointsEarned > 0 && (
+        {showPointsInfo && pointsEarned > 0 && (
           <div className="text-sm text-mint-600 text-center">
             Selamat! Anda mendapatkan {pointsEarned} poin dari transaksi ini
           </div>

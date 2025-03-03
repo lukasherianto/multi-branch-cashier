@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CartItem {
   id: number;
@@ -30,7 +31,35 @@ export const ShoppingCart = ({
   customerPoints = 0
 }: ShoppingCartProps) => {
   const [pointsToUse, setPointsToUse] = useState(0);
+  const [pointsEnabled, setPointsEnabled] = useState(true);
   const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  
+  useEffect(() => {
+    fetchPointsSettings();
+  }, []);
+
+  const fetchPointsSettings = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) return;
+      
+      const { data, error } = await supabase
+        .from('pelaku_usaha')
+        .select('points_enabled')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching points settings:", error);
+        return;
+      }
+
+      setPointsEnabled(data?.points_enabled || false);
+    } catch (error) {
+      console.error("Error in fetchPointsSettings:", error);
+    }
+  };
   
   const handlePointsInput = (value: string) => {
     const points = parseInt(value) || 0;
@@ -47,7 +76,7 @@ export const ShoppingCart = ({
     setPointsToUse(points);
   };
 
-  const finalTotal = total - (pointsToUse * 1000);
+  const finalTotal = total - (pointsEnabled ? pointsToUse * 1000 : 0);
 
   return (
     <Card className="w-[320px] flex flex-col">
@@ -115,7 +144,7 @@ export const ShoppingCart = ({
 
       <div className="border-t p-3 space-y-3">
         <div className="space-y-2">
-          {customerPoints > 0 && (
+          {pointsEnabled && customerPoints > 0 && (
             <>
               <div className="flex justify-between text-xs">
                 <span>Poin Tersedia</span>
@@ -139,7 +168,7 @@ export const ShoppingCart = ({
             <span>Total</span>
             <span>Rp {total.toLocaleString('id-ID')}</span>
           </div>
-          {pointsToUse > 0 && (
+          {pointsEnabled && pointsToUse > 0 && (
             <>
               <div className="flex justify-between text-xs text-red-500">
                 <span>Poin Digunakan</span>

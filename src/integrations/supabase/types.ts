@@ -280,6 +280,7 @@ export type Database = {
           instagram_url: string | null
           logo_url: string | null
           pelaku_usaha_id: number
+          points_enabled: boolean | null
           updated_at: string
           user_id: string
         }
@@ -291,6 +292,7 @@ export type Database = {
           instagram_url?: string | null
           logo_url?: string | null
           pelaku_usaha_id?: never
+          points_enabled?: boolean | null
           updated_at?: string
           user_id: string
         }
@@ -302,6 +304,7 @@ export type Database = {
           instagram_url?: string | null
           logo_url?: string | null
           pelaku_usaha_id?: never
+          points_enabled?: boolean | null
           updated_at?: string
           user_id?: string
         }

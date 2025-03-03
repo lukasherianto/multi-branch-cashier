@@ -31,7 +31,7 @@ export const useOrderConfirmation = ({
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "qris">("cash");
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [pointsEnabled, setPointsEnabled] = useState(true);
+  const [pointsEnabled, setPointsEnabled] = useState(false);
 
   useEffect(() => {
     if (pelakuUsahaId) {
@@ -47,7 +47,7 @@ export const useOrderConfirmation = ({
         .from('pelaku_usaha')
         .select('points_enabled')
         .eq('pelaku_usaha_id', pelakuUsahaId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("Error fetching points settings:", error);

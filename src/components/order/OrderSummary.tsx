@@ -14,6 +14,7 @@ interface OrderSummaryProps {
   finalTotal: number;
   paymentMethod: "cash" | "qris";
   setPaymentMethod: (method: "cash" | "qris") => void;
+  pointsEnabled?: boolean;
 }
 
 export const OrderSummary = ({
@@ -26,7 +27,8 @@ export const OrderSummary = ({
   pointsToUse,
   finalTotal,
   paymentMethod,
-  setPaymentMethod
+  setPaymentMethod,
+  pointsEnabled = true
 }: OrderSummaryProps) => {
   return (
     <CardContent className="space-y-6">
@@ -70,7 +72,7 @@ export const OrderSummary = ({
         </div>
       </div>
 
-      {pointsToUse > 0 && (
+      {pointsEnabled && pointsToUse > 0 && (
         <div className="flex justify-between text-red-500 font-medium">
           <span>Poin Digunakan ({pointsToUse} poin)</span>
           <span>- Rp {(pointsToUse * 1000).toLocaleString('id-ID')}</span>

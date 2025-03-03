@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ReceiptDisplay } from "@/components/receipt/ReceiptDisplay";
@@ -9,7 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 
-// Define interface for business details
 interface BusinessDetails {
   business_name: string;
   contact_whatsapp?: string | null;
@@ -22,126 +20,121 @@ interface BusinessDetails {
 const PrintPreview = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { pelakuUsaha } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [businessDetails, setBusinessDetails] = useState<BusinessDetails | null>(null);
   
-  const { 
-    items, 
-    total, 
-    pointsUsed, 
-    pointsEarned, 
-    businessName, 
-    branchName,
-    customerName,
-    whatsappNumber,
-    paymentMethod,
-    transactionId
-  } = location.state || {};
-  
-  // Initialize receipt data early to ensure hooks order is consistent
   const receiptData = {
-    items: items || [],
-    total: total || 0,
-    pointsUsed: pointsUsed || 0,
-    pointsEarned: pointsEarned || 0,
-    businessName: businessName || (pelakuUsaha?.business_name || ""),
-    branchName: branchName || "",
-    customerName: customerName || null,
-    whatsappNumber: whatsappNumber || null,
-    paymentMethod: paymentMethod || null,
-    transactionId: transactionId || null,
-    logoUrl: businessDetails?.logo_url || null,
-    instagramUrl: businessDetails?.instagram_url || null,
-    facebookUrl: businessDetails?.facebook_url || null,
-    businessWhatsapp: businessDetails?.contact_whatsapp || null,
-    pointsEnabled: businessDetails?.points_enabled || false
+    items: location.state?.items || [],
+    total: location.state?.total || 0,
+    pointsUsed: location.state?.pointsUsed || 0,
+    pointsEarned: location.state?.pointsEarned || 0,
+    businessName: location.state?.businessName || "",
+    branchName: location.state?.branchName || "",
+    customerName: location.state?.customerName || null,
+    whatsappNumber: location.state?.whatsappNumber || null,
+    paymentMethod: location.state?.paymentMethod || null,
+    transactionId: location.state?.transactionId || null,
+    logoUrl: null,
+    instagramUrl: null,
+    facebookUrl: null,
+    businessWhatsapp: null,
   };
   
-  // Use the receipt hook for functionality (before useEffect)
-  const { invoiceNumber, handlePrint, handleWhatsApp, handleBack, handleDownloadPDF } = useReceipt(receiptData);
+  const { 
+    invoiceNumber, 
+    handlePrint, 
+    handleWhatsApp, 
+    handleBack,
+    handleDownloadPDF 
+  } = useReceipt(receiptData);
   
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [instagramUrl, setInstagramUrl] = useState<string | null>(null);
+  const [facebookUrl, setFacebookUrl] = useState<string | null>(null);
+  const [businessWhatsapp, setBusinessWhatsapp] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [pointsEnabled, setPointsEnabled] = useState(true);
+
   useEffect(() => {
-    // If we already have the pelaku_usaha details from auth context, use that
-    if (pelakuUsaha) {
-      setBusinessDetails(pelakuUsaha);
-      setIsLoading(false);
-    } else {
-      // Otherwise fetch the business details
-      fetchBusinessDetails();
+    if (!location.state) {
+      navigate('/pos');
+      return;
     }
-  }, [pelakuUsaha]);
-  
-  const fetchBusinessDetails = async () => {
+
+    loadBusinessDetails();
+  }, [location, navigate]);
+
+  const loadBusinessDetails = async () => {
     try {
       setIsLoading(true);
       
       const { data: { user } } = await supabase.auth.getUser();
       
-      if (user) {
-        const { data, error } = await supabase
-          .from('pelaku_usaha')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-          
-        if (error) throw error;
-        
-        if (data) {
-          setBusinessDetails(data as BusinessDetails);
-        }
+      if (!user) {
+        console.log("No authenticated user found");
+        setIsLoading(false);
+        return;
       }
+      
+      const { data, error } = await supabase
+        .from('pelaku_usaha')
+        .select('logo_url, instagram_url, facebook_url, contact_whatsapp, points_enabled')
+        .eq('user_id', user.id)
+        .maybeSingle();
+        
+      if (error) {
+        console.error("Error loading business details:", error);
+        setIsLoading(false);
+        return;
+      }
+      
+      if (data) {
+        setLogoUrl(data.logo_url);
+        setInstagramUrl(data.instagram_url);
+        setFacebookUrl(data.facebook_url);
+        setBusinessWhatsapp(data.contact_whatsapp);
+        setPointsEnabled(data.points_enabled || false);
+      }
+      
+      setIsLoading(false);
     } catch (error) {
-      console.error("Error fetching business details:", error);
-    } finally {
+      console.error("Error in loadBusinessDetails:", error);
       setIsLoading(false);
     }
   };
-  
-  // Redirect to POS page if necessary data is missing
-  if (!items || !total) {
-    navigate('/pos');
-    return null;
-  }
 
-  // Show loading while fetching business details
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-10 w-10 animate-spin text-mint-600" />
       </div>
     );
   }
 
-  // Only show points information if the feature is enabled
-  const showPointsInfo = businessDetails?.points_enabled && (pointsUsed > 0 || pointsEarned > 0);
-
   return (
     <div className="min-h-screen bg-gray-100 p-8">
-      <ReceiptDisplay 
-        businessName={businessName}
-        branchName={branchName}
-        invoiceNumber={invoiceNumber}
-        customerName={customerName}
-        whatsappNumber={whatsappNumber}
-        items={items as TransactionItem[]}
-        pointsUsed={showPointsInfo ? pointsUsed : 0}
-        total={total}
-        paymentMethod={paymentMethod}
-        pointsEarned={showPointsInfo ? pointsEarned : 0}
-        logoUrl={businessDetails?.logo_url}
-        instagramUrl={businessDetails?.instagram_url}
-        facebookUrl={businessDetails?.facebook_url}
-        businessWhatsapp={businessDetails?.contact_whatsapp}
-        showPointsInfo={showPointsInfo}
-      />
-      
-      <div className="mt-6">
+      <div className="max-w-3xl mx-auto space-y-8">
         <ReceiptActions
           onPrint={handlePrint}
           onWhatsApp={handleWhatsApp}
           onBack={handleBack}
           onDownloadPDF={handleDownloadPDF}
+        />
+        
+        <ReceiptDisplay
+          businessName={receiptData.businessName}
+          branchName={receiptData.branchName}
+          invoiceNumber={invoiceNumber}
+          customerName={receiptData.customerName}
+          whatsappNumber={receiptData.whatsappNumber}
+          items={receiptData.items}
+          pointsUsed={receiptData.pointsUsed}
+          total={receiptData.total}
+          paymentMethod={receiptData.paymentMethod}
+          pointsEarned={receiptData.pointsEarned}
+          logoUrl={logoUrl}
+          instagramUrl={instagramUrl}
+          facebookUrl={facebookUrl}
+          businessWhatsapp={businessWhatsapp}
+          showPointsInfo={pointsEnabled}
         />
       </div>
     </div>
