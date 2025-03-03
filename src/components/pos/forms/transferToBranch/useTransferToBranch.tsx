@@ -1,48 +1,21 @@
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useAuth } from "@/hooks/useAuth";
-import { useCentralProducts } from "./useCentralProducts"; 
-import { usePagination } from "./usePagination";
 import { toast } from "sonner";
 import { schema } from "./schema";
-import { executeTransferToBranch } from "./transferToBranchUtils";
 import { ProductWithSelection, TransferToBranchValues } from "@/types/pos";
+import { useAuth } from "@/hooks/useAuth";
+import { useCentralProducts } from "./useCentralProducts";
+import { transferToBranch } from "./transferToBranchUtils";
+import { usePagination } from "./usePagination";
 
 export const useTransferToBranch = () => {
   const { cabangList } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [centralBranchId, setCentralBranchId] = useState<number | null>(null);
-  const [branchesLoading, setBranchesLoading] = useState(false);
-  const [productsLoading, setProductsLoading] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<ProductWithSelection[]>([]);
-  const [totalCostPrice, setTotalCostPrice] = useState(0);
-  const [totalItems, setTotalItems] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
-  // Find the central branch (assuming it's the first branch)
-  useEffect(() => {
-    setBranchesLoading(true);
-    if (cabangList && cabangList.length > 0) {
-      // Sort branches by ID, assume lowest ID is headquarters
-      const sortedBranches = [...cabangList].sort((a, b) => a.cabang_id - b.cabang_id);
-      setCentralBranchId(sortedBranches[0].cabang_id);
-    }
-    setBranchesLoading(false);
-  }, [cabangList]);
-
-  // Get destination branches (all except central)
-  const destinationBranches = centralBranchId 
-    ? cabangList.filter(branch => branch.cabang_id !== centralBranchId)
-    : [];
-
-  // Create branch options for dropdown
-  const branchOptions = destinationBranches.map(branch => ({
-    value: branch.cabang_id.toString(),
-    label: branch.branch_name
-  }));
-
-  // Initialize form with default values
   const form = useForm<TransferToBranchValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -52,68 +25,50 @@ export const useTransferToBranch = () => {
     }
   });
 
-  // Get central branch products
-  const {
-    filteredProducts,
-    loading,
-    handleSearch,
-    handleProductSelection,
-    handleQuantityChange
-  } = useCentralProducts(centralBranchId);
+  const { products, loading, handleSearch, fetchProducts } = useCentralProducts();
+  const { paginatedProducts, totalPages } = usePagination(products, currentPage, ITEMS_PER_PAGE);
 
-  // Setup pagination
-  const {
-    currentPage,
-    totalPages,
-    paginatedProducts,
-    handleNextPage,
-    handlePreviousPage,
-    ITEMS_PER_PAGE
-  } = usePagination(filteredProducts);
+  const handleNextPage = () => {
+    setCurrentPage(prev => Math.min(prev + 1, totalPages));
+  };
 
-  // Update selected products and total cost price when filtered products change
-  useEffect(() => {
-    const selected = filteredProducts.filter(product => product.selected);
-    setSelectedProducts(selected);
-    
-    // Calculate total cost price
-    const total = selected.reduce(
-      (sum, product) => sum + (product.cost_price * product.quantity),
-      0
+  const handlePreviousPage = () => {
+    setCurrentPage(prev => Math.max(prev - 1, 1));
+  };
+
+  const handleProductSelection = (productId: number, selected: boolean) => {
+    const updatedProducts = products.map(product =>
+      product.id === productId ? { ...product, selected } : product
     );
-    setTotalCostPrice(total);
-    setTotalItems(selected.length);
-    setProductsLoading(loading);
-  }, [filteredProducts, loading]);
+    setSelectedProducts(updatedProducts);
+    fetchProducts(updatedProducts);
+  };
 
-  // Handle form submission
+  const handleQuantityChange = (productId: number, quantity: number) => {
+    const updatedProducts = products.map(product =>
+      product.id === productId ? { ...product, quantity } : product
+    );
+    setSelectedProducts(updatedProducts);
+    fetchProducts(updatedProducts);
+  };
+
   const onSubmit = async (data: TransferToBranchValues) => {
     try {
-      if (!centralBranchId) {
-        toast("Cabang pusat belum ditemukan");
-        return;
-      }
+      setIsSubmitting(true);
 
-      if (selectedProducts.length === 0) {
+      const productsToTransfer = products.filter(p => p.selected);
+
+      if (productsToTransfer.length === 0) {
         toast("Pilih minimal satu produk untuk ditransfer");
         return;
       }
 
-      setIsSubmitting(true);
-      
-      // Execute transfer
-      const transferId = await executeTransferToBranch(
-        data, 
-        selectedProducts,
-        centralBranchId
-      );
-      
-      if (transferId) {
-        toast(`Transfer stok berhasil dengan ID: ${transferId}`);
-        
-        // Reset form and selection
+      const success = await transferToBranch(data, productsToTransfer);
+
+      if (success) {
+        toast(`Transfer stok berhasil dilakukan`);
         form.reset();
-        // Reset product selection would happen here
+        fetchProducts([]);
       }
     } catch (error) {
       console.error("Transfer error:", error);
@@ -126,22 +81,18 @@ export const useTransferToBranch = () => {
   return {
     form,
     onSubmit,
-    branchOptions,
-    branchesLoading,
-    productsLoading,
     isSubmitting,
-    centralBranch: cabangList.find(branch => branch.cabang_id === centralBranchId),
-    destinationBranches,
+    cabangList,
+    products,
+    loading,
     selectedProducts,
     paginatedProducts,
-    totalCostPrice,
     currentPage,
     totalPages,
-    totalItems,
-    handleNextPage,
-    handlePreviousPage,
     ITEMS_PER_PAGE,
     handleSearch,
+    handlePreviousPage,
+    handleNextPage,
     handleProductSelection,
     handleQuantityChange
   };

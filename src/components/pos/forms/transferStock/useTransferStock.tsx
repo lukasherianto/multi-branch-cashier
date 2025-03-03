@@ -1,27 +1,13 @@
 
-import { useState, useEffect } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { executeStockTransfer } from "./utils/transfer";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { schema } from "./schema";
-import { ProductWithSelection, TransferStockFormValues } from "@/types/pos";
-import { useAuth } from "@/hooks/useAuth";
-import { useProducts } from "./hooks/useProducts";
+import { TransferStockFormValues } from "@/types/pos";
+import { useBranchManagement } from "./hooks/useBranchManagement";
+import { useProductManagement } from "./hooks/useProductManagement";
+import { useTransferSubmit } from "./hooks/useTransferSubmit";
 
 export const useTransferStock = () => {
-  const { cabangList, pelakuUsaha } = useAuth();
-  const [fromCentralToBranch, setFromCentralToBranch] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedProducts, setSelectedProducts] = useState<ProductWithSelection[]>([]);
-  const [branchesLoading, setBranchesLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [paginatedProducts, setPaginatedProducts] = useState<ProductWithSelection[]>([]);
-  const ITEMS_PER_PAGE = 10;
-  const [centralBranch, setCentralBranch] = useState<any>(null);
-  const [sourceBranches, setSourceBranches] = useState<any[]>([]);
-  const [destinationBranches, setDestinationBranches] = useState<any[]>([]);
-
   // Initialize the form
   const form = useForm<TransferStockFormValues>({
     resolver: zodResolver(schema),
@@ -33,154 +19,42 @@ export const useTransferStock = () => {
     }
   });
 
-  // Setup branches when cabangList is loaded
-  useEffect(() => {
-    if (!cabangList || cabangList.length === 0) return;
-    
-    console.log("Setting up branches with cabangList:", cabangList);
-    setBranchesLoading(true);
-    
-    try {
-      // Identify the central branch (first/lowest ID)
-      const sortedBranches = [...cabangList].sort((a, b) => a.cabang_id - b.cabang_id);
-      const central = sortedBranches[0];
-      setCentralBranch(central);
-      
-      console.log("Central branch identified:", central);
-      
-      if (fromCentralToBranch) {
-        // From central to branch: source is central, destinations are all others
-        setSourceBranches([central]);
-        setDestinationBranches(sortedBranches.filter(b => b.cabang_id !== central.cabang_id));
-        
-        // Auto-select central as source
-        form.setValue('cabang_id_from', central.cabang_id.toString());
-        console.log("Auto-selected central branch as source:", central.cabang_id.toString());
-      } else {
-        // From branch to central: sources are all branches, destination is central
-        setSourceBranches(sortedBranches);
-        setDestinationBranches([central]);
-        
-        // Reset the form source value since there are multiple source options now
-        form.setValue('cabang_id_from', '');
-      }
-    } catch (error) {
-      console.error("Error setting up branches:", error);
-    } finally {
-      setBranchesLoading(false);
-    }
-  }, [cabangList, fromCentralToBranch, form]);
-
-  // Toggle direction changes how branches are filtered
-  const toggleDirection = () => {
-    setFromCentralToBranch(prev => !prev);
-    // Reset the form values when direction changes
-    form.setValue('cabang_id_from', '');
-    form.setValue('cabang_id_to', '');
-  };
-
   // Watch for source branch changes to load products
   const sourceBranchId = form.watch("cabang_id_from");
-  
   console.log("Current source branch ID:", sourceBranchId);
   
-  // Get products for the selected source branch
-  const { 
-    filteredProducts, 
-    allProducts,
-    loading: productsLoading, 
+  // Get branch management functionality
+  const {
+    branchesLoading,
+    cabangList,
+    centralBranch,
+    sourceBranches,
+    destinationBranches,
+    fromCentralToBranch,
+    toggleDirection
+  } = useBranchManagement(form);
+
+  // Get product management functionality
+  const {
+    selectedProducts,
+    paginatedProducts,
+    productsLoading,
+    currentPage,
+    totalPages,
+    ITEMS_PER_PAGE,
     handleSearch,
-    setFilteredProducts 
-  } = useProducts(sourceBranchId);
+    handlePreviousPage,
+    handleNextPage,
+    handleProductSelection,
+    handleQuantityChange,
+    filteredProducts
+  } = useProductManagement(sourceBranchId);
 
-  // Update paginated products when currentPage or filteredProducts change
-  useEffect(() => {
-    if (!filteredProducts) return;
-    
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    
-    console.log(`Updating paginated products: ${startIndex}-${endIndex} of ${filteredProducts.length}`);
-    setPaginatedProducts(filteredProducts.slice(startIndex, endIndex));
-  }, [currentPage, filteredProducts]);
-
-  // Update selectedProducts when filteredProducts change
-  useEffect(() => {
-    setSelectedProducts(filteredProducts);
-  }, [filteredProducts]);
-
-  // Calculate total pages
-  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
-
-  // Handle pagination
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(prev => prev + 1);
-    }
-  };
-
-  const handlePreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(prev => prev - 1);
-    }
-  };
-
-  // Handle product selection
-  const handleProductSelection = (productId: number, selected: boolean) => {
-    console.log(`Selection change for product ${productId}: ${selected}`);
-    const updatedProducts = filteredProducts.map(product => 
-      product.id === productId ? { ...product, selected } : product
-    );
-    setFilteredProducts(updatedProducts);
-  };
-
-  // Handle quantity change
-  const handleQuantityChange = (productId: number, quantity: number) => {
-    console.log(`Quantity change for product ${productId}: ${quantity}`);
-    const updatedProducts = filteredProducts.map(product => 
-      product.id === productId ? { ...product, quantity } : product
-    );
-    setFilteredProducts(updatedProducts);
-  };
-
-  // Handle form submission
-  const onSubmit = async (data: TransferStockFormValues) => {
-    try {
-      setIsSubmitting(true);
-      
-      const productsToTransfer = filteredProducts.filter(p => p.selected);
-      
-      if (productsToTransfer.length === 0) {
-        toast("Pilih minimal satu produk untuk ditransfer");
-        return;
-      }
-
-      console.log("Submitting transfer with data:", data);
-      console.log("Selected products:", productsToTransfer);
-
-      // Execute transfer operation
-      const success = await executeStockTransfer(data, productsToTransfer);
-      
-      if (success) {
-        toast(`Transfer stok berhasil dilakukan`);
-        
-        // Reset form and selection
-        form.reset();
-        setFilteredProducts([]);
-        setSelectedProducts([]);
-        
-        // If direction is from central to branch, auto-select central again
-        if (fromCentralToBranch && centralBranch) {
-          form.setValue('cabang_id_from', centralBranch.cabang_id.toString());
-        }
-      }
-    } catch (error) {
-      console.error("Transfer error:", error);
-      toast(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  // Get form submission functionality
+  const {
+    isSubmitting,
+    onSubmit
+  } = useTransferSubmit(form, filteredProducts, centralBranch, fromCentralToBranch);
 
   return {
     form,
