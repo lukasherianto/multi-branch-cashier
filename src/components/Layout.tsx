@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -52,14 +53,24 @@ const Layout = () => {
   };
 
   useEffect(() => {
-    for (const section of menuConfig) {
-      const foundItem = section.items.find(item => location.pathname === item.path);
-      if (foundItem && !expandedMenus.includes(foundItem.path)) {
-        setExpandedMenus(prev => [...prev, foundItem.path]);
-        break;
+    // Add a debugging console log to help identify any issues
+    console.log('Layout component mounted', { location, expandedMenus, menuConfig });
+    
+    try {
+      for (const section of menuConfig) {
+        const foundItem = section.items.find(item => location.pathname === item.path);
+        if (foundItem && !expandedMenus.includes(foundItem.path)) {
+          setExpandedMenus(prev => [...prev, foundItem.path]);
+          break;
+        }
       }
+    } catch (err) {
+      console.error('Error in Layout useEffect:', err);
     }
-  }, [location.pathname, expandedMenus]);
+  }, [location.pathname]);
+
+  // Add a debugging console log for the render path
+  console.log('Layout rendering', { isMobile, user });
 
   if (isMobile) {
     return (
