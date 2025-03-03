@@ -799,6 +799,24 @@ export type Database = {
           },
         ]
       }
+      user_status: {
+        Row: {
+          status_id: number
+          uraian: string
+          wewenang: string
+        }
+        Insert: {
+          status_id: number
+          uraian: string
+          wewenang: string
+        }
+        Update: {
+          status_id?: number
+          uraian?: string
+          wewenang?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string
