@@ -24,11 +24,13 @@ export function useBranchSelection(form: UseFormReturn<TransferStockFormValues>)
         form.setValue("cabang_id_from", centralBranch.cabang_id.toString());
         form.setValue("cabang_id_to", "");
         setSourceBranchId(centralBranch.cabang_id.toString());
+        console.log("Direction changed to central→branch, source ID:", centralBranch.cabang_id.toString());
       } else {
         // Branch to Central: Source is empty (to be chosen), Destination is Central
         form.setValue("cabang_id_from", "");
         form.setValue("cabang_id_to", centralBranch.cabang_id.toString());
         setSourceBranchId(null);
+        console.log("Direction changed to branch→central, source ID reset to null");
       }
     }
   }, [centralBranch, fromCentralToBranch, form]);

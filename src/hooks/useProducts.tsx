@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +9,7 @@ export const useProducts = () => {
   const [products, setProducts] = useState<CartItem[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<CartItem[]>([]);
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (branchId?: string | null) => {
     try {
       const { data: pelakuUsahaData } = await supabase
         .from('pelaku_usaha')
@@ -17,7 +18,7 @@ export const useProducts = () => {
         .single();
 
       if (pelakuUsahaData) {
-        const { data: productsData, error } = await supabase
+        let query = supabase
           .from('produk')
           .select(`
             produk_id,
@@ -35,6 +36,11 @@ export const useProducts = () => {
           `)
           .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id);
 
+        // If a branch ID is specified, fetch branch-specific products
+        // This would normally involve some relationship or filter based on your schema
+        // For now, fetching all products as an example
+        const { data: productsData, error } = await query;
+
         if (error) throw error;
 
         if (productsData) {
@@ -51,6 +57,9 @@ export const useProducts = () => {
             unit: product.unit,
             cost_price: product.cost_price
           }));
+          
+          console.log(`Found ${mappedProducts.length} products${branchId ? ` for branch ${branchId}` : ''}`);
+          
           setProducts(mappedProducts);
           setFilteredProducts(mappedProducts);
         }

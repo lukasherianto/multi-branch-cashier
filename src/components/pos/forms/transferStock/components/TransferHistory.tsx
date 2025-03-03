@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -59,12 +60,11 @@ const TransferHistory = () => {
   });
 
   const { data: transfers = [], isLoading, error } = useQuery({
-    queryKey: ['transfers'],
+    queryKey: ['transfers-history'],
     queryFn: async () => {
-      console.log("Starting transfer data fetch");
+      console.log("Starting transfer history data fetch");
       try {
         const userResponse = await supabase.auth.getUser();
-        console.log("Auth user response:", userResponse);
         
         if (!userResponse.data.user) {
           console.error("No authenticated user found");
@@ -82,7 +82,6 @@ const TransferHistory = () => {
           return [];
         }
 
-        console.log("Pelaku usaha data:", pelakuUsaha);
         if (!pelakuUsaha) {
           console.log("No pelaku usaha found");
           return [];
@@ -112,7 +111,7 @@ const TransferHistory = () => {
           return [];
         }
 
-        console.log("Transfer data fetched:", transferData);
+        console.log("Transfer history data fetched:", transferData);
 
         // Generate batch numbers based on transfer date
         // Transfers with the same date should have the same batch number
@@ -147,7 +146,7 @@ const TransferHistory = () => {
 
         return formattedTransfers;
       } catch (error) {
-        console.error('Error in transfer query:', error);
+        console.error('Error in transfer history query:', error);
         return [];
       }
     },
@@ -171,20 +170,20 @@ const TransferHistory = () => {
     return (
       <div className="p-8 flex flex-col items-center justify-center min-h-[50vh]">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
-        <p className="text-lg">Memuat data transfer stok...</p>
+        <p className="text-lg">Memuat data riwayat transfer stok...</p>
       </div>
     );
   }
   
   if (error) {
-    console.error("Error in transfers query:", error);
+    console.error("Error in transfers history query:", error);
     return (
       <div className="p-8">
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>
-            Gagal memuat data transfer stok. Silakan coba lagi nanti.
+            Gagal memuat data riwayat transfer stok. Silakan coba lagi nanti.
             <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto">
               {JSON.stringify(error, null, 2)}
             </pre>
