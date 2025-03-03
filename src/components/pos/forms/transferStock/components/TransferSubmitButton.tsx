@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Loader2, Send } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
-import { TransferStockFormValues } from "../schema";
+import { TransferStockFormValues } from "@/types/pos";
 
 interface TransferSubmitButtonProps {
   isSubmitting: boolean;

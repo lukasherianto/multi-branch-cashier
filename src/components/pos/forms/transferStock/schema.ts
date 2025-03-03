@@ -1,5 +1,6 @@
 
 import { z } from "zod";
+import { TransferStockFormValues } from "@/types/pos";
 
 export const schema = z.object({
   cabang_id_from: z.string(),
@@ -13,3 +14,6 @@ export const schema = z.object({
   ).optional(),
   notes: z.string().optional()
 });
+
+// Export the type for form values
+export type { TransferStockFormValues };

@@ -47,7 +47,13 @@ export const executeStockTransfer = async (
     }
     
     // 1. Create transfer record
-    const { data: transferRecord, error: transferError } = await supabase
+    // We need to modify this to work with the structure in the database
+    // The table expects produk_id and quantity if we directly insert, but we'll be
+    // inserting multiple products through the detail records
+    // Let's use a different approach by separating the transfer record and details
+    
+    // First, create the parent transfer record
+    const { data: transferParent, error: transferParentError } = await supabase
       .from('transfer_stok')
       .insert({
         cabang_id_from: parseInt(data.cabang_id_from),
@@ -57,15 +63,17 @@ export const executeStockTransfer = async (
         total_items: selectedProducts.length,
         total_quantity: selectedProducts.reduce((sum, p) => sum + p.quantity, 0),
         notes: data.notes || 'Transfer Stok Antar Cabang',
-        // Not including produk_id and quantity as they will be in detail records
+        // Using defaults for produk_id and quantity since we're using detail records
+        produk_id: selectedProducts[0]?.produk_id || selectedProducts[0]?.id || 0,
+        quantity: 0 // This will be tracked in detail records
       })
       .select('transfer_id')
       .single();
       
-    if (transferError) throw transferError;
-    if (!transferRecord) throw new Error("Failed to create transfer record");
+    if (transferParentError) throw transferParentError;
+    if (!transferParent) throw new Error("Failed to create transfer record");
     
-    const transferId = transferRecord.transfer_id;
+    const transferId = transferParent.transfer_id;
     
     // 2. Create transfer details
     // Prepare detail records array for batch insert

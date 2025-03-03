@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Send } from 'lucide-react';
+import { Loader2, Send } from 'lucide-react';
 
 export interface TransferSubmitButtonProps {
   isSubmitting: boolean;
@@ -20,7 +20,7 @@ export const TransferSubmitButton = ({
     >
       {isSubmitting ? (
         <>
-          <span className="animate-spin mr-2">◌</span>
+          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
           Memproses...
         </>
       ) : (

@@ -2,7 +2,7 @@
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
-import { TransferStockFormValues } from "../schema";
+import { TransferStockFormValues } from "@/types/pos";
 
 interface BranchSelectorProps {
   form: UseFormReturn<TransferStockFormValues>;

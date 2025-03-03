@@ -1,5 +1,6 @@
 
 import { z } from "zod";
+import { TransferToBranchValues } from "@/types/pos";
 
 export const schema = z.object({
   cabang_id_to: z.string(),
@@ -13,4 +14,5 @@ export const schema = z.object({
   notes: z.string().optional()
 });
 
-export type TransferToBranchValues = z.infer<typeof schema>;
+// Export the type for form values
+export type { TransferToBranchValues };

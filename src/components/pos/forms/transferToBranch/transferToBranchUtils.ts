@@ -25,7 +25,8 @@ export const executeTransferToBranch = async (
     }
     
     // 1. Create transfer record
-    const { data: transferRecord, error: transferError } = await supabase
+    // First, create the parent transfer record
+    const { data: transferParent, error: transferError } = await supabase
       .from('transfer_stok')
       .insert({
         cabang_id_from: centralBranchId,
@@ -35,15 +36,17 @@ export const executeTransferToBranch = async (
         total_items: selectedProducts.length,
         total_quantity: selectedProducts.reduce((sum, p) => sum + p.quantity, 0),
         notes: data.notes || 'Transfer Stok dari Pusat ke Cabang',
-        // Not including produk_id and quantity as they will be in detail records
+        // Using defaults for produk_id and quantity since we're using detail records
+        produk_id: selectedProducts[0]?.produk_id || selectedProducts[0]?.id || 0,
+        quantity: 0 // This will be tracked in detail records
       })
       .select('transfer_id')
       .single();
       
     if (transferError) throw transferError;
-    if (!transferRecord) throw new Error("Failed to create transfer record");
+    if (!transferParent) throw new Error("Failed to create transfer record");
     
-    const transferId = transferRecord.transfer_id;
+    const transferId = transferParent.transfer_id;
     
     // 2. Create transfer details
     // Prepare detail records array for batch insert

@@ -30,7 +30,7 @@ export interface ProductWithSelection extends CartItem {
   selected: boolean;
 }
 
-// Define the transfer form values type with all fields required as specified in the schema
+// Define the transfer form values type - all required fields match schema
 export interface TransferStockFormValues {
   cabang_id_from: string;
   cabang_id_to: string;
@@ -42,7 +42,7 @@ export interface TransferStockFormValues {
   notes?: string;
 }
 
-// Define the transfer to branch values type with required fields
+// Define the transfer to branch values type - required fields match schema
 export interface TransferToBranchValues {
   cabang_id_to: string;
   products?: {
