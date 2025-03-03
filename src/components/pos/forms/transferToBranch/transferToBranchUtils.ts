@@ -1,74 +1,36 @@
 
-import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { TransferToBranchFormValues } from "./schema";
 import { CartItem } from "@/types/pos";
+import { toast } from "sonner";
 
-export const useTransferToBranchSubmit = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const submitTransfer = async (
-    values: TransferToBranchFormValues,
-    selectedProducts: CartItem[],
-    sourceBranchId: string | null,
-    onSuccess?: () => void
-  ) => {
-    if (!sourceBranchId) {
-      toast("Cabang pusat tidak terdeteksi");
-      return;
-    }
-
-    const productsToTransfer = selectedProducts.filter(p => p.selected);
+/**
+ * Checks if a product has already been created in the destination branch
+ */
+export const checkProductExists = async (
+  productId: number,
+  destinationBranchId: number
+): Promise<boolean> => {
+  const { data } = await supabase
+    .from('produk')
+    .select('produk_id')
+    .eq('produk_id', productId)
+    .eq('cabang_id', destinationBranchId)
+    .single();
     
-    if (productsToTransfer.length === 0) {
-      toast("Tidak ada produk yang dipilih untuk transfer");
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
-    try {
-      // Validate stock availability
-      const stockValid = await validateStockForTransfer(
-        productsToTransfer, 
-        parseInt(sourceBranchId)
-      );
-      
-      if (!stockValid) {
-        setIsSubmitting(false);
-        return;
-      }
-      
-      // Execute the transfer
-      const transferId = await executeTransfer(
-        values, 
-        productsToTransfer, 
-        parseInt(sourceBranchId)
-      );
-      
-      if (transferId) {
-        toast.success(`Transfer stok berhasil dengan nomor: ${transferId}`);
-        if (onSuccess) onSuccess();
-      }
-    } catch (error) {
-      console.error("Transfer error:", error);
-      toast.error(`Gagal melakukan transfer: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return { isSubmitting, submitTransfer };
+  return !!data;
 };
 
-// Validate stock availability for transfer
-const validateStockForTransfer = async (
+/**
+ * Validates that central branch has sufficient stock for transfer
+ */
+export const validateStockForTransfer = async (
   products: CartItem[],
   sourceBranchId: number
 ): Promise<boolean> => {
   try {
     for (const product of products) {
+      if (!product.selected) continue;
+      
       // Check stock availability
       const { data, error } = await supabase
         .from('produk')
@@ -79,88 +41,85 @@ const validateStockForTransfer = async (
       
       if (error) {
         console.error("Error checking stock:", error);
-        throw new Error(`Error checking stock for ${product.name}: ${error.message}`);
+        throw new Error(`Error checking stock for ${product.name}`);
       }
       
       if (!data || data.stock < product.quantity) {
-        toast.error(`Stok tidak cukup untuk produk: ${product.name}`);
+        toast(`Stok pusat tidak cukup untuk produk: ${product.name}`);
         return false;
       }
     }
     return true;
   } catch (error) {
     console.error("Stock validation error:", error);
-    throw error;
+    toast(`Error validating stock: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    return false;
   }
 };
 
-// Execute the transfer operation
-const executeTransfer = async (
-  values: TransferToBranchFormValues,
-  products: CartItem[],
-  sourceBranchId: number
+/**
+ * Execute stock transfer from central branch to destination branch
+ */
+export const executeTransferToBranch = async (
+  selectedProducts: CartItem[],
+  sourceBranchId: number,
+  destinationBranchId: number
 ): Promise<number | null> => {
-  const destinationBranchId = parseInt(values.cabang_id_to);
+  if (selectedProducts.length === 0) {
+    toast("Tidak ada produk yang dipilih untuk transfer");
+    return null;
+  }
   
   try {
     // Start a transaction
-    console.log("Starting transfer from central to branch");
+    console.log("Starting transaction for stock transfer to branch");
     
     // Array to store all transfer operations
     const transferOperations = [];
-    let lastTransferId = null;
     
-    for (const product of products) {
-      console.log(`Processing product ${product.id}: ${product.name}, quantity: ${product.quantity}`);
+    for (const product of selectedProducts) {
+      console.log(`Processing product ${product.id}: ${product.name}`);
       
       // 1. Decrease stock in source branch (central)
-      const { error: decreaseError } = await supabase
+      const decreaseSourcePromise = supabase
         .from('produk')
         .update({ 
           stock: supabase.rpc('decrement', { x: product.quantity }) 
         })
         .eq('produk_id', product.id)
         .eq('cabang_id', sourceBranchId);
-        
-      if (decreaseError) throw decreaseError;
       
       // 2. Check if product exists in destination branch
-      const { data: existingProduct, error: checkError } = await supabase
-        .from('produk')
-        .select('produk_id, stock')
-        .eq('produk_id', product.id)
-        .eq('cabang_id', destinationBranchId)
-        .maybeSingle();
-        
-      if (checkError) throw checkError;
+      const productExists = await checkProductExists(product.id, destinationBranchId);
       
-      // 3. Update or create product in destination branch
-      if (existingProduct) {
-        // Product exists, update stock
-        const { error: updateError } = await supabase
+      let destinationOperationPromise;
+      
+      if (productExists) {
+        // Product exists in destination branch, update stock
+        destinationOperationPromise = supabase
           .from('produk')
           .update({ 
-            stock: existingProduct.stock + product.quantity 
+            stock: supabase.rpc('increment', { x: product.quantity }) 
           })
           .eq('produk_id', product.id)
           .eq('cabang_id', destinationBranchId);
-          
-        if (updateError) throw updateError;
       } else {
-        // Product doesn't exist, create it
-        const { data: sourceProduct, error: sourceError } = await supabase
+        // Product doesn't exist in destination branch, create it
+        const { data: sourceProduct } = await supabase
           .from('produk')
           .select('*')
           .eq('produk_id', product.id)
           .eq('cabang_id', sourceBranchId)
           .single();
           
-        if (sourceError) throw sourceError;
+        if (!sourceProduct) {
+          throw new Error(`Source product ${product.id} not found`);
+        }
         
-        const { error: insertError } = await supabase
+        // Create new product in destination branch
+        destinationOperationPromise = supabase
           .from('produk')
           .insert({
-            produk_id: sourceProduct.produk_id,
             pelaku_usaha_id: sourceProduct.pelaku_usaha_id,
             kategori_id: sourceProduct.kategori_id,
             product_name: sourceProduct.product_name,
@@ -173,32 +132,42 @@ const executeTransfer = async (
             stock: product.quantity,
             cabang_id: destinationBranchId
           });
-          
-        if (insertError) throw insertError;
       }
       
-      // 4. Create transfer record
-      const { data: transferRecord, error: transferError } = await supabase
+      // 3. Create transfer record
+      const createTransferRecordPromise = supabase
         .from('transfer_stok')
         .insert({
           cabang_id_from: sourceBranchId,
           cabang_id_to: destinationBranchId,
           produk_id: product.id,
           quantity: product.quantity
-        })
-        .select('transfer_id')
-        .single();
-        
-      if (transferError) throw transferError;
+        });
       
-      lastTransferId = transferRecord.transfer_id;
+      transferOperations.push(decreaseSourcePromise);
+      transferOperations.push(destinationOperationPromise);
+      transferOperations.push(createTransferRecordPromise);
     }
     
-    console.log("Transfer completed successfully with ID:", lastTransferId);
-    return lastTransferId;
+    // Execute all operations
+    const results = await Promise.all(transferOperations);
+    
+    // Check for errors
+    for (const result of results) {
+      if (result.error) {
+        throw new Error(`Transfer operation failed: ${result.error.message}`);
+      }
+    }
+    
+    // Get the transfer ID from the last operation (should be a transfer_stok insert)
+    const lastOperation = results[results.length - 1];
+    const transferId = lastOperation.data?.[0]?.transfer_id || null;
+    
+    console.log("Stock transfer to branch completed successfully");
+    return transferId;
     
   } catch (error) {
-    console.error("Transfer error:", error);
+    console.error("Stock transfer error:", error);
     throw error;
   }
 };

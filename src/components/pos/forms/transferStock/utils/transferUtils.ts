@@ -64,7 +64,7 @@ export const executeStockTransfer = async (
       console.log(`Processing product ${product.id}: ${product.name}`);
       
       // 1. Decrease stock in source branch
-      const decreaseSource = supabase
+      const decreaseSourcePromise = supabase
         .from('produk')
         .update({ 
           stock: supabase.rpc('decrement', { x: product.quantity }) 
@@ -80,11 +80,11 @@ export const executeStockTransfer = async (
         .eq('cabang_id', destinationBranchId)
         .single();
       
-      let destinationOperation;
+      let destinationOperationPromise;
       
       if (existingProduct) {
         // Product exists in destination branch, update stock
-        destinationOperation = supabase
+        destinationOperationPromise = supabase
           .from('produk')
           .update({ 
             stock: supabase.rpc('increment', { x: product.quantity }) 
@@ -104,7 +104,7 @@ export const executeStockTransfer = async (
           throw new Error(`Source product ${product.id} not found`);
         }
         
-        destinationOperation = supabase
+        destinationOperationPromise = supabase
           .from('produk')
           .insert({
             pelaku_usaha_id: sourceProduct.pelaku_usaha_id,
@@ -122,7 +122,7 @@ export const executeStockTransfer = async (
       }
       
       // 3. Create transfer record
-      const createTransferRecord = supabase
+      const createTransferRecordPromise = supabase
         .from('transfer_stok')
         .insert({
           cabang_id_from: sourceBranchId,
@@ -131,9 +131,9 @@ export const executeStockTransfer = async (
           quantity: product.quantity
         });
       
-      transferOperations.push(decreaseSource);
-      transferOperations.push(destinationOperation);
-      transferOperations.push(createTransferRecord);
+      transferOperations.push(decreaseSourcePromise);
+      transferOperations.push(destinationOperationPromise);
+      transferOperations.push(createTransferRecordPromise);
     }
     
     // Execute all operations

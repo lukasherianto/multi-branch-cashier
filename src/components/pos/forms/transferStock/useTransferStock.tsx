@@ -1,212 +1,183 @@
 
-import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { transferStockSchema, type TransferStockFormValues } from "./schema";
-import { useBranches } from "./hooks/useBranches";
-import { useProducts } from "@/hooks/products";
-import { CartItem } from "@/types/pos";
-import { useToast } from "@/hooks/use-toast";
-import { validateStockForTransfer, executeStockTransfer } from "./utils/transferUtils";
-import { hooks } from "./hooks";
+import { useState } from "react";
+import { toast } from "sonner";
+import { useProducts } from "./hooks/useProducts";
+import { usePagination } from "./hooks/usePagination";
+import { useBranchSelection } from "./hooks/useBranchSelection";
+import { transferStockSchema } from "./schema";
+import { executeStockTransfer, validateStockForTransfer } from "./utils/transferUtils";
 
-// Define a type for products with selection state
-interface ProductWithSelection extends CartItem {
-  selected: boolean;
-}
+export type TransferStockFormValues = z.infer<typeof transferStockSchema>;
 
 export const useTransferStock = () => {
-  const { toast } = useToast();
-  const [fromCentralToBranch, setFromCentralToBranch] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Initialize form with schema validation
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isTransferring, setIsTransferring] = useState(false);
+  const [successful, setSuccessful] = useState(false);
+  const [transferId, setTransferId] = useState<number | null>(null);
+  const [direction, setDirection] = useState<"to-branch" | "to-headquarter">("to-branch");
+
+  const {
+    sourceBranch,
+    destinationBranch,
+    branches,
+    handleSelectSourceBranch,
+    handleSelectDestinationBranch,
+    toggleDirection,
+  } = useBranchSelection(direction);
+
   const form = useForm<TransferStockFormValues>({
     resolver: zodResolver(transferStockSchema),
     defaultValues: {
       cabang_id_from: "",
       cabang_id_to: "",
-      products: []
-    }
+    },
   });
-  
-  // Get branches data
-  const { branches, centralBranch, branchesLoading } = useBranches();
-  
-  // Determine available source and destination branches based on direction
-  const sourceBranches = fromCentralToBranch 
-    ? (centralBranch ? [centralBranch] : [])
-    : branches.filter(b => b.cabang_id !== centralBranch?.cabang_id);
-    
-  const destinationBranches = fromCentralToBranch
-    ? branches.filter(b => b.cabang_id !== centralBranch?.cabang_id) 
-    : (centralBranch ? [centralBranch] : []);
-  
-  // Products management
-  const { products: rawProducts, handleSearch, currentBranchId } = useProducts();
-  
-  // Add selected state to products
-  const [selectedProducts, setSelectedProducts] = useState<ProductWithSelection[]>([]);
-  
-  // Pagination settings
-  const ITEMS_PER_PAGE = 10;
-  const [currentPage, setCurrentPage] = useState(1);
-  
-  // Calculate total pages
-  const totalPages = Math.ceil(selectedProducts.length / ITEMS_PER_PAGE);
-  
-  // Get paginated products for current page
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, selectedProducts.length);
-  const paginatedProducts = selectedProducts.slice(startIndex, endIndex);
-  
-  // Handle direction toggle
-  const toggleDirection = () => {
-    setFromCentralToBranch(prev => !prev);
-    // Reset form values when direction changes
-    form.reset({
-      cabang_id_from: "",
-      cabang_id_to: "",
-      products: []
-    });
-  };
-  
+
+  // Update form values when branches change
+  React.useEffect(() => {
+    if (sourceBranch) {
+      form.setValue("cabang_id_from", sourceBranch.cabang_id.toString());
+    }
+    if (destinationBranch) {
+      form.setValue("cabang_id_to", destinationBranch.cabang_id.toString());
+    }
+  }, [sourceBranch, destinationBranch, form]);
+
+  // Get products based on the selected source branch
+  const { products, filteredProducts, loading, handleSearch } = useProducts(
+    sourceBranch?.cabang_id?.toString()
+  );
+
+  // Setup pagination
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems: paginatedProducts,
+    goToNextPage,
+    goToPreviousPage,
+    goToPage,
+  } = usePagination(
+    searchTerm
+      ? filteredProducts.filter((product) =>
+          product.name.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      : filteredProducts
+  );
+
   // Handle product selection
   const handleProductSelection = (productId: number, selected: boolean) => {
-    setSelectedProducts(prev => 
-      prev.map(product => 
-        product.id === productId ? { ...product, selected } : product
-      )
+    const updatedProducts = filteredProducts.map((product) =>
+      product.id === productId ? { ...product, selected } : product
     );
+    
+    // Get the products hook's setFilteredProducts function
+    useProducts.setFilteredProducts(updatedProducts);
   };
-  
+
   // Handle quantity change
   const handleQuantityChange = (productId: number, quantity: number) => {
-    if (quantity < 1) return;
-    
-    // Find product to check stock
-    const product = selectedProducts.find(p => p.id === productId);
-    
-    if (product && quantity > product.stock) {
-      toast({
-        title: "Warning",
-        description: `Jumlah melebihi stok yang tersedia (${product.stock})`,
-        variant: "destructive",
-      });
-      quantity = product.stock; // Cap at max stock
-    }
-    
-    setSelectedProducts(prev => 
-      prev.map(product => 
-        product.id === productId ? { ...product, quantity } : product
-      )
+    const updatedProducts = filteredProducts.map((product) =>
+      product.id === productId ? { ...product, quantity } : product
     );
+    
+    // Get the products hook's setFilteredProducts function
+    useProducts.setFilteredProducts(updatedProducts);
   };
-  
-  // Pagination handlers
-  const handlePreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(prev => prev - 1);
-    }
+
+  // Handle search input
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    handleSearch(value);
+    goToPage(1); // Reset to first page when searching
   };
-  
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(prev => prev + 1);
-    }
+
+  // Handle direction toggle
+  const handleToggleDirection = () => {
+    // Toggle direction state
+    const newDirection = direction === "to-branch" ? "to-headquarter" : "to-branch";
+    setDirection(newDirection);
+    
+    // Call the branch selection hook's toggle function
+    toggleDirection();
+    
+    // Reset form and products
+    form.reset();
+    setSearchTerm("");
   };
-  
-  // Handle product search with selection state preservation
-  const handleProductSearch = (searchTerm: string) => {
-    handleSearch(searchTerm);
-    // We need to maintain the selected state when filtering
-  };
-  
-  // Form submission handler
-  const onSubmit = async (values: TransferStockFormValues) => {
+
+  // Submit handler
+  const onSubmit = async (data: TransferStockFormValues) => {
     try {
-      setIsSubmitting(true);
+      setIsTransferring(true);
       
-      // Ensure branches are selected
-      if (!values.cabang_id_from || !values.cabang_id_to) {
-        toast({
-          title: "Error",
-          description: "Pilih cabang asal dan tujuan",
-          variant: "destructive",
-        });
-        setIsSubmitting(false);
+      // Validate if any products are selected
+      const selectedProducts = filteredProducts.filter((p) => p.selected);
+      if (selectedProducts.length === 0) {
+        toast("Pilih minimal satu produk untuk ditransfer");
         return;
       }
       
-      // Get selected products
-      const productsToTransfer = selectedProducts.filter(p => p.selected);
-      
-      if (productsToTransfer.length === 0) {
-        toast({
-          title: "Error",
-          description: "Pilih minimal satu produk",
-          variant: "destructive",
-        });
-        setIsSubmitting(false);
-        return;
-      }
-      
-      // Validate stock availability
-      const stockValid = await validateStockForTransfer(
-        productsToTransfer, 
-        values.cabang_id_from
+      // Validate stock
+      const isStockValid = await validateStockForTransfer(
+        selectedProducts,
+        data.cabang_id_from
       );
       
-      if (!stockValid) {
-        setIsSubmitting(false);
+      if (!isStockValid) {
         return;
       }
       
-      // Execute the transfer
-      const transferId = await executeStockTransfer(values, productsToTransfer);
+      // Execute transfer
+      const id = await executeStockTransfer(data, selectedProducts);
       
-      if (transferId) {
-        toast.success(`Transfer stok berhasil dengan nomor: ${transferId}`);
+      if (id) {
+        setTransferId(id);
+        setSuccessful(true);
+        toast(`Transfer stok berhasil dengan ID: ${id}`);
+        
         // Reset form
-        form.reset({
-          cabang_id_from: "",
-          cabang_id_to: "",
-          products: []
-        });
-        setSelectedProducts([]);
+        form.reset();
+        // Reset products selection
+        handleSearch("");
+        setSearchTerm("");
       }
     } catch (error) {
-      console.error("Transfer submission error:", error);
-      toast({
-        title: "Error",
-        description: `Gagal melakukan transfer stok: ${error instanceof Error ? error.message : "Unknown error"}`,
-        variant: "destructive",
-      });
+      console.error("Transfer error:", error);
+      toast(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
     } finally {
-      setIsSubmitting(false);
+      setIsTransferring(false);
     }
   };
-  
+
   return {
     form,
-    isSubmitting,
-    branchesLoading,
-    branches,
-    centralBranch,
-    sourceBranches,
-    destinationBranches,
-    fromCentralToBranch,
-    toggleDirection,
-    selectedProducts,
+    onSubmit,
+    products,
+    filteredProducts,
     paginatedProducts,
     currentPage,
     totalPages,
-    handleSearch: handleProductSearch,
+    goToNextPage,
+    goToPreviousPage,
+    goToPage,
+    loading,
     handleProductSelection,
     handleQuantityChange,
-    handlePreviousPage,
-    handleNextPage,
-    onSubmit,
-    ITEMS_PER_PAGE
+    handleSearchChange,
+    searchTerm,
+    isTransferring,
+    successful,
+    transferId,
+    sourceBranch,
+    destinationBranch,
+    branches,
+    handleSelectSourceBranch,
+    handleSelectDestinationBranch,
+    direction,
+    handleToggleDirection,
   };
 };

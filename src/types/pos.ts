@@ -12,6 +12,7 @@ export interface CartItem {
   unit: string;
   cost_price: number;
   cabang_id: number;
+  selected?: boolean;
 }
 
 export interface Customer {

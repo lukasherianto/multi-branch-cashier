@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { CartItem } from "@/types/pos";
 
-interface ProductWithSelection extends CartItem {
+export interface ProductWithSelection extends CartItem {
   selected: boolean;
 }
 
