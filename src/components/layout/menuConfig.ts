@@ -1,5 +1,5 @@
 
-import { LayoutDashboard, Store, Package2, History, FileBarChart2, Settings, ArrowLeftRight, Banknote, Building2, UserRound, Users } from "lucide-react";
+import { LayoutDashboard, Store, Package2, History, FileBarChart2, Settings, ArrowLeftRight, Banknote, Building2, UserRound, Users, ArrowDownUp } from "lucide-react";
 
 export const menuItems = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -11,7 +11,8 @@ export const menuItems = [
     subItems: [
       { path: "/products", label: "Daftar Produk" },
       { path: "/products/categories", label: "Kategori" },
-      { path: "/products/transfer", label: "Transfer Produk" }
+      { path: "/products/transfer", label: "Transfer Produk" },
+      { path: "/products/transfer-to-branch", label: "Transfer Ke Cabang" }
     ]
   },
   { path: "/history", label: "Riwayat", icon: History },
