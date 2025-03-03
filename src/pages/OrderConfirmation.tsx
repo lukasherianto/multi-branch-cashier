@@ -49,21 +49,33 @@ const OrderConfirmation = () => {
     return null;
   }
 
-  const validateMemberId = async (id: number | null) => {
+  const validateMemberId = async (id: number | null): Promise<boolean> => {
     if (id === null) return true; // Null memberId is valid (non-member transaction)
     
-    const { data, error } = await supabase
-      .from('pelanggan')  // Use pelanggan table instead of member
-      .select('pelanggan_id')
-      .eq('pelanggan_id', id)
-      .maybeSingle();
+    try {
+      console.log(`Validating pelanggan ID: ${id}`);
+      const { data, error } = await supabase
+        .from('pelanggan')
+        .select('pelanggan_id')
+        .eq('pelanggan_id', id)
+        .maybeSingle();
+        
+      if (error) {
+        console.error("Pelanggan validation query error:", error);
+        return false;
+      }
       
-    if (error || !data) {
-      console.error("Pelanggan validation failed:", error || "Pelanggan not found");
+      if (!data) {
+        console.error("Pelanggan not found with ID:", id);
+        return false;
+      }
+      
+      console.log("Pelanggan validation successful:", data);
+      return true;
+    } catch (err) {
+      console.error("Unexpected error during pelanggan validation:", err);
       return false;
     }
-    
-    return true;
   };
 
   const handleConfirmPayment = async () => {
@@ -71,10 +83,20 @@ const OrderConfirmation = () => {
       setIsProcessing(true);
       setErrorMessage(null);
       
+      console.log("Payment confirmation started:", {
+        isRegisteredCustomer,
+        memberId,
+        paymentMethod
+      });
+      
       if (isRegisteredCustomer && memberId) {
         const isValidMember = await validateMemberId(memberId);
         if (!isValidMember) {
-          throw new Error("Data pelanggan tidak valid. Silakan periksa kembali pelanggan.");
+          console.error("Invalid pelanggan ID:", memberId);
+          toast.error("Data pelanggan tidak valid. Silakan periksa kembali pelanggan.");
+          setErrorMessage("Data pelanggan tidak valid. Silakan kembali ke POS dan pilih pelanggan yang valid.");
+          setIsProcessing(false);
+          return;
         }
       }
       

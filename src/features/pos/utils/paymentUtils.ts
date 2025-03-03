@@ -22,59 +22,66 @@ export const createTransactions = async (
   let validMemberId = memberId;
   
   if (memberId !== null) {
-    // Periksa apakah member dengan ID ini benar-benar ada di database
-    const { data: memberData, error: memberError } = await supabase
-      .from('pelanggan')  // Menggunakan tabel pelanggan, bukan member
-      .select('pelanggan_id')
-      .eq('pelanggan_id', memberId)
-      .maybeSingle();
-      
-    if (memberError || !memberData) {
-      console.log(`Pelanggan dengan ID ${memberId} tidak ditemukan, mengatur pelanggan_id ke null`);
+    try {
+      // Periksa apakah pelanggan dengan ID ini benar-benar ada di database
+      const { data: pelangganData, error: pelangganError } = await supabase
+        .from('pelanggan')
+        .select('pelanggan_id')
+        .eq('pelanggan_id', memberId)
+        .maybeSingle();
+        
+      if (pelangganError || !pelangganData) {
+        console.log(`Pelanggan dengan ID ${memberId} tidak ditemukan, mengatur pelanggan_id ke null`);
+        validMemberId = null;
+      } else {
+        console.log(`Pelanggan dengan ID ${memberId} ditemukan, melanjutkan transaksi`);
+      }
+    } catch (error) {
+      console.error("Error validating pelanggan:", error);
       validMemberId = null;
     }
   }
   
-  const transactionPromises = cartItems.map(async (item) => {
-    const pointsForItem = pointsToUse > 0 
-      ? Math.floor((item.price * item.quantity / totalBeforePoints) * pointsToUse) 
-      : 0;
+  try {
+    const transactionPromises = cartItems.map(async (item) => {
+      const pointsForItem = pointsToUse > 0 
+        ? Math.floor((item.price * item.quantity / totalBeforePoints) * pointsToUse) 
+        : 0;
+        
+      console.log(`Creating transaction for item ${item.id}, points allocated: ${pointsForItem}`);
+      console.log(`Using pelanggan_id: ${validMemberId}`);
       
-    console.log(`Creating transaction for item ${item.id}, points allocated: ${pointsForItem}`);
-    
-    // Store the transaction ID in the description field since we don't have a dedicated column
-    const result = await supabase
-      .from('transaksi')
-      .insert({
-        cabang_id: selectedCabangId,
-        produk_id: item.id,
-        quantity: item.quantity,
-        total_price: item.price * item.quantity,
-        points_used: pointsForItem,
-        pelanggan_id: validMemberId, // Menggunakan memberId yang sudah divalidasi
-        transaction_date: new Date().toISOString(),
-        payment_method: paymentMethod
-      })
-      .select();
+      // Store the transaction ID in the description field since we don't have a dedicated column
+      const result = await supabase
+        .from('transaksi')
+        .insert({
+          cabang_id: selectedCabangId,
+          produk_id: item.id,
+          quantity: item.quantity,
+          total_price: item.price * item.quantity,
+          points_used: pointsForItem,
+          pelanggan_id: validMemberId, // Menggunakan memberId yang sudah divalidasi
+          transaction_date: new Date().toISOString(),
+          payment_method: paymentMethod
+        })
+        .select();
+        
+      if (result.error) {
+        console.error(`Error creating transaction for item ${item.id}:`, result.error);
+        throw result.error;
+      } else {
+        console.log(`Transaction created successfully for item ${item.id}:`, result.data);
+      }
       
-    if (result.error) {
-      console.error(`Error creating transaction for item ${item.id}:`, result.error);
-    } else {
-      console.log(`Transaction created successfully for item ${item.id}:`, result.data);
-    }
-    
-    return result;
-  });
+      return result;
+    });
 
-  const results = await Promise.all(transactionPromises);
-  const errors = results.filter(result => result.error);
-
-  if (errors.length > 0) {
-    console.error('Errors processing transactions:', errors);
-    throw new Error('Failed to process some transactions');
+    await Promise.all(transactionPromises);
+    return true;
+  } catch (error) {
+    console.error('Errors processing transactions:', error);
+    throw new Error(`Failed to process transactions: ${error.message || "Unknown error"}`);
   }
-  
-  return true;
 };
 
 /**
