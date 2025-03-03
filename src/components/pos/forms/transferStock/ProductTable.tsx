@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ProductWithSelection } from "@/types/pos";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, InfoIcon } from "lucide-react";
 
 export interface ProductTableProps {
   products: ProductWithSelection[];
@@ -75,6 +75,7 @@ export const ProductTable = ({
               <TableCell className="font-medium">
                 {product.name}
                 <span className="text-xs text-gray-500 block">ID: {product.produk_id || product.id}</span>
+                {product.barcode && <span className="text-xs text-gray-500 block">Barcode: {product.barcode}</span>}
               </TableCell>
               <TableCell>{product.category || '-'}</TableCell>
               <TableCell>{product.stock}</TableCell>

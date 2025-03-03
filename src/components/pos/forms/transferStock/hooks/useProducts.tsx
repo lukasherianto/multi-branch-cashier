@@ -16,6 +16,7 @@ export const useProducts = (sourceBranchId: string) => {
       if (!sourceBranchId || !pelakuUsaha) {
         console.log("Missing sourceBranchId or pelakuUsaha, skipping fetch");
         setFilteredProducts([]);
+        setAllProducts([]);
         return;
       }
       
@@ -44,9 +45,13 @@ export const useProducts = (sourceBranchId: string) => {
           .eq('cabang_id', parseInt(sourceBranchId))
           .gt('stock', 0); // Only fetch products with stock > 0
           
-        if (error) throw error;
+        if (error) {
+          console.error("Error fetching products:", error);
+          throw error;
+        }
         
         console.log(`Found ${productsData ? productsData.length : 0} products for branch ${sourceBranchId}`);
+        console.log("Products data:", productsData);
         
         const mappedProducts = productsData ? productsData.map(product => ({
           id: product.produk_id,
@@ -103,6 +108,7 @@ export const useProducts = (sourceBranchId: string) => {
   return {
     filteredProducts,
     setFilteredProducts,
+    allProducts,
     loading,
     handleSearch
   };

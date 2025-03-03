@@ -2,20 +2,19 @@
 import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useBranchSelection } from "./hooks/useBranchSelection";
-import { useProducts } from "./hooks/useProducts";
 import { toast } from "sonner";
 import { executeStockTransfer } from "./utils/transferUtils";
 import { schema } from "./schema";
 import { ProductWithSelection, TransferStockFormValues } from "@/types/pos";
 import { useAuth } from "@/hooks/useAuth";
+import { useProducts } from "./hooks/useProducts";
 
 export const useTransferStock = () => {
-  const { cabangList } = useAuth();
-  const [fromCentralToBranch, setFromCentralToBranch] = useState(false);
+  const { cabangList, pelakuUsaha } = useAuth();
+  const [fromCentralToBranch, setFromCentralToBranch] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<ProductWithSelection[]>([]);
-  const [branchesLoading, setBranchesLoading] = useState(false);
+  const [branchesLoading, setBranchesLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [paginatedProducts, setPaginatedProducts] = useState<ProductWithSelection[]>([]);
   const ITEMS_PER_PAGE = 10;
@@ -60,7 +59,10 @@ export const useTransferStock = () => {
       } else {
         // From branch to central: sources are all branches, destination is central
         setSourceBranches(sortedBranches);
-        setDestinationBranches(sortedBranches);
+        setDestinationBranches([central]);
+        
+        // Reset the form source value since there are multiple source options now
+        form.setValue('cabang_id_from', '');
       }
     } catch (error) {
       console.error("Error setting up branches:", error);
@@ -85,6 +87,7 @@ export const useTransferStock = () => {
   // Get products for the selected source branch
   const { 
     filteredProducts, 
+    allProducts,
     loading: productsLoading, 
     handleSearch,
     setFilteredProducts 
@@ -92,15 +95,19 @@ export const useTransferStock = () => {
 
   // Update paginated products when currentPage or filteredProducts change
   useEffect(() => {
+    if (!filteredProducts) return;
+    
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const endIndex = startIndex + ITEMS_PER_PAGE;
     
     console.log(`Updating paginated products: ${startIndex}-${endIndex} of ${filteredProducts.length}`);
     setPaginatedProducts(filteredProducts.slice(startIndex, endIndex));
-    
-    // Update selectedProducts when filteredProducts change
-    setSelectedProducts(filteredProducts.filter(p => p.selected));
   }, [currentPage, filteredProducts]);
+
+  // Update selectedProducts when filteredProducts change
+  useEffect(() => {
+    setSelectedProducts(filteredProducts);
+  }, [filteredProducts]);
 
   // Calculate total pages
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
@@ -141,16 +148,18 @@ export const useTransferStock = () => {
     try {
       setIsSubmitting(true);
       
-      if (selectedProducts.length === 0) {
+      const productsToTransfer = filteredProducts.filter(p => p.selected);
+      
+      if (productsToTransfer.length === 0) {
         toast("Pilih minimal satu produk untuk ditransfer");
         return;
       }
 
       console.log("Submitting transfer with data:", data);
-      console.log("Selected products:", selectedProducts);
+      console.log("Selected products:", productsToTransfer);
 
       // Execute transfer operation
-      const transferId = await executeStockTransfer(data, selectedProducts);
+      const transferId = await executeStockTransfer(data, productsToTransfer);
       
       if (transferId) {
         toast(`Transfer stok berhasil dengan ID: ${transferId}`);
@@ -159,6 +168,11 @@ export const useTransferStock = () => {
         form.reset();
         setFilteredProducts([]);
         setSelectedProducts([]);
+        
+        // If direction is from central to branch, auto-select central again
+        if (fromCentralToBranch && centralBranch) {
+          form.setValue('cabang_id_from', centralBranch.cabang_id.toString());
+        }
       }
     } catch (error) {
       console.error("Transfer error:", error);
