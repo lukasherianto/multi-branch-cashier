@@ -677,8 +677,8 @@ export type Database = {
             foreignKeyName: "transaksi_pelanggan_id_fkey"
             columns: ["pelanggan_id"]
             isOneToOne: false
-            referencedRelation: "member"
-            referencedColumns: ["member_id"]
+            referencedRelation: "pelanggan"
+            referencedColumns: ["pelanggan_id"]
           },
           {
             foreignKeyName: "transaksi_produk_id_fkey"
