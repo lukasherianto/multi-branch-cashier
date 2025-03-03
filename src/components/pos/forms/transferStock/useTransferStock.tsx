@@ -38,6 +38,7 @@ export const useTransferStock = () => {
   useEffect(() => {
     if (!cabangList || cabangList.length === 0) return;
     
+    console.log("Setting up branches with cabangList:", cabangList);
     setBranchesLoading(true);
     
     try {
@@ -46,6 +47,8 @@ export const useTransferStock = () => {
       const central = sortedBranches[0];
       setCentralBranch(central);
       
+      console.log("Central branch identified:", central);
+      
       if (fromCentralToBranch) {
         // From central to branch: source is central, destinations are all others
         setSourceBranches([central]);
@@ -53,8 +56,9 @@ export const useTransferStock = () => {
         
         // Auto-select central as source
         form.setValue('cabang_id_from', central.cabang_id.toString());
+        console.log("Auto-selected central branch as source:", central.cabang_id.toString());
       } else {
-        // From branch to central: sources are all others, destination is central
+        // From branch to central: sources are all branches, destination is central
         setSourceBranches(sortedBranches);
         setDestinationBranches(sortedBranches);
       }
@@ -76,6 +80,8 @@ export const useTransferStock = () => {
   // Watch for source branch changes to load products
   const sourceBranchId = form.watch("cabang_id_from");
   
+  console.log("Current source branch ID:", sourceBranchId);
+  
   // Get products for the selected source branch
   const { 
     filteredProducts, 
@@ -88,6 +94,8 @@ export const useTransferStock = () => {
   useEffect(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const endIndex = startIndex + ITEMS_PER_PAGE;
+    
+    console.log(`Updating paginated products: ${startIndex}-${endIndex} of ${filteredProducts.length}`);
     setPaginatedProducts(filteredProducts.slice(startIndex, endIndex));
     
     // Update selectedProducts when filteredProducts change
@@ -112,6 +120,7 @@ export const useTransferStock = () => {
 
   // Handle product selection
   const handleProductSelection = (productId: number, selected: boolean) => {
+    console.log(`Selection change for product ${productId}: ${selected}`);
     const updatedProducts = filteredProducts.map(product => 
       product.id === productId ? { ...product, selected } : product
     );
@@ -120,6 +129,7 @@ export const useTransferStock = () => {
 
   // Handle quantity change
   const handleQuantityChange = (productId: number, quantity: number) => {
+    console.log(`Quantity change for product ${productId}: ${quantity}`);
     const updatedProducts = filteredProducts.map(product => 
       product.id === productId ? { ...product, quantity } : product
     );
@@ -135,6 +145,9 @@ export const useTransferStock = () => {
         toast("Pilih minimal satu produk untuk ditransfer");
         return;
       }
+
+      console.log("Submitting transfer with data:", data);
+      console.log("Selected products:", selectedProducts);
 
       // Execute transfer operation
       const transferId = await executeStockTransfer(data, selectedProducts);

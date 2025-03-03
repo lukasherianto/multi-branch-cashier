@@ -12,9 +12,14 @@ export const useProducts = (sourceBranchId: string) => {
   // Load products for the source branch when branchId changes
   useEffect(() => {
     const fetchProductsForBranch = async () => {
-      if (!sourceBranchId || !pelakuUsaha) return;
+      if (!sourceBranchId || !pelakuUsaha) {
+        console.log("Missing sourceBranchId or pelakuUsaha, skipping fetch");
+        return;
+      }
       
+      console.log(`Fetching products for branch ID: ${sourceBranchId}`);
       setLoading(true);
+      
       try {
         const { data: productsData, error } = await supabase
           .from('produk')
@@ -38,7 +43,9 @@ export const useProducts = (sourceBranchId: string) => {
           
         if (error) throw error;
         
-        const mappedProducts = productsData.map(product => ({
+        console.log(`Found ${productsData ? productsData.length : 0} products for branch ${sourceBranchId}`);
+        
+        const mappedProducts = productsData ? productsData.map(product => ({
           id: product.produk_id,
           produk_id: product.produk_id,
           name: product.product_name,
@@ -53,7 +60,7 @@ export const useProducts = (sourceBranchId: string) => {
           cost_price: product.cost_price,
           cabang_id: product.cabang_id,
           selected: false
-        }));
+        })) : [];
         
         setFilteredProducts(mappedProducts);
       } catch (error) {
@@ -68,9 +75,9 @@ export const useProducts = (sourceBranchId: string) => {
   
   // Search filter function
   const handleSearch = (query: string) => {
+    if (!query) return; // Don't filter if query is empty
+    
     setFilteredProducts(prev => {
-      if (!query) return prev;
-      
       const searchTerms = query.toLowerCase().split(" ");
       
       return prev.filter(product => {

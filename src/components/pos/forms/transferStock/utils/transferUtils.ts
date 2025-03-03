@@ -1,168 +1,172 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { ProductWithSelection, TransferStockFormValues } from "@/types/pos";
 import { toast } from "sonner";
+import { ProductWithSelection, TransferStockFormValues } from "@/types/pos";
 
-/**
- * Validates if the selected products have enough stock for transfer
- */
-export const validateStockForTransfer = async (
-  selectedProducts: ProductWithSelection[],
-  sourceBranchId: string
-): Promise<boolean> => {
-  try {
-    // Check each product for sufficient stock
-    for (const product of selectedProducts) {
-      if (product.quantity > product.stock) {
-        toast(`Stok ${product.name} tidak cukup (${product.stock} tersedia)`);
-        return false;
-      }
-    }
-    return true;
-  } catch (error) {
-    console.error("Error validating stock:", error);
-    toast(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
-    return false;
-  }
-};
-
-/**
- * Executes the stock transfer operation
- */
-export const executeStockTransfer = async (
-  data: TransferStockFormValues,
+export async function executeStockTransfer(
+  formData: TransferStockFormValues,
   selectedProducts: ProductWithSelection[]
-): Promise<number | null> => {
+): Promise<number | null> {
   try {
-    // Get user's pelaku_usaha_id
-    const { data: userData } = await supabase.auth.getUser();
-    const { data: pelakuUsahaData } = await supabase
-      .from('pelaku_usaha')
-      .select('pelaku_usaha_id')
-      .eq('user_id', userData.user?.id)
-      .single();
-      
-    if (!pelakuUsahaData) {
-      throw new Error("Pelaku usaha data not found");
+    console.log("Executing stock transfer with data:", formData);
+    console.log("Selected products:", selectedProducts);
+    
+    // Validate the form data
+    if (!formData.cabang_id_from || !formData.cabang_id_to) {
+      toast("Pilih cabang asal dan tujuan");
+      return null;
+    }
+
+    // Get current user's pelaku_usaha_id
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    
+    if (userError) {
+      console.error("Error getting user:", userError);
+      throw new Error("Error getting user data");
     }
     
-    // 1. Create transfer record
-    // We need to modify this to work with the structure in the database
-    // The table expects produk_id and quantity if we directly insert, but we'll be
-    // inserting multiple products through the detail records
-    // Let's use a different approach by separating the transfer record and details
-    
-    // First, create the parent transfer record
-    const { data: transferParent, error: transferParentError } = await supabase
-      .from('transfer_stok')
-      .insert({
-        cabang_id_from: parseInt(data.cabang_id_from),
-        cabang_id_to: parseInt(data.cabang_id_to),
-        pelaku_usaha_id: pelakuUsahaData.pelaku_usaha_id,
-        status: 'completed',
-        total_items: selectedProducts.length,
-        total_quantity: selectedProducts.reduce((sum, p) => sum + p.quantity, 0),
-        notes: data.notes || 'Transfer Stok Antar Cabang',
-        // Using defaults for produk_id and quantity since we're using detail records
-        produk_id: selectedProducts[0]?.produk_id || selectedProducts[0]?.id || 0,
-        quantity: 0 // This will be tracked in detail records
-      })
-      .select('transfer_id')
+    const { data: pelakuUsaha, error: pelakulError } = await supabase
+      .from("pelaku_usaha")
+      .select("pelaku_usaha_id")
+      .eq("user_id", userData.user.id)
       .single();
       
-    if (transferParentError) throw transferParentError;
-    if (!transferParent) throw new Error("Failed to create transfer record");
+    if (pelakulError) {
+      console.error("Error getting pelaku usaha:", pelakulError);
+      throw new Error("Error getting business data");
+    }
     
-    const transferId = transferParent.transfer_id;
+    // Filter only selected products
+    const transferProducts = selectedProducts.filter(product => product.selected);
+    console.log("Products to transfer:", transferProducts);
     
-    // 2. Create transfer details
-    // Prepare detail records array for batch insert
-    const detailRecords = selectedProducts.map(product => ({
-      transfer_id: transferId,
-      produk_id: product.produk_id || product.id,
-      quantity: product.quantity,
-      retail_price: product.price,
-      cost_price: product.cost_price
-    }));
+    if (transferProducts.length === 0) {
+      toast("Pilih minimal satu produk untuk ditransfer");
+      return null;
+    }
+    
+    // Insert transfer header
+    const { data: transferHeader, error: transferError } = await supabase
+      .from("stock_transfer")
+      .insert({
+        cabang_id_from: parseInt(formData.cabang_id_from),
+        cabang_id_to: parseInt(formData.cabang_id_to),
+        pelaku_usaha_id: pelakuUsaha.pelaku_usaha_id,
+        status: "pending",
+        total_items: transferProducts.length,
+        total_quantity: transferProducts.reduce((total, p) => total + p.quantity, 0),
+        notes: formData.notes || ""
+      })
+      .select("transfer_id")
+      .single();
+      
+    if (transferError) {
+      console.error("Error creating transfer header:", transferError);
+      throw new Error("Error creating transfer: " + transferError.message);
+    }
+    
+    console.log("Transfer header created:", transferHeader);
     
     // Insert transfer details
-    const { error: detailsError } = await supabase
-      .from('transfer_stok_detail')
-      .insert(detailRecords);
-      
-    if (detailsError) throw detailsError;
+    const transferDetails = transferProducts.map(product => ({
+      transfer_id: transferHeader.transfer_id,
+      produk_id: product.produk_id,
+      quantity: product.quantity,
+      cabang_id_from: parseInt(formData.cabang_id_from),
+      cabang_id_to: parseInt(formData.cabang_id_to)
+    }));
     
-    // 3. Update source and destination branch stocks
-    for (const product of selectedProducts) {
-      // Update stock in source branch (decrease)
-      const { error: sourceStockError } = await supabase
-        .from('produk')
+    const { error: detailsError } = await supabase
+      .from("stock_transfer_item")
+      .insert(transferDetails);
+      
+    if (detailsError) {
+      console.error("Error creating transfer details:", detailsError);
+      throw new Error("Error creating transfer details: " + detailsError.message);
+    }
+    
+    console.log("Transfer details created:", transferDetails);
+    
+    // Update stock in source branch (decrease)
+    const sourceStockUpdates = transferProducts.map(async (product) => {
+      const { error: updateError } = await supabase
+        .from("produk")
         .update({ 
           stock: product.stock - product.quantity 
         })
-        .eq('produk_id', product.produk_id || product.id)
-        .eq('cabang_id', parseInt(data.cabang_id_from));
+        .eq("produk_id", product.produk_id)
+        .eq("cabang_id", parseInt(formData.cabang_id_from));
         
-      if (sourceStockError) throw sourceStockError;
-      
+      if (updateError) {
+        console.error(`Error updating source stock for product ${product.produk_id}:`, updateError);
+        throw new Error(`Error updating stock: ${updateError.message}`);
+      }
+    });
+    
+    await Promise.all(sourceStockUpdates);
+    
+    // Create or update stock in destination branch (increase)
+    for (const product of transferProducts) {
       // Check if product exists in destination branch
-      const { data: existingProduct, error: fetchError } = await supabase
-        .from('produk')
-        .select('produk_id, stock')
-        .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id)
-        .eq('cabang_id', parseInt(data.cabang_id_to))
-        .eq('product_name', product.name)
+      const { data: existingProduct, error: checkError } = await supabase
+        .from("produk")
+        .select("produk_id, stock")
+        .eq("produk_id", product.produk_id)
+        .eq("cabang_id", parseInt(formData.cabang_id_to))
         .maybeSingle();
         
-      if (fetchError && fetchError.code !== 'PGRST116') { // Not found is not an error here
-        throw fetchError;
+      if (checkError) {
+        console.error(`Error checking product in destination branch:`, checkError);
+        throw new Error(`Error checking product: ${checkError.message}`);
       }
       
       if (existingProduct) {
         // Update existing product stock
         const { error: updateError } = await supabase
-          .from('produk')
+          .from("produk")
           .update({ 
             stock: existingProduct.stock + product.quantity 
           })
-          .eq('produk_id', existingProduct.produk_id);
+          .eq("produk_id", product.produk_id)
+          .eq("cabang_id", parseInt(formData.cabang_id_to));
           
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error(`Error updating destination stock:`, updateError);
+          throw new Error(`Error updating destination stock: ${updateError.message}`);
+        }
       } else {
-        // Create new product in destination branch
-        const { data: categoryData } = await supabase
-          .from('kategori_produk')
-          .select('kategori_id')
-          .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id)
-          .eq('kategori_name', product.category || 'Umum')
-          .maybeSingle();
+        // Create a copy of the product in the destination branch
+        const { data: originalProduct, error: getError } = await supabase
+          .from("produk")
+          .select("*")
+          .eq("produk_id", product.produk_id)
+          .single();
           
-        const kategoriId = categoryData?.kategori_id || 1; // Default to 1 if not found
+        if (getError) {
+          console.error(`Error getting original product:`, getError);
+          throw new Error(`Error getting product details: ${getError.message}`);
+        }
         
+        // Create new product in destination branch
         const { error: insertError } = await supabase
-          .from('produk')
+          .from("produk")
           .insert({
-            pelaku_usaha_id: pelakuUsahaData.pelaku_usaha_id,
-            cabang_id: parseInt(data.cabang_id_to),
-            product_name: product.name,
-            retail_price: product.price,
-            member_price_1: product.member_price_1,
-            member_price_2: product.member_price_2,
-            stock: product.quantity,
-            barcode: product.barcode,
-            unit: product.unit,
-            cost_price: product.cost_price,
-            kategori_id: kategoriId
+            ...originalProduct,
+            produk_id: undefined, // Let DB generate new ID
+            cabang_id: parseInt(formData.cabang_id_to),
+            stock: product.quantity
           });
           
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error(`Error creating product in destination branch:`, insertError);
+          throw new Error(`Error creating product: ${insertError.message}`);
+        }
       }
     }
     
-    return transferId;
+    return transferHeader.transfer_id;
   } catch (error) {
-    console.error("Error executing transfer:", error);
-    toast(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
-    return null;
+    console.error("Error in executeStockTransfer:", error);
+    throw error;
   }
-};
+}

@@ -29,7 +29,7 @@ export const ProductTable = ({
     return (
       <div className="p-4 rounded-md bg-gray-50 text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto mb-2"></div>
-        <p>Loading products...</p>
+        <p>Memuat produk...</p>
       </div>
     );
   }
@@ -37,7 +37,7 @@ export const ProductTable = ({
   if (products.length === 0) {
     return (
       <div className="p-4 rounded-md bg-gray-50 text-center">
-        <p>No products found for this branch or matching your search.</p>
+        <p>Tidak ada produk yang ditemukan untuk cabang ini atau sesuai dengan pencarian Anda.</p>
       </div>
     );
   }
@@ -47,13 +47,13 @@ export const ProductTable = ({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-12">Select</TableHead>
-            <TableHead>Product Name</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Stock</TableHead>
-            <TableHead>Unit</TableHead>
-            <TableHead>Price</TableHead>
-            <TableHead className="w-24">Quantity</TableHead>
+            <TableHead className="w-12">Pilih</TableHead>
+            <TableHead>Nama Produk</TableHead>
+            <TableHead>Kategori</TableHead>
+            <TableHead>Stok</TableHead>
+            <TableHead>Satuan</TableHead>
+            <TableHead>Harga</TableHead>
+            <TableHead className="w-24">Jumlah</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
