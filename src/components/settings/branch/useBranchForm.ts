@@ -13,6 +13,9 @@ export const useBranchForm = () => {
   const [whatsapp, setWhatsapp] = useState("");
 
   const validateWhatsappNumber = (number: string) => {
+    // Skip validation if empty
+    if (!number) return true;
+    
     const cleanNumber = number.replace(/\D/g, '');
     if (!cleanNumber.match(/^(08|628)/)) return false;
     if (cleanNumber.length < 10 || cleanNumber.length > 13) return false;
@@ -73,7 +76,7 @@ export const useBranchForm = () => {
       setAddress("");
       setWhatsapp("");
       
-      // Tambahkan refresh halaman untuk memastikan data terupdate
+      // Tambahkan redirect ke halaman branches dengan timeout untuk memastikan toast muncul dulu
       setTimeout(() => {
         window.location.href = "/branches";
       }, 1500);
