@@ -1,9 +1,12 @@
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 export const useBranchForm = () => {
   const { toast } = useToast();
+  const { pelakuUsaha } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [branchName, setBranchName] = useState("");
   const [address, setAddress] = useState("");
@@ -40,30 +43,25 @@ export const useBranchForm = () => {
     setIsSaving(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not authenticated");
+      // Menggunakan pelaku_usaha_id dari context Auth daripada query database lagi
+      if (!pelakuUsaha) {
+        throw new Error("Data pelaku usaha tidak ditemukan");
+      }
 
-      console.log("Getting pelaku_usaha_id for user:", user.id);
-      const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
-        .from('pelaku_usaha')
-        .select('pelaku_usaha_id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (pelakuUsahaError) throw pelakuUsahaError;
-      if (!pelakuUsahaData) throw new Error("Pelaku usaha not found");
-
-      console.log("Creating new branch for pelaku_usaha_id:", pelakuUsahaData.pelaku_usaha_id);
-      const { error: insertError } = await supabase
+      console.log("Creating new branch for pelaku_usaha_id:", pelakuUsaha.pelaku_usaha_id);
+      const { error: insertError, data } = await supabase
         .from('cabang')
         .insert({
-          pelaku_usaha_id: pelakuUsahaData.pelaku_usaha_id,
+          pelaku_usaha_id: pelakuUsaha.pelaku_usaha_id,
           branch_name: branchName,
           address: address || null,
           contact_whatsapp: whatsapp || null,
-        });
+        })
+        .select();
 
       if (insertError) throw insertError;
+
+      console.log("Branch successfully added:", data);
 
       toast({
         title: "Berhasil",
@@ -74,6 +72,12 @@ export const useBranchForm = () => {
       setBranchName("");
       setAddress("");
       setWhatsapp("");
+      
+      // Tambahkan refresh halaman untuk memastikan data terupdate
+      setTimeout(() => {
+        window.location.href = "/branches";
+      }, 1500);
+      
     } catch (error) {
       console.error("Error saving branch data:", error);
       toast({

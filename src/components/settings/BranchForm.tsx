@@ -1,10 +1,13 @@
+
 import { Button } from "@/components/ui/button";
 import { Loader2, GitBranchPlus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BranchFormFields } from "./branch/BranchFormFields";
 import { useBranchForm } from "./branch/useBranchForm";
+import { useAuth } from "@/hooks/useAuth";
 
 export const BranchForm = () => {
+  const { pelakuUsaha } = useAuth();
   const {
     branchName,
     setBranchName,
@@ -15,6 +18,21 @@ export const BranchForm = () => {
     isSaving,
     handleSubmit,
   } = useBranchForm();
+
+  // Menampilkan pesan jika pelaku usaha belum terdaftar
+  if (!pelakuUsaha) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <div className="p-4 text-center">
+            <p className="text-red-500 font-medium">
+              Silakan lengkapi data usaha terlebih dahulu sebelum menambahkan cabang.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
