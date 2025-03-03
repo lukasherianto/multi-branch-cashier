@@ -26,13 +26,16 @@ function AppRoutes() {
   
   useEffect(() => {
     document.title = "Xaviera POS";
-  }, []);
+    console.log("App routes mounted, authenticated:", !!user);
+  }, [user]);
 
   if (isLoading) {
-    return null;
+    console.log("Auth loading...");
+    return <div className="p-4">Loading authentication...</div>;
   }
 
   if (!user) {
+    console.log("No user, redirecting to auth");
     return (
       <Routes>
         <Route path="/auth" element={<Auth />} />
@@ -41,6 +44,8 @@ function AppRoutes() {
     );
   }
 
+  console.log("Rendering authenticated routes");
+  
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
@@ -67,6 +72,7 @@ function AppRoutes() {
 }
 
 function App() {
+  console.log("App component rendering");
   return (
     <AuthProvider>
       <BrowserRouter>
