@@ -50,7 +50,7 @@ export function useTransferStock() {
     paginatedProducts,
     handleNextPage,
     handlePreviousPage,
-    ITEMS_PER_PAGE
+    ITEMS_PER_PAGE  // Now correctly accessed from the hook's return value
   } = usePagination(selectedProducts);
 
   // Use the submission hook for handling form submissions

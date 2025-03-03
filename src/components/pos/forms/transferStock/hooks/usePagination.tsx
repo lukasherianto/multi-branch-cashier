@@ -31,6 +31,7 @@ export function usePagination(filteredProducts: ProductTransfer[]) {
     paginatedProducts,
     handlePreviousPage,
     handleNextPage,
-    resetPage
+    resetPage,
+    ITEMS_PER_PAGE  // Add this constant to the returned object
   };
 }
