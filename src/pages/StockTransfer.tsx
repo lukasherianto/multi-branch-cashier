@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { TransferStockForm } from "@/components/pos/forms/transferStock";
 import TransferHeader from "@/components/pos/forms/transferStock/components/TransferHeader";
 import TransferHistory from "@/components/pos/forms/transferStock/components/TransferHistory";
@@ -10,16 +10,6 @@ import { AlertTriangle } from "lucide-react";
 const StockTransfer = () => {
   const [renderError, setRenderError] = useState<Error | null>(null);
   
-  // Add error boundary to catch any rendering errors
-  useEffect(() => {
-    try {
-      console.log("StockTransfer component mounted");
-    } catch (err) {
-      console.error("Error in StockTransfer mount:", err);
-      setRenderError(err as Error);
-    }
-  }, []);
-
   // If we caught a render error, show it
   if (renderError) {
     return <ErrorBoundary error={renderError} />;

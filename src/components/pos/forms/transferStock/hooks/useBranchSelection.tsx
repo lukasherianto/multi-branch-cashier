@@ -1,90 +1,59 @@
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { TransferStockFormValues } from "../schema";
-import { useBranches } from "./useBranches";
+import { useBranches, type Branch } from "./useBranches";
+import { useProducts } from "@/hooks/products";
 
-export function useBranchSelection(form: UseFormReturn<TransferStockFormValues>) {
-  const [fromCentralToBranch, setFromCentralToBranch] = useState(true);
-  const [sourceBranchId, setSourceBranchId] = useState<string | null>(null);
+export const useBranchSelection = (
+  form: UseFormReturn<TransferStockFormValues>,
+  fromCentralToBranch: boolean
+) => {
+  const { branches, centralBranch, branchesLoading } = useBranches();
+  const { fetchProducts } = useProducts();
   
-  // Fetch branch data
-  const { 
-    branches, 
-    branchesLoading, 
-    centralBranch 
-  } = useBranches();
-
-  // Set appropriate source and destination branches based on the transfer direction
-  useEffect(() => {
-    if (!centralBranch) return;
-    
-    // When direction changes, reset the form values
-    if (fromCentralToBranch) {
-      // Central to Branch: Source is Central, Destination are other branches
-      form.setValue("cabang_id_from", centralBranch.cabang_id.toString());
-      form.setValue("cabang_id_to", "");
-      setSourceBranchId(centralBranch.cabang_id.toString());
-      console.log("Direction changed to central→branch, source ID:", centralBranch.cabang_id.toString());
-    } else {
-      // Branch to Central: Source is empty (to be chosen), Destination is Central
-      form.setValue("cabang_id_from", "");
-      form.setValue("cabang_id_to", centralBranch.cabang_id.toString());
-      setSourceBranchId(null);
-      console.log("Direction changed to branch→central, source ID reset to null");
-    }
-  }, [centralBranch, fromCentralToBranch, form]);
-
-  // Create filtered branch lists for source and destination
+  // Set available source branches based on direction
   const sourceBranches = fromCentralToBranch 
-    ? [centralBranch].filter(Boolean) 
-    : branches.filter(branch => branch.cabang_id !== centralBranch?.cabang_id);
-  
-  const destinationBranches = fromCentralToBranch 
-    ? branches.filter(branch => branch.cabang_id !== centralBranch?.cabang_id) 
-    : [centralBranch].filter(Boolean);
-
-  // Handle direction toggle
-  const toggleDirection = () => {
-    setFromCentralToBranch(!fromCentralToBranch);
-    form.reset({
-      cabang_id_from: "",
-      cabang_id_to: "",
-      products: []
-    });
-  };
-
-  // Auto-select source branch if there's only one option (for branch to central)
-  useEffect(() => {
-    if (!fromCentralToBranch && sourceBranches.length === 1) {
-      const autoSelectedBranchId = sourceBranches[0].cabang_id.toString();
-      form.setValue("cabang_id_from", autoSelectedBranchId);
-      setSourceBranchId(autoSelectedBranchId);
-      console.log("Auto-selected source branch:", autoSelectedBranchId);
-    }
-  }, [fromCentralToBranch, sourceBranches, form]);
-
-  // Update sourceBranchId when form values change
-  useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      if (name === 'cabang_id_from' && value.cabang_id_from) {
-        setSourceBranchId(value.cabang_id_from);
-        console.log("Source branch ID updated to:", value.cabang_id_from);
-      }
-    });
+    ? (centralBranch ? [centralBranch] : [])
+    : branches.filter(b => b.cabang_id !== centralBranch?.cabang_id);
     
-    return () => subscription.unsubscribe();
-  }, [form]);
-
+  // Set available destination branches based on direction
+  const destinationBranches = fromCentralToBranch
+    ? branches.filter(b => b.cabang_id !== centralBranch?.cabang_id) 
+    : (centralBranch ? [centralBranch] : []);
+  
+  // Auto-select source branch on direction change
+  useEffect(() => {
+    if (fromCentralToBranch && centralBranch) {
+      form.setValue('cabang_id_from', centralBranch.cabang_id.toString());
+    } else {
+      form.setValue('cabang_id_from', '');
+    }
+    
+    // Reset destination selection
+    form.setValue('cabang_id_to', '');
+  }, [fromCentralToBranch, centralBranch, form]);
+  
+  // Handle source branch selection
+  const handleSourceBranchChange = (branchId: string) => {
+    form.setValue('cabang_id_from', branchId);
+    
+    // Fetch products for the selected branch
+    if (branchId) {
+      fetchProducts(parseInt(branchId));
+    }
+  };
+  
+  // Handle destination branch selection
+  const handleDestinationBranchChange = (branchId: string) => {
+    form.setValue('cabang_id_to', branchId);
+  };
+  
   return {
-    fromCentralToBranch,
-    toggleDirection,
-    sourceBranchId,
-    setSourceBranchId,
+    branchesLoading,
     sourceBranches,
     destinationBranches,
-    branches,
-    branchesLoading,
-    centralBranch
+    handleSourceBranchChange,
+    handleDestinationBranchChange
   };
-}
+};

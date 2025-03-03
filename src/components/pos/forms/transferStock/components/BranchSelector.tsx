@@ -1,7 +1,7 @@
 
-import { UseFormReturn } from "react-hook-form";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { UseFormReturn } from "react-hook-form";
 import { TransferStockFormValues } from "../schema";
 
 interface BranchSelectorProps {
@@ -16,76 +16,80 @@ interface BranchSelectorProps {
   }>;
 }
 
-export function BranchSelector({ 
+export const BranchSelector = ({ 
   form, 
   sourceBranches, 
   destinationBranches 
-}: BranchSelectorProps) {
+}: BranchSelectorProps) => {
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-      <FormField
-        control={form.control}
-        name="cabang_id_from"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Cabang Asal</FormLabel>
-            <FormControl>
+    <div className="flex flex-col md:flex-row gap-4">
+      <div className="flex-1">
+        <FormField
+          control={form.control}
+          name="cabang_id_from"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Cabang Asal</FormLabel>
               <Select
-                value={field.value}
                 onValueChange={field.onChange}
-                disabled={sourceBranches.length === 1}
+                defaultValue={field.value}
+                value={field.value}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih cabang asal" />
-                </SelectTrigger>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih Cabang Asal" />
+                  </SelectTrigger>
+                </FormControl>
                 <SelectContent>
                   {sourceBranches.map((branch) => (
-                    <SelectItem 
-                      key={branch.cabang_id} 
+                    <SelectItem
+                      key={branch.cabang_id}
                       value={branch.cabang_id.toString()}
                     >
-                      {branch.branch_name}
+                      {branch.branch_name}{branch.cabang_id === sourceBranches[0]?.cabang_id && sourceBranches.length === 1 ? " (Pusat)" : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      <FormField
-        control={form.control}
-        name="cabang_id_to"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Cabang Tujuan</FormLabel>
-            <FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+      
+      <div className="flex-1">
+        <FormField
+          control={form.control}
+          name="cabang_id_to"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Cabang Tujuan</FormLabel>
               <Select
-                value={field.value}
                 onValueChange={field.onChange}
-                disabled={destinationBranches.length === 1}
+                defaultValue={field.value}
+                value={field.value}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih cabang tujuan" />
-                </SelectTrigger>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih Cabang Tujuan" />
+                  </SelectTrigger>
+                </FormControl>
                 <SelectContent>
                   {destinationBranches.map((branch) => (
-                    <SelectItem 
-                      key={branch.cabang_id} 
+                    <SelectItem
+                      key={branch.cabang_id}
                       value={branch.cabang_id.toString()}
                     >
-                      {branch.branch_name}
+                      {branch.branch_name}{branch.cabang_id === destinationBranches[0]?.cabang_id && destinationBranches.length === 1 ? " (Pusat)" : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
     </div>
   );
-}
+};

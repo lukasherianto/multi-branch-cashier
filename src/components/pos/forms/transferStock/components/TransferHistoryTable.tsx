@@ -1,52 +1,52 @@
 
-import React from "react";
 import { format } from "date-fns";
-import { id } from 'date-fns/locale';
+import { ArrowDownUp } from "lucide-react";
+import { TransferHistoryItem } from "../hooks/useTransferHistory";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { type Transfer } from "../hooks/useTransferHistory";
 
 interface TransferHistoryTableProps {
-  transfers: Transfer[];
-  branchFilter: string;
+  transfers: TransferHistoryItem[];
 }
 
-const TransferHistoryTable = ({ transfers, branchFilter }: TransferHistoryTableProps) => {
+const TransferHistoryTable = ({ transfers }: TransferHistoryTableProps) => {
+  if (transfers.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <ArrowDownUp className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+        <h3 className="text-lg font-medium">Tidak ada riwayat transfer</h3>
+        <p className="text-sm text-muted-foreground">
+          Riwayat transfer akan ditampilkan di sini setelah Anda melakukan transfer.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="rounded-md border">
+    <div className="border rounded-md overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>No. Transfer</TableHead>
+            <TableHead>ID</TableHead>
             <TableHead>Tanggal</TableHead>
-            <TableHead>Produk</TableHead>
             <TableHead>Dari</TableHead>
             <TableHead>Ke</TableHead>
-            <TableHead>Jumlah</TableHead>
+            <TableHead>Produk</TableHead>
+            <TableHead className="text-right">Jumlah</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {transfers && transfers.length > 0 ? (
-            transfers.map((transfer) => (
-              <TableRow key={transfer.transfer_id}>
-                <TableCell>{transfer.batch_number}</TableCell>
-                <TableCell>
-                  {format(new Date(transfer.transfer_date), 'PPpp', { locale: id })}
-                </TableCell>
-                <TableCell>{transfer.produk?.product_name || 'Produk tidak tersedia'}</TableCell>
-                <TableCell>{transfer.cabang_from?.branch_name || 'Cabang tidak tersedia'}</TableCell>
-                <TableCell>{transfer.cabang_to?.branch_name || 'Cabang tidak tersedia'}</TableCell>
-                <TableCell>{transfer.quantity}</TableCell>
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={6} className="text-center text-muted-foreground py-4">
-                {branchFilter !== "all" 
-                  ? `Belum ada riwayat transfer untuk cabang ${branchFilter}`
-                  : "Belum ada riwayat transfer"}
+          {transfers.map((transfer) => (
+            <TableRow key={transfer.transfer_id}>
+              <TableCell className="font-medium">#{transfer.transfer_id}</TableCell>
+              <TableCell>
+                {format(new Date(transfer.transfer_date), 'dd/MM/yyyy HH:mm')}
               </TableCell>
+              <TableCell>{transfer.from_branch_name}</TableCell>
+              <TableCell>{transfer.to_branch_name}</TableCell>
+              <TableCell>{transfer.product_name}</TableCell>
+              <TableCell className="text-right">{transfer.quantity}</TableCell>
             </TableRow>
-          )}
+          ))}
         </TableBody>
       </Table>
     </div>

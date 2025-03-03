@@ -1,2 +1,2 @@
 
-export { TransferStockForm } from "./TransferStockForm";
+export { TransferStockForm } from './TransferStockForm';

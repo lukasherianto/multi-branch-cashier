@@ -1,37 +1,48 @@
 
-import { useState } from "react";
-import { type ProductTransfer, ITEMS_PER_PAGE } from "../schema";
+import { useState, useEffect } from "react";
+import { ProductWithSelection } from "./useProducts";
 
-export function usePagination(filteredProducts: ProductTransfer[]) {
-  const [currentPage, setCurrentPage] = useState(0);
+export const usePagination = (
+  filteredProducts: ProductWithSelection[], 
+  itemsPerPage: number = 10
+) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [paginatedProducts, setPaginatedProducts] = useState<ProductWithSelection[]>([]);
   
-  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+  // Calculate total pages
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
   
-  const paginatedProducts = filteredProducts.slice(
-    currentPage * ITEMS_PER_PAGE,
-    (currentPage + 1) * ITEMS_PER_PAGE
-  );
-
-  const handlePreviousPage = () => {
-    setCurrentPage(prev => Math.max(0, prev - 1));
-  };
-
+  // Update paginated products when filtered products or page changes
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    setPaginatedProducts(filteredProducts.slice(startIndex, endIndex));
+    
+    // If current page is now greater than total pages, reset to page 1
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [filteredProducts, currentPage, totalPages, itemsPerPage]);
+  
+  // Handle next page
   const handleNextPage = () => {
-    setCurrentPage(prev => Math.min(totalPages - 1, prev + 1));
+    if (currentPage < totalPages) {
+      setCurrentPage(prev => prev + 1);
+    }
   };
   
-  // Reset page when filtered products change
-  const resetPage = () => {
-    setCurrentPage(0);
+  // Handle previous page
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(prev => prev - 1);
+    }
   };
-
+  
   return {
     currentPage,
     totalPages,
     paginatedProducts,
-    handlePreviousPage,
     handleNextPage,
-    resetPage,
-    ITEMS_PER_PAGE  // Add this constant to the returned object
+    handlePreviousPage
   };
-}
+};

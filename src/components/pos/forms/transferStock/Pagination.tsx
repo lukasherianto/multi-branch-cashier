@@ -11,37 +11,50 @@ interface PaginationProps {
   onNextPage: () => void;
 }
 
-export function Pagination({
+export const Pagination = ({
   currentPage,
   totalPages,
   itemsPerPage,
   totalItems,
   onPreviousPage,
   onNextPage
-}: PaginationProps) {
+}: PaginationProps) => {
+  const start = (currentPage - 1) * itemsPerPage + 1;
+  const end = Math.min(currentPage * itemsPerPage, totalItems);
+  
+  if (totalItems === 0) return null;
+  
   return (
     <div className="flex items-center justify-between">
-      <div className="text-sm text-gray-500">
-        Menampilkan {currentPage * itemsPerPage + 1}-{Math.min((currentPage + 1) * itemsPerPage, totalItems)} dari {totalItems} produk
-      </div>
-      <div className="flex gap-2">
-        <Button 
-          type="button" 
-          variant="outline" 
+      <p className="text-sm text-muted-foreground">
+        Menampilkan {start}-{end} dari {totalItems} produk
+      </p>
+      
+      <div className="flex items-center space-x-2">
+        <Button
+          variant="outline"
+          size="sm"
           onClick={onPreviousPage}
-          disabled={currentPage === 0}
+          disabled={currentPage === 1}
         >
           <ChevronLeft className="h-4 w-4" />
+          <span className="sr-only">Previous</span>
         </Button>
-        <Button 
-          type="button" 
-          variant="outline" 
+        
+        <div className="text-sm">
+          Halaman {currentPage} dari {totalPages}
+        </div>
+        
+        <Button
+          variant="outline"
+          size="sm"
           onClick={onNextPage}
-          disabled={currentPage >= totalPages - 1}
+          disabled={currentPage === totalPages}
         >
           <ChevronRight className="h-4 w-4" />
+          <span className="sr-only">Next</span>
         </Button>
       </div>
     </div>
   );
-}
+};

@@ -32,6 +32,7 @@ export const useProducts = () => {
     fetchProducts: loadProducts,
     loading,
     error,
-    currentBranchId
+    currentBranchId,
+    setFilteredProducts
   };
 };

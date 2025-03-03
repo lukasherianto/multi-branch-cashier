@@ -1,133 +1,100 @@
 
-import React, { useState } from "react";
-import { Form } from "@/components/ui/form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ProductSearch } from "@/components/pos/ProductSearch";
+import { AlertTriangle, ArrowDown } from "lucide-react";
+import { useTransferToBranch } from "./useTransferToBranch";
+import { Form } from "@/components/ui/form";
 import { ProductTable } from "./ProductTable";
-import { Pagination } from "@/components/pos/forms/transferStock/Pagination";
-import { Info } from "lucide-react";
 import { BranchSelector } from "./BranchSelector";
 import { TransferSubmitButton } from "./TransferSubmitButton";
-import { useTransferToBranch } from "./useTransferToBranch";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
 
 export function TransferToBranchForm() {
-  const [renderError, setRenderError] = useState<Error | null>(null);
+  const {
+    form,
+    isSubmitting,
+    branchesLoading,
+    productsLoading,
+    centralBranch,
+    destinationBranches,
+    paginatedProducts,
+    totalCostPrice,
+    handleSearch,
+    handleProductSelection,
+    handleQuantityChange,
+    onSubmit
+  } = useTransferToBranch();
 
-  try {
-    const {
-      form,
-      isSubmitting,
-      branchesLoading,
-      branches,
-      destinationBranches,
-      selectedProducts,
-      paginatedProducts,
-      currentPage,
-      totalPages,
-      totalCostPrice,
-      handleSearch,
-      handleProductSelection,
-      handleQuantityChange,
-      handlePreviousPage,
-      handleNextPage,
-      onSubmit,
-      ITEMS_PER_PAGE
-    } = useTransferToBranch();
-
-    if (branchesLoading) {
-      return (
-        <div className="p-4 rounded-md bg-gray-50 border text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto mb-2"></div>
-          <p>Memuat data cabang...</p>
-        </div>
-      );
-    }
-
-    // If branches array is undefined or empty
-    if (!branches || branches.length === 0) {
-      return (
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertDescription>
-            Tidak ada cabang yang tersedia. Silakan tambahkan cabang terlebih dahulu di halaman Pengaturan.
-          </AlertDescription>
-        </Alert>
-      );
-    }
-
-    if (branches.length < 2) {
-      return (
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertDescription>
-            Minimal harus ada 2 cabang untuk melakukan transfer stok. Silakan tambahkan cabang terlebih dahulu.
-          </AlertDescription>
-        </Alert>
-      );
-    }
-
-    const selectedProductsCount = selectedProducts.filter(p => p.selected).length;
-
+  if (branchesLoading) {
     return (
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-4">
-            <p className="text-blue-800 font-medium">Mode Transfer: Pusat ke Cabang</p>
-            <p className="text-sm text-blue-600 mt-1">
-              Produk akan ditransfer dari pusat ke cabang yang dipilih.
-            </p>
-          </div>
-
-          <BranchSelector 
-            form={form} 
-            destinationBranches={destinationBranches} 
-          />
-
-          <div className="mb-4">
-            <ProductSearch onSearch={handleSearch} />
-          </div>
-
-          <ProductTable 
-            paginatedProducts={paginatedProducts}
-            handleProductSelection={handleProductSelection}
-            handleQuantityChange={handleQuantityChange}
-          />
-
-          <Pagination 
-            currentPage={currentPage}
-            totalPages={totalPages}
-            itemsPerPage={ITEMS_PER_PAGE}
-            totalItems={selectedProducts.length}
-            onPreviousPage={handlePreviousPage}
-            onNextPage={handleNextPage}
-          />
-
-          <Card className="bg-gray-50">
-            <CardContent className="pt-6">
-              <div className="text-right">
-                <p className="text-sm text-gray-600">Total Nilai Barang (Harga Modal):</p>
-                <p className="text-lg font-bold">Rp {totalCostPrice.toLocaleString('id-ID')}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <TransferSubmitButton 
-            isSubmitting={isSubmitting} 
-            form={form}
-            selectedProductsCount={selectedProductsCount}
-          />
-        </form>
-      </Form>
+      <div className="p-4 text-center">
+        <div className="animate-spin h-10 w-10 border-t-2 border-primary rounded-full mx-auto mb-4"></div>
+        <p>Memuat data cabang...</p>
+      </div>
     );
-  } catch (error) {
-    console.error("Uncaught error in TransferToBranchForm:", error);
+  }
+
+  if (!centralBranch) {
     return (
       <Alert variant="destructive">
+        <AlertTriangle className="h-4 w-4" />
         <AlertDescription>
-          Terjadi kesalahan saat memuat form transfer. Silakan coba muat ulang halaman.
+          Cabang Pusat tidak ditemukan. Pastikan Anda telah mengatur cabang pusat dengan benar.
         </AlertDescription>
       </Alert>
     );
   }
+
+  if (destinationBranches.length === 0) {
+    return (
+      <Alert variant="destructive">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertDescription>
+          Tidak ada cabang tujuan yang tersedia. Silakan tambahkan cabang terlebih dahulu.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="bg-muted/30 p-4 rounded-lg flex items-center space-x-4">
+          <div className="flex-1">
+            <div className="text-sm font-medium">Dari</div>
+            <div className="text-lg font-semibold">{centralBranch.branch_name} (Pusat)</div>
+          </div>
+          <ArrowDown className="text-gray-400" />
+          <div className="flex-1">
+            <BranchSelector form={form} destinationBranches={destinationBranches} />
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <ProductSearch onSearch={handleSearch} />
+          
+          {productsLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin h-8 w-8 border-t-2 border-primary rounded-full mx-auto mb-2"></div>
+              <p>Memuat produk...</p>
+            </div>
+          ) : (
+            <ProductTable 
+              products={paginatedProducts} 
+              onProductSelect={handleProductSelection}
+              onQuantityChange={handleQuantityChange}
+            />
+          )}
+        </div>
+
+        <div className="border-t pt-4">
+          <div className="flex justify-between mb-4">
+            <div className="text-lg font-medium">Total Nilai Transfer:</div>
+            <div className="text-xl font-bold">Rp {totalCostPrice.toLocaleString('id-ID')}</div>
+          </div>
+          
+          <TransferSubmitButton isSubmitting={isSubmitting} />
+        </div>
+      </form>
+    </Form>
+  );
 }

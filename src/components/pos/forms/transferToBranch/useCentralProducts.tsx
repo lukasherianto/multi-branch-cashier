@@ -1,177 +1,166 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { CartItem } from "@/types/pos";
 import { useToast } from "@/hooks/use-toast";
-import { type ProductTransfer } from "./schema";
 
-export function useCentralProducts(centralBranchId: string | null) {
+export interface ProductWithSelection extends CartItem {
+  selected: boolean;
+  produk_id: number;
+}
+
+export const useCentralProducts = (centralBranchId: string | null) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedProducts, setSelectedProducts] = useState<ProductWithSelection[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<ProductWithSelection[]>([]);
   const { toast } = useToast();
-  const [selectedProducts, setSelectedProducts] = useState<ProductTransfer[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<ProductTransfer[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
 
-  // Fetch products for central branch
+  // Fetch products from central branch
   useEffect(() => {
-    if (centralBranchId === null) {
-      console.log("No central branch identified yet");
-      return;
-    }
-    
-    console.log("Fetching products for central branch ID:", centralBranchId);
-    fetchCentralProducts(centralBranchId);
-  }, [centralBranchId]);
-
-  const fetchCentralProducts = async (branchId: string) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      console.log("Fetching products for central branch ID:", branchId);
-
-      const { data: userResponse } = await supabase.auth.getUser();
-      
-      if (!userResponse.user) {
-        console.error("No authenticated user");
-        setSelectedProducts([]);
-        setFilteredProducts([]);
+    const fetchCentralProducts = async () => {
+      if (!centralBranchId) {
+        setIsLoading(false);
         return;
       }
 
-      const { data: pelakuUsaha, error: pelakuUsahaError } = await supabase
-        .from('pelaku_usaha')
-        .select('pelaku_usaha_id')
-        .eq('user_id', userResponse.user.id)
-        .maybeSingle();
+      try {
+        setIsLoading(true);
+        const { data: pelakuUsahaData } = await supabase
+          .from("pelaku_usaha")
+          .select("*")
+          .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
+          .single();
 
-      if (pelakuUsahaError) {
-        console.error("Error fetching pelaku usaha:", pelakuUsahaError);
-        throw pelakuUsahaError;
+        if (pelakuUsahaData) {
+          const { data: productsData, error } = await supabase
+            .from("produk")
+            .select(`
+              produk_id,
+              product_name,
+              retail_price,
+              member_price_1,
+              member_price_2,
+              stock,
+              barcode,
+              unit,
+              cost_price,
+              cabang_id,
+              kategori_produk (
+                kategori_name
+              )
+            `)
+            .eq("pelaku_usaha_id", pelakuUsahaData.pelaku_usaha_id)
+            .eq("cabang_id", centralBranchId)
+            .gt("stock", 0); // Only fetch products with stock > 0
+
+          if (error) throw error;
+
+          if (productsData) {
+            const mappedProducts = productsData.map((product) => ({
+              id: product.produk_id,
+              produk_id: product.produk_id,
+              name: product.product_name,
+              price: product.retail_price,
+              member_price_1: product.member_price_1,
+              member_price_2: product.member_price_2,
+              quantity: 1,
+              category: product.kategori_produk?.kategori_name,
+              stock: product.stock,
+              barcode: product.barcode,
+              unit: product.unit,
+              cost_price: product.cost_price,
+              cabang_id: product.cabang_id,
+              selected: false
+            }));
+
+            setSelectedProducts(mappedProducts);
+            setFilteredProducts(mappedProducts);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching central products:", error);
+        toast({
+          title: "Error",
+          description: "Gagal memuat produk dari cabang pusat",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
       }
+    };
 
-      if (!pelakuUsaha) {
-        console.log("No pelaku usaha found");
-        setSelectedProducts([]);
-        setFilteredProducts([]);
-        return;
-      }
+    fetchCentralProducts();
+  }, [centralBranchId, toast]);
 
-      const { data: products, error: productsError } = await supabase
-        .from('produk')
-        .select(`
-          produk_id,
-          product_name,
-          stock,
-          cost_price
-        `)
-        .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id)
-        .gt('stock', 0); // Only get products with stock > 0
-
-      if (productsError) {
-        console.error("Error fetching products:", productsError);
-        throw productsError;
-      }
-
-      if (products && products.length > 0) {
-        const productsWithSelection = products.map((product) => ({
-          ...product,
-          selected: false,
-          quantity: 1
-        }));
-        console.log(`Found ${productsWithSelection.length} products with stock > 0 for central branch ${branchId}`);
-        setSelectedProducts(productsWithSelection);
-        setFilteredProducts(productsWithSelection);
-      } else {
-        console.log(`No products with stock found for central branch ${branchId}`);
-        setSelectedProducts([]);
-        setFilteredProducts([]);
-      }
-    } catch (err) {
-      console.error("Error in fetchCentralProducts:", err);
-      setError(err instanceof Error ? err : new Error("Failed to fetch products"));
-      toast({
-        title: "Error",
-        description: "Tidak dapat memuat data produk",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Handle product selection
-  const handleProductSelection = (produk_id: number, checked: boolean) => {
-    setSelectedProducts((prev) =>
-      prev.map((product) =>
-        product.produk_id === produk_id
-          ? { ...product, selected: checked }
-          : product
-      )
-    );
-    // Update filtered products too
-    setFilteredProducts((prev) =>
-      prev.map((product) =>
-        product.produk_id === produk_id
-          ? { ...product, selected: checked }
-          : product
-      )
-    );
-  };
-
-  // Handle quantity change
-  const handleQuantityChange = (produk_id: number, quantity: number) => {
-    if (quantity < 0) {
-      return; // Don't allow negative quantities
-    }
-    
-    setSelectedProducts((prev) =>
-      prev.map((product) =>
-        product.produk_id === produk_id
-          ? { ...product, quantity: Math.min(quantity, product.stock) }
-          : product
-      )
-    );
-    // Update filtered products too
-    setFilteredProducts((prev) =>
-      prev.map((product) =>
-        product.produk_id === produk_id
-          ? { ...product, quantity: Math.min(quantity, product.stock) }
-          : product
-      )
-    );
-  };
-
-  // Handle product search
+  // Handle search functionality
   const handleSearch = (searchTerm: string) => {
     if (!searchTerm.trim()) {
       setFilteredProducts(selectedProducts);
       return;
     }
 
+    const searchLower = searchTerm.toLowerCase();
     const filtered = selectedProducts.filter(
       (product) =>
-        product.product_name.toLowerCase().includes(searchTerm.toLowerCase())
+        product.name.toLowerCase().includes(searchLower) ||
+        (product.barcode && product.barcode.toLowerCase().includes(searchLower)) ||
+        (product.category && product.category.toLowerCase().includes(searchLower))
     );
 
     setFilteredProducts(filtered);
+  };
 
-    if (searchTerm.length > 2 && filtered.length === 0) {
+  // Handle product selection
+  const handleProductSelection = (productId: number, selected: boolean) => {
+    setSelectedProducts((prevProducts) =>
+      prevProducts.map((product) =>
+        product.produk_id === productId ? { ...product, selected } : product
+      )
+    );
+
+    setFilteredProducts((prevProducts) =>
+      prevProducts.map((product) =>
+        product.produk_id === productId ? { ...product, selected } : product
+      )
+    );
+  };
+
+  // Handle quantity change
+  const handleQuantityChange = (productId: number, quantity: number) => {
+    if (quantity < 1) return;
+
+    // Find the product to check stock
+    const product = selectedProducts.find(p => p.produk_id === productId);
+    
+    if (product && quantity > product.stock) {
       toast({
-        title: "Produk Tidak Ditemukan",
-        description: "Tidak ada produk dengan nama tersebut",
+        title: "Warning",
+        description: `Jumlah melebihi stok yang tersedia (${product.stock})`,
         variant: "destructive",
       });
+      quantity = product.stock; // Cap at max stock
     }
+
+    setSelectedProducts((prevProducts) =>
+      prevProducts.map((product) =>
+        product.produk_id === productId ? { ...product, quantity } : product
+      )
+    );
+
+    setFilteredProducts((prevProducts) =>
+      prevProducts.map((product) =>
+        product.produk_id === productId ? { ...product, quantity } : product
+      )
+    );
   };
 
   return {
     selectedProducts,
     filteredProducts,
     isLoading,
-    error,
     handleSearch,
     handleProductSelection,
     handleQuantityChange,
-    setSelectedProducts,
-    fetchCentralProducts
+    setSelectedProducts
   };
-}
+};

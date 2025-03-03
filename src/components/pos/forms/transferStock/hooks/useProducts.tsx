@@ -2,186 +2,121 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { CartItem } from "@/types/pos";
 
-interface Product {
-  produk_id: number;
-  product_name: string;
-  stock: number;
+interface ProductWithSelection extends CartItem {
   selected: boolean;
-  quantity: number;
 }
 
-export function useProducts(sourceBranchId: string | null) {
+export const useProducts = (sourceBranchId?: string) => {
+  const [products, setProducts] = useState<ProductWithSelection[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<ProductWithSelection[]>([]);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
 
-  // Fetch products for specific branch
+  // Fetch products for the selected source branch
   useEffect(() => {
-    if (sourceBranchId === null) {
-      console.log("No source branch selected yet");
-      return;
-    }
-    
-    console.log("Branch ID changed in useProducts:", sourceBranchId);
-    fetchProducts(sourceBranchId);
-  }, [sourceBranchId]);
-
-  const fetchProducts = async (branchId: string | null) => {
-    if (!branchId) {
-      console.log("No branch ID provided, not fetching products");
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setError(null);
-      console.log("Fetching products for branch ID:", branchId);
-
-      const { data: userResponse } = await supabase.auth.getUser();
+    const fetchProducts = async () => {
+      if (!sourceBranchId) {
+        setProducts([]);
+        setFilteredProducts([]);
+        setLoading(false);
+        return;
+      }
       
-      if (!userResponse.user) {
-        console.error("No authenticated user");
-        setSelectedProducts([]);
-        setFilteredProducts([]);
-        return;
+      try {
+        setLoading(true);
+        
+        const { data: pelakuUsahaData } = await supabase
+          .from('pelaku_usaha')
+          .select('*')
+          .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+          .single();
+
+        if (pelakuUsahaData) {
+          let query = supabase
+            .from('produk')
+            .select(`
+              produk_id,
+              product_name,
+              retail_price,
+              member_price_1,
+              member_price_2,
+              stock,
+              barcode,
+              unit,
+              cost_price,
+              cabang_id,
+              kategori_produk (
+                kategori_name
+              )
+            `)
+            .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id)
+            .eq('cabang_id', parseInt(sourceBranchId))
+            .gt('stock', 0); // Only fetch products with stock > 0
+
+          const { data: productsData, error } = await query;
+
+          if (error) throw error;
+
+          if (productsData) {
+            const mappedProducts = productsData.map(product => ({
+              id: product.produk_id,
+              name: product.product_name,
+              price: product.retail_price,
+              member_price_1: product.member_price_1,
+              member_price_2: product.member_price_2,
+              quantity: 1,
+              category: product.kategori_produk?.kategori_name,
+              stock: product.stock,
+              barcode: product.barcode,
+              unit: product.unit,
+              cost_price: product.cost_price,
+              cabang_id: product.cabang_id,
+              selected: false
+            }));
+            
+            setProducts(mappedProducts);
+            setFilteredProducts(mappedProducts);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Gagal mengambil data produk",
+        });
+      } finally {
+        setLoading(false);
       }
-
-      const { data: pelakuUsaha, error: pelakuUsahaError } = await supabase
-        .from('pelaku_usaha')
-        .select('pelaku_usaha_id')
-        .eq('user_id', userResponse.user.id)
-        .maybeSingle();
-
-      if (pelakuUsahaError) {
-        console.error("Error fetching pelaku usaha:", pelakuUsahaError);
-        throw pelakuUsahaError;
-      }
-
-      if (!pelakuUsaha) {
-        console.log("No pelaku usaha found");
-        setSelectedProducts([]);
-        setFilteredProducts([]);
-        return;
-      }
-
-      const { data: products, error: productsError } = await supabase
-        .from('produk')
-        .select(`
-          produk_id,
-          product_name,
-          stock
-        `)
-        .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id);
-
-      if (productsError) {
-        console.error("Error fetching products:", productsError);
-        throw productsError;
-      }
-
-      if (products && products.length > 0) {
-        const productsWithSelection = products.map((product) => ({
-          ...product,
-          selected: false,
-          quantity: 1
-        }));
-        console.log(`Found ${productsWithSelection.length} products for branch ${branchId}`);
-        setSelectedProducts(productsWithSelection);
-        setFilteredProducts(productsWithSelection);
-      } else {
-        console.log(`No products found for branch ${branchId}`);
-        setSelectedProducts([]);
-        setFilteredProducts([]);
-      }
-    } catch (err) {
-      console.error("Error in fetchProducts:", err);
-      setError(err instanceof Error ? err : new Error("Failed to fetch products"));
-      toast({
-        title: "Error",
-        description: "Tidak dapat memuat data produk",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Handle product selection
-  const handleProductSelection = (produk_id: number, checked: boolean) => {
-    setSelectedProducts((prev) =>
-      prev.map((product) =>
-        product.produk_id === produk_id
-          ? { ...product, selected: checked }
-          : product
-      )
-    );
-    // Update filtered products too
-    setFilteredProducts((prev) =>
-      prev.map((product) =>
-        product.produk_id === produk_id
-          ? { ...product, selected: checked }
-          : product
-      )
-    );
-  };
-
-  // Handle quantity change
-  const handleQuantityChange = (produk_id: number, quantity: number) => {
-    if (quantity < 0) {
-      return; // Don't allow negative quantities
-    }
+    };
     
-    setSelectedProducts((prev) =>
-      prev.map((product) =>
-        product.produk_id === produk_id
-          ? { ...product, quantity: Math.min(quantity, product.stock) }
-          : product
-      )
-    );
-    // Update filtered products too
-    setFilteredProducts((prev) =>
-      prev.map((product) =>
-        product.produk_id === produk_id
-          ? { ...product, quantity: Math.min(quantity, product.stock) }
-          : product
-      )
-    );
-  };
+    fetchProducts();
+  }, [sourceBranchId, toast]);
 
-  // Handle product search
+  // Handle search functionality
   const handleSearch = (searchTerm: string) => {
     if (!searchTerm.trim()) {
-      setFilteredProducts(selectedProducts);
+      setFilteredProducts(products);
       return;
     }
 
-    const filtered = selectedProducts.filter(
-      (product) =>
-        product.product_name.toLowerCase().includes(searchTerm.toLowerCase())
+    const searchLower = searchTerm.toLowerCase();
+    const filtered = products.filter(product => 
+      product.name.toLowerCase().includes(searchLower) || 
+      (product.barcode && product.barcode.toLowerCase().includes(searchLower)) ||
+      (product.category && product.category.toLowerCase().includes(searchLower))
     );
-
+    
     setFilteredProducts(filtered);
-
-    if (searchTerm.length > 2 && filtered.length === 0) {
-      toast({
-        title: "Produk Tidak Ditemukan",
-        description: "Tidak ada produk dengan nama tersebut",
-        variant: "destructive",
-      });
-    }
   };
 
   return {
-    selectedProducts,
+    products,
     filteredProducts,
-    isLoading,
-    error,
+    loading,
     handleSearch,
-    handleProductSelection,
-    handleQuantityChange,
-    setSelectedProducts,
-    fetchProducts
+    setFilteredProducts
   };
-}
+};

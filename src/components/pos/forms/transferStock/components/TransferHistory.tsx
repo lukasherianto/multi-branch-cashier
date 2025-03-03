@@ -1,45 +1,58 @@
 
-import React from "react";
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTransferHistory } from "../hooks/useTransferHistory";
-import TransferFilter from "./TransferFilter";
+import { useBranches } from "../hooks/useBranches";
 import TransferHistoryTable from "./TransferHistoryTable";
 import TransferHistoryLoading from "./TransferHistoryLoading";
 import TransferHistoryError from "./TransferHistoryError";
 
 const TransferHistory = () => {
-  const { 
-    branches, 
-    branchFilter, 
-    setBranchFilter, 
-    transfers, 
-    isLoading, 
-    error 
-  } = useTransferHistory();
+  const { transfers, isLoading, error, handleBranchChange, refreshHistory } = useTransferHistory();
+  const { branches, branchesLoading } = useBranches();
+  const [selectedBranchFilter, setSelectedBranchFilter] = useState<string>("all");
 
-  if (isLoading) {
-    return <TransferHistoryLoading />;
-  }
-  
-  if (error) {
-    console.error("Error in transfers history query:", error);
-    return <TransferHistoryError error={error} />;
-  }
+  const handleBranchFilter = (value: string) => {
+    setSelectedBranchFilter(value);
+    handleBranchChange(value === "all" ? null : parseInt(value));
+  };
 
   return (
-    <div>
-      <h3 className="text-lg font-semibold mb-4">Riwayat Transfer</h3>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between py-4">
+        <CardTitle className="text-lg">Riwayat Transfer</CardTitle>
+        
+        <div className="flex">
+          <Select
+            value={selectedBranchFilter}
+            onValueChange={handleBranchFilter}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filter Cabang" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua Cabang</SelectItem>
+              {branches.map((branch) => (
+                <SelectItem key={branch.cabang_id} value={branch.cabang_id.toString()}>
+                  {branch.branch_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </CardHeader>
       
-      <TransferFilter
-        branches={branches}
-        branchFilter={branchFilter}
-        setBranchFilter={setBranchFilter}
-      />
-      
-      <TransferHistoryTable 
-        transfers={transfers} 
-        branchFilter={branchFilter} 
-      />
-    </div>
+      <CardContent>
+        {isLoading ? (
+          <TransferHistoryLoading />
+        ) : error ? (
+          <TransferHistoryError error={error} onRetry={refreshHistory} />
+        ) : (
+          <TransferHistoryTable transfers={transfers} />
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

@@ -1,12 +1,34 @@
 
-import React from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const TransferHistoryLoading = () => {
   return (
-    <div className="p-8 flex flex-col items-center justify-center min-h-[50vh]">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
-      <p className="text-lg">Memuat data riwayat transfer stok...</p>
-      <p className="text-sm text-muted-foreground mt-2">Mohon tunggu sebentar</p>
+    <div className="border rounded-md overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>ID</TableHead>
+            <TableHead>Tanggal</TableHead>
+            <TableHead>Dari</TableHead>
+            <TableHead>Ke</TableHead>
+            <TableHead>Produk</TableHead>
+            <TableHead className="text-right">Jumlah</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <TableRow key={i}>
+              <TableCell><Skeleton className="h-5 w-12" /></TableCell>
+              <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+              <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+              <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+              <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+              <TableCell className="text-right"><Skeleton className="h-5 w-10 ml-auto" /></TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 };
