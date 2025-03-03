@@ -13,5 +13,3 @@ export const schema = z.object({
   ).optional(),
   notes: z.string().optional()
 });
-
-export type TransferStockFormValues = z.infer<typeof schema>;

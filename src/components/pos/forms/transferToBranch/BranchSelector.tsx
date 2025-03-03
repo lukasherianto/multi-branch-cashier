@@ -3,15 +3,23 @@ import React from 'react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from 'react-hook-form';
-import { TransferToBranchValues } from './schema';
+import { TransferToBranchValues } from '@/types/pos';
 
 export interface BranchSelectorProps {
-  form: UseFormReturn<TransferToBranchValues, any>;
+  form: UseFormReturn<TransferToBranchValues>;
   branchOptions: { value: string; label: string }[];
   loading: boolean;
 }
 
-export const BranchSelector: React.FC<BranchSelectorProps> = ({ form, branchOptions, loading }) => {
+const BranchSelector = ({ form, branchOptions, loading }: BranchSelectorProps) => {
+  if (loading) {
+    return (
+      <div className="p-2 rounded-md bg-gray-50 text-center">
+        <span className="animate-pulse">Loading branches...</span>
+      </div>
+    );
+  }
+
   return (
     <FormField
       control={form.control}
@@ -20,10 +28,10 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({ form, branchOpti
         <FormItem>
           <FormLabel>Cabang Tujuan</FormLabel>
           <FormControl>
-            <Select
-              disabled={loading}
-              onValueChange={field.onChange}
-              value={field.value}
+            <Select 
+              onValueChange={field.onChange} 
+              defaultValue={field.value}
+              disabled={loading || branchOptions.length === 0}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Pilih cabang tujuan" />

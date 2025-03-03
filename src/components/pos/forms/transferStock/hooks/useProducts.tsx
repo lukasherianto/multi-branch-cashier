@@ -3,22 +3,20 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductWithSelection } from "@/types/pos";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
 
-export const useProducts = (sourceBranchId?: string) => {
-  const { toast } = useToast();
-  const { pelakuUsaha } = useAuth();
-  const [products, setProducts] = useState<ProductWithSelection[]>([]);
+export const useProducts = (sourceBranchId: string) => {
   const [filteredProducts, setFilteredProducts] = useState<ProductWithSelection[]>([]);
   const [loading, setLoading] = useState(false);
-
+  const { pelakuUsaha } = useAuth();
+  
+  // Load products for the source branch when branchId changes
   useEffect(() => {
-    const fetchProducts = async () => {
-      if (!sourceBranchId || !pelakuUsaha?.pelaku_usaha_id) return;
-
+    const fetchProductsForBranch = async () => {
+      if (!sourceBranchId || !pelakuUsaha) return;
+      
       setLoading(true);
       try {
-        const { data, error } = await supabase
+        const { data: productsData, error } = await supabase
           .from('produk')
           .select(`
             produk_id,
@@ -37,10 +35,10 @@ export const useProducts = (sourceBranchId?: string) => {
           `)
           .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id)
           .eq('cabang_id', parseInt(sourceBranchId));
-
+          
         if (error) throw error;
-
-        const mappedProducts = (data || []).map(product => ({
+        
+        const mappedProducts = productsData.map(product => ({
           id: product.produk_id,
           produk_id: product.produk_id,
           name: product.product_name,
@@ -56,42 +54,40 @@ export const useProducts = (sourceBranchId?: string) => {
           cabang_id: product.cabang_id,
           selected: false
         }));
-
-        setProducts(mappedProducts);
+        
         setFilteredProducts(mappedProducts);
       } catch (error) {
-        console.error('Error fetching products:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Gagal mengambil data produk",
-        });
+        console.error("Error fetching products for branch:", error);
       } finally {
         setLoading(false);
       }
     };
-
-    fetchProducts();
-  }, [sourceBranchId, pelakuUsaha, toast]);
-
-  const handleSearch = (searchTerm: string) => {
-    if (!searchTerm.trim()) {
-      setFilteredProducts(products);
-      return;
-    }
-
-    const filtered = products.filter(product => 
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.barcode?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredProducts(filtered);
+    
+    fetchProductsForBranch();
+  }, [sourceBranchId, pelakuUsaha]);
+  
+  // Search filter function
+  const handleSearch = (query: string) => {
+    setFilteredProducts(prev => {
+      if (!query) return prev;
+      
+      const searchTerms = query.toLowerCase().split(" ");
+      
+      return prev.filter(product => {
+        const productName = product.name.toLowerCase();
+        const productBarcode = product.barcode?.toLowerCase() || "";
+        
+        return searchTerms.every(term => 
+          productName.includes(term) || productBarcode.includes(term)
+        );
+      });
+    });
   };
-
-  return { 
-    products, 
-    filteredProducts, 
-    loading, 
-    handleSearch,
-    setFilteredProducts 
+  
+  return {
+    filteredProducts,
+    setFilteredProducts,
+    loading,
+    handleSearch
   };
 };

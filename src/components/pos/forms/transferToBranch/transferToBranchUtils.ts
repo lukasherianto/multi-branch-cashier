@@ -4,7 +4,7 @@ import { ProductWithSelection, TransferToBranchValues } from "@/types/pos";
 import { toast } from "sonner";
 
 /**
- * Executes the stock transfer operation from central to branch
+ * Executes the transfer to branch operation
  */
 export const executeTransferToBranch = async (
   data: TransferToBranchValues,
@@ -12,17 +12,6 @@ export const executeTransferToBranch = async (
   centralBranchId: number
 ): Promise<number | null> => {
   try {
-    // Validate data
-    if (!data.cabang_id_to) {
-      toast("Pilih cabang tujuan terlebih dahulu");
-      return null;
-    }
-
-    if (selectedProducts.length === 0) {
-      toast("Pilih minimal satu produk untuk ditransfer");
-      return null;
-    }
-
     // Get user's pelaku_usaha_id
     const { data: userData } = await supabase.auth.getUser();
     const { data: pelakuUsahaData } = await supabase
@@ -45,7 +34,8 @@ export const executeTransferToBranch = async (
         status: 'completed',
         total_items: selectedProducts.length,
         total_quantity: selectedProducts.reduce((sum, p) => sum + p.quantity, 0),
-        notes: data.notes || 'Transfer Stok dari Pusat ke Cabang'
+        notes: data.notes || 'Transfer Stok dari Pusat ke Cabang',
+        // Not including produk_id and quantity as they will be in detail records
       })
       .select('transfer_id')
       .single();
@@ -56,9 +46,10 @@ export const executeTransferToBranch = async (
     const transferId = transferRecord.transfer_id;
     
     // 2. Create transfer details
+    // Prepare detail records array for batch insert
     const detailRecords = selectedProducts.map(product => ({
       transfer_id: transferId,
-      produk_id: product.produk_id,
+      produk_id: product.produk_id || product.id,
       quantity: product.quantity,
       retail_price: product.price,
       cost_price: product.cost_price
@@ -79,7 +70,7 @@ export const executeTransferToBranch = async (
         .update({ 
           stock: product.stock - product.quantity 
         })
-        .eq('produk_id', product.produk_id)
+        .eq('produk_id', product.produk_id || product.id)
         .eq('cabang_id', centralBranchId);
         
       if (sourceStockError) throw sourceStockError;

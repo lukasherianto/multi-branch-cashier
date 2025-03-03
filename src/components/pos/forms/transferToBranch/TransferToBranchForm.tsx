@@ -48,6 +48,8 @@ export const TransferToBranchForm = () => {
       );
     }
 
+    const selectedProductsCount = selectedProducts.length;
+
     return (
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -92,12 +94,12 @@ export const TransferToBranchForm = () => {
             <CardContent className="p-4">
               <div className="flex justify-between items-center">
                 <div>
-                  <p>Total produk: <strong>{selectedProducts.length}</strong></p>
+                  <p>Total produk: <strong>{selectedProductsCount}</strong></p>
                   <p>Total nilai: <strong>Rp {totalCostPrice.toLocaleString('id-ID')}</strong></p>
                 </div>
                 <TransferSubmitButton 
                   isSubmitting={isSubmitting}
-                  selectedCount={selectedProducts.length} 
+                  selectedProductsCount={selectedProductsCount} 
                 />
               </div>
             </CardContent>

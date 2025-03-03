@@ -36,6 +36,7 @@ export function TransferStockForm() {
       handlePreviousPage,
       handleNextPage,
       onSubmit,
+      productsLoading,
       ITEMS_PER_PAGE
     } = useTransferStock();
 
@@ -99,6 +100,7 @@ export function TransferStockForm() {
             products={paginatedProducts}
             onSelectProduct={handleProductSelection}
             onQuantityChange={handleQuantityChange}
+            loading={productsLoading}
           />
 
           <Pagination 

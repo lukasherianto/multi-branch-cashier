@@ -30,24 +30,25 @@ export interface ProductWithSelection extends CartItem {
   selected: boolean;
 }
 
-// Define the transfer form values type
+// Define the transfer form values type with all fields required as specified in the schema
 export interface TransferStockFormValues {
   cabang_id_from: string;
   cabang_id_to: string;
   products?: {
-    selected?: boolean;
     produk_id?: number;
     quantity?: number;
+    selected?: boolean;
   }[];
   notes?: string;
 }
 
+// Define the transfer to branch values type with required fields
 export interface TransferToBranchValues {
   cabang_id_to: string;
   products?: {
-    selected?: boolean;
     produk_id?: number;
     quantity?: number;
+    selected?: boolean;
   }[];
   notes?: string;
 }
