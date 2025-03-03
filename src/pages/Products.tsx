@@ -112,6 +112,11 @@ const Products = () => {
     }
   };
 
+  // Sort branches so the headquarters (lowest ID) appears first
+  const sortedBranches = [...cabangList].sort((a, b) => a.cabang_id - b.cabang_id);
+  // The first branch (after sorting) is considered the headquarters
+  const headquartersId = sortedBranches.length > 0 ? sortedBranches[0].cabang_id : null;
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -119,20 +124,22 @@ const Products = () => {
         <div className="flex gap-4">
           {cabangList.length > 1 && (
             <Select
-              value={selectedCabangId ? selectedCabangId.toString() : undefined}
-              onValueChange={(value) => setSelectedCabangId(value ? parseInt(value) : null)}
+              value={selectedCabangId ? selectedCabangId.toString() : "0"}
+              onValueChange={(value) => setSelectedCabangId(value === "0" ? null : parseInt(value))}
             >
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Semua Cabang" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="0">Semua Cabang</SelectItem>
-                {cabangList.map((branch) => (
+                {sortedBranches.map((branch) => (
                   <SelectItem 
                     key={branch.cabang_id} 
                     value={branch.cabang_id.toString()}
                   >
-                    {branch.branch_name}
+                    {branch.cabang_id === headquartersId 
+                      ? `${branch.branch_name} (Pusat)` 
+                      : branch.branch_name}
                   </SelectItem>
                 ))}
               </SelectContent>

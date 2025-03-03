@@ -34,7 +34,7 @@ const Branches = () => {
         .from("cabang")
         .select("*")
         .eq("pelaku_usaha_id", pelakuUsaha?.pelaku_usaha_id)
-        .order("created_at", { ascending: false });
+        .order("cabang_id", { ascending: true }); // Order by ID to ensure headquarters is first
 
       if (error) {
         console.error("Error loading branches:", error);
@@ -60,11 +60,8 @@ const Branches = () => {
     }
   };
 
-  useEffect(() => {
-    // Tambahkan console.log untuk debugging
-    console.log("Current pelakuUsaha:", pelakuUsaha);
-    console.log("Current branches:", branches);
-  }, [pelakuUsaha, branches]);
+  // The headquarters is the first branch (with lowest ID)
+  const headquartersId = branches.length > 0 ? branches[0].cabang_id : null;
 
   if (!pelakuUsaha) {
     return (
@@ -158,12 +155,19 @@ const Branches = () => {
           </Card>
         ) : (
           branches.map((branch) => (
-            <Card key={branch.cabang_id} className="p-6 hover:shadow-lg transition-shadow duration-200">
+            <Card key={branch.cabang_id} className={`p-6 hover:shadow-lg transition-shadow duration-200 ${branch.cabang_id === headquartersId ? 'border-mint-400' : ''}`}>
               <div className="flex items-center space-x-3 mb-4">
                 <div className="bg-mint-50 p-2 rounded-lg">
                   <Building className="w-5 h-5 text-mint-600" />
                 </div>
-                <h3 className="font-semibold text-gray-800">{branch.branch_name}</h3>
+                <h3 className="font-semibold text-gray-800">
+                  {branch.branch_name}
+                  {branch.cabang_id === headquartersId && (
+                    <span className="ml-2 text-xs bg-mint-100 text-mint-700 px-2 py-1 rounded-full">
+                      Pusat
+                    </span>
+                  )}
+                </h3>
               </div>
               <div className="space-y-3">
                 {branch.address && (

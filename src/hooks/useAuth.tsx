@@ -10,7 +10,7 @@ interface AuthContextType {
   cabangList: any[];
   selectedCabangId: number | null;
   setSelectedCabangId: (id: number | null) => void;
-  isLoading: boolean; // Added this line
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [cabangList, setCabangList] = useState<any[]>([]);
   const [cabang, setCabang] = useState<any>(null);
   const [selectedCabangId, setSelectedCabangId] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // Added this line
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Check active session on mount
@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("Active session found:", session.user.id);
         setUser(session.user);
       }
-      setIsLoading(false); // Added this line
+      setIsLoading(false);
     });
 
     // Set up real-time subscription to auth changes
@@ -97,17 +97,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
 
           console.log("Data cabang:", cabangData);
-          setCabangList(cabangData || []);
+
+          // Sort branches by ID to ensure the first branch (headquarters) is first
+          const sortedBranches = (cabangData || []).sort((a, b) => a.cabang_id - b.cabang_id);
+          setCabangList(sortedBranches);
           
           // If there's only one branch, select it automatically
-          if (cabangData && cabangData.length === 1) {
-            setSelectedCabangId(cabangData[0].cabang_id);
-            setCabang(cabangData[0]);
+          if (sortedBranches.length === 1) {
+            setSelectedCabangId(sortedBranches[0].cabang_id);
+            setCabang(sortedBranches[0]);
           }
-          // If there are multiple branches and none selected, select the first one
-          else if (cabangData && cabangData.length > 1 && !selectedCabangId) {
-            setSelectedCabangId(cabangData[0].cabang_id);
-            setCabang(cabangData[0]);
+          // If there are multiple branches and none selected, default to Pusat (first/lowest ID branch)
+          else if (sortedBranches.length > 1 && !selectedCabangId) {
+            // The headquarters is considered the first branch (lowest ID)
+            const headquartersId = sortedBranches[0].cabang_id;
+            setSelectedCabangId(headquartersId);
+            setCabang(sortedBranches[0]);
           }
         } catch (error) {
           console.error('Error in fetchPelakuUsaha:', error);
@@ -133,7 +138,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       cabangList,
       selectedCabangId,
       setSelectedCabangId,
-      isLoading // Added this line
+      isLoading
     }}>
       {children}
     </AuthContext.Provider>
