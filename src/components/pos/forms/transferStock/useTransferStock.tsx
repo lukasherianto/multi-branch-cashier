@@ -1,32 +1,38 @@
 
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
 import { toast } from "sonner";
-import { useProducts } from "./hooks/useProducts";
+import { useProducts, UseProductsReturn } from "./hooks/useProducts";
 import { usePagination } from "./hooks/usePagination";
-import { useBranchSelection } from "./hooks/useBranchSelection";
+import { useBranchSelection, UseBranchSelectionReturn } from "./hooks/useBranchSelection";
 import { transferStockSchema } from "./schema";
 import { executeStockTransfer, validateStockForTransfer } from "./utils/transferUtils";
+import { ProductWithSelection } from "@/types/pos";
 
 export type TransferStockFormValues = z.infer<typeof transferStockSchema>;
 
 export const useTransferStock = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [isTransferring, setIsTransferring] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [successful, setSuccessful] = useState(false);
   const [transferId, setTransferId] = useState<number | null>(null);
   const [direction, setDirection] = useState<"to-branch" | "to-headquarter">("to-branch");
 
-  const {
+  const branchSelection: UseBranchSelectionReturn = useBranchSelection(direction);
+  const { 
+    branchesLoading, 
+    branches, 
+    sourceBranches, 
+    destinationBranches,
+    fromCentralToBranch,
     sourceBranch,
     destinationBranch,
-    branches,
-    handleSelectSourceBranch,
-    handleSelectDestinationBranch,
     toggleDirection,
-  } = useBranchSelection(direction);
+    handleSourceBranchChange,
+    handleDestinationBranchChange
+  } = branchSelection;
 
   const form = useForm<TransferStockFormValues>({
     resolver: zodResolver(transferStockSchema),
@@ -37,7 +43,7 @@ export const useTransferStock = () => {
   });
 
   // Update form values when branches change
-  React.useEffect(() => {
+  useEffect(() => {
     if (sourceBranch) {
       form.setValue("cabang_id_from", sourceBranch.cabang_id.toString());
     }
@@ -47,24 +53,36 @@ export const useTransferStock = () => {
   }, [sourceBranch, destinationBranch, form]);
 
   // Get products based on the selected source branch
-  const { products, filteredProducts, loading, handleSearch } = useProducts(
+  const productsHook: UseProductsReturn = useProducts(
     sourceBranch?.cabang_id?.toString()
   );
+  
+  const { 
+    filteredProducts, 
+    loading: productsLoading, 
+    handleSearch, 
+    setFilteredProducts 
+  } = productsHook;
+
+  // Define a convenience variable for selected products
+  const selectedProducts = filteredProducts;
 
   // Setup pagination
+  const ITEMS_PER_PAGE = 10;
   const {
     currentPage,
     totalPages,
     paginatedItems: paginatedProducts,
-    goToNextPage,
-    goToPreviousPage,
+    goToNextPage: handleNextPage,
+    goToPreviousPage: handlePreviousPage,
     goToPage,
   } = usePagination(
     searchTerm
       ? filteredProducts.filter((product) =>
           product.name.toLowerCase().includes(searchTerm.toLowerCase())
         )
-      : filteredProducts
+      : filteredProducts,
+    ITEMS_PER_PAGE
   );
 
   // Handle product selection
@@ -73,8 +91,7 @@ export const useTransferStock = () => {
       product.id === productId ? { ...product, selected } : product
     );
     
-    // Get the products hook's setFilteredProducts function
-    useProducts.setFilteredProducts(updatedProducts);
+    setFilteredProducts(updatedProducts);
   };
 
   // Handle quantity change
@@ -83,13 +100,11 @@ export const useTransferStock = () => {
       product.id === productId ? { ...product, quantity } : product
     );
     
-    // Get the products hook's setFilteredProducts function
-    useProducts.setFilteredProducts(updatedProducts);
+    setFilteredProducts(updatedProducts);
   };
 
   // Handle search input
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+  const handleSearchChange = (value: string) => {
     setSearchTerm(value);
     handleSearch(value);
     goToPage(1); // Reset to first page when searching
@@ -112,18 +127,18 @@ export const useTransferStock = () => {
   // Submit handler
   const onSubmit = async (data: TransferStockFormValues) => {
     try {
-      setIsTransferring(true);
+      setIsSubmitting(true);
       
       // Validate if any products are selected
-      const selectedProducts = filteredProducts.filter((p) => p.selected);
-      if (selectedProducts.length === 0) {
+      const selectedProds = filteredProducts.filter((p) => p.selected);
+      if (selectedProds.length === 0) {
         toast("Pilih minimal satu produk untuk ditransfer");
         return;
       }
       
       // Validate stock
       const isStockValid = await validateStockForTransfer(
-        selectedProducts,
+        selectedProds,
         data.cabang_id_from
       );
       
@@ -132,7 +147,7 @@ export const useTransferStock = () => {
       }
       
       // Execute transfer
-      const id = await executeStockTransfer(data, selectedProducts);
+      const id = await executeStockTransfer(data, selectedProds);
       
       if (id) {
         setTransferId(id);
@@ -149,35 +164,34 @@ export const useTransferStock = () => {
       console.error("Transfer error:", error);
       toast(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
     } finally {
-      setIsTransferring(false);
+      setIsSubmitting(false);
     }
   };
 
   return {
     form,
     onSubmit,
-    products,
-    filteredProducts,
+    isSubmitting,
+    branchesLoading,
+    branches,
+    centralBranch: branchSelection.centralBranch,
+    sourceBranches,
+    destinationBranches,
+    fromCentralToBranch,
+    toggleDirection,
+    selectedProducts,
     paginatedProducts,
     currentPage,
     totalPages,
-    goToNextPage,
-    goToPreviousPage,
-    goToPage,
-    loading,
+    handleNextPage,
+    handlePreviousPage,
+    handleSearch: handleSearchChange,
     handleProductSelection,
     handleQuantityChange,
-    handleSearchChange,
+    productsLoading,
     searchTerm,
-    isTransferring,
     successful,
     transferId,
-    sourceBranch,
-    destinationBranch,
-    branches,
-    handleSelectSourceBranch,
-    handleSelectDestinationBranch,
-    direction,
-    handleToggleDirection,
+    ITEMS_PER_PAGE
   };
 };

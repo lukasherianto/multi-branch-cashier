@@ -13,6 +13,7 @@ export interface CartItem {
   cost_price: number;
   cabang_id: number;
   selected?: boolean;
+  produk_id?: number; // Added for compatibility with some components
 }
 
 export interface Customer {
@@ -22,4 +23,9 @@ export interface Customer {
   isRegistered: boolean;
   memberId?: number;
   loyaltyPoints?: number;
+}
+
+// Export the ProductWithSelection type that's used in transfer components
+export interface ProductWithSelection extends CartItem {
+  selected: boolean;
 }

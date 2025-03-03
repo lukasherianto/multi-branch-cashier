@@ -1,173 +1,199 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { CartItem } from "@/types/pos";
 import { toast } from "sonner";
+import { ProductWithSelection } from "@/types/pos";
+
+export interface TransferToBranchValues {
+  cabang_id_to: string;
+  notes?: string;
+}
 
 /**
- * Checks if a product has already been created in the destination branch
+ * Transfers products from central branch to other branches
  */
-export const checkProductExists = async (
-  productId: number,
-  destinationBranchId: number
-): Promise<boolean> => {
-  const { data } = await supabase
-    .from('produk')
-    .select('produk_id')
-    .eq('produk_id', productId)
-    .eq('cabang_id', destinationBranchId)
-    .single();
-    
-  return !!data;
-};
-
-/**
- * Validates that central branch has sufficient stock for transfer
- */
-export const validateStockForTransfer = async (
-  products: CartItem[],
-  sourceBranchId: number
-): Promise<boolean> => {
-  try {
-    for (const product of products) {
-      if (!product.selected) continue;
-      
-      // Check stock availability
-      const { data, error } = await supabase
-        .from('produk')
-        .select('stock')
-        .eq('produk_id', product.id)
-        .eq('cabang_id', sourceBranchId)
-        .single();
-      
-      if (error) {
-        console.error("Error checking stock:", error);
-        throw new Error(`Error checking stock for ${product.name}`);
-      }
-      
-      if (!data || data.stock < product.quantity) {
-        toast(`Stok pusat tidak cukup untuk produk: ${product.name}`);
-        return false;
-      }
-    }
-    return true;
-  } catch (error) {
-    console.error("Stock validation error:", error);
-    toast(`Error validating stock: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    return false;
-  }
-};
-
-/**
- * Execute stock transfer from central branch to destination branch
- */
-export const executeTransferToBranch = async (
-  selectedProducts: CartItem[],
-  sourceBranchId: number,
-  destinationBranchId: number
+export const transferProductsToBranch = async (
+  data: TransferToBranchValues,
+  centralBranchId: number,
+  products: ProductWithSelection[]
 ): Promise<number | null> => {
-  if (selectedProducts.length === 0) {
-    toast("Tidak ada produk yang dipilih untuk transfer");
-    return null;
-  }
-  
   try {
-    // Start a transaction
-    console.log("Starting transaction for stock transfer to branch");
+    // Filter selected products
+    const selectedProducts = products.filter(p => p.selected);
     
-    // Array to store all transfer operations
-    const transferOperations = [];
+    // Validate if any products are selected
+    if (selectedProducts.length === 0) {
+      toast("Pilih minimal satu produk untuk ditransfer");
+      return null;
+    }
     
-    for (const product of selectedProducts) {
-      console.log(`Processing product ${product.id}: ${product.name}`);
+    // Get user's pelaku_usaha_id
+    const { data: userData } = await supabase.auth.getUser();
+    const { data: pelakuUsahaData } = await supabase
+      .from('pelaku_usaha')
+      .select('pelaku_usaha_id')
+      .eq('user_id', userData.user?.id)
+      .single();
       
-      // 1. Decrease stock in source branch (central)
-      const decreaseSourcePromise = supabase
+    if (!pelakuUsahaData) {
+      throw new Error("Pelaku usaha data not found");
+    }
+    
+    // 1. Create transfer record
+    const { data: transferData, error: transferError } = await supabase
+      .from('transfer_stok')
+      .insert({
+        cabang_id_from: centralBranchId,
+        cabang_id_to: parseInt(data.cabang_id_to),
+        pelaku_usaha_id: pelakuUsahaData.pelaku_usaha_id,
+        status: 'completed',
+        total_items: selectedProducts.length,
+        total_quantity: selectedProducts.reduce((sum, p) => sum + p.quantity, 0),
+        notes: data.notes || 'Transfer dari Pusat ke Cabang'
+      })
+      .select('transfer_id')
+      .single();
+      
+    if (transferError) throw transferError;
+    if (!transferData) throw new Error("Failed to create transfer record");
+    
+    const transferId = transferData.transfer_id;
+    
+    // 2. Create transfer details and update stocks
+    for (const product of selectedProducts) {
+      // Create transfer detail record
+      const { error: detailError } = await supabase
+        .from('transfer_stok_detail')
+        .insert({
+          transfer_id: transferId,
+          produk_id: product.id,
+          quantity: product.quantity,
+          retail_price: product.price,
+          cost_price: product.cost_price
+        });
+        
+      if (detailError) throw detailError;
+      
+      // Update stock in source branch (decrease)
+      const { error: sourceStockError } = await supabase
         .from('produk')
         .update({ 
-          stock: supabase.rpc('decrement', { x: product.quantity }) 
+          stock: product.stock - product.quantity 
         })
         .eq('produk_id', product.id)
-        .eq('cabang_id', sourceBranchId);
+        .eq('cabang_id', centralBranchId);
+        
+      if (sourceStockError) throw sourceStockError;
       
-      // 2. Check if product exists in destination branch
-      const productExists = await checkProductExists(product.id, destinationBranchId);
+      // Check if product exists in destination branch
+      const { data: existingProduct, error: fetchError } = await supabase
+        .from('produk')
+        .select('produk_id, stock')
+        .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id)
+        .eq('cabang_id', parseInt(data.cabang_id_to))
+        .eq('product_name', product.name)
+        .maybeSingle();
+        
+      if (fetchError && fetchError.code !== 'PGRST116') { // Not found is not an error here
+        throw fetchError;
+      }
       
-      let destinationOperationPromise;
-      
-      if (productExists) {
-        // Product exists in destination branch, update stock
-        destinationOperationPromise = supabase
+      if (existingProduct) {
+        // Update existing product stock
+        const { error: updateError } = await supabase
           .from('produk')
           .update({ 
-            stock: supabase.rpc('increment', { x: product.quantity }) 
+            stock: existingProduct.stock + product.quantity 
           })
-          .eq('produk_id', product.id)
-          .eq('cabang_id', destinationBranchId);
-      } else {
-        // Product doesn't exist in destination branch, create it
-        const { data: sourceProduct } = await supabase
-          .from('produk')
-          .select('*')
-          .eq('produk_id', product.id)
-          .eq('cabang_id', sourceBranchId)
-          .single();
+          .eq('produk_id', existingProduct.produk_id);
           
-        if (!sourceProduct) {
-          throw new Error(`Source product ${product.id} not found`);
-        }
-        
+        if (updateError) throw updateError;
+      } else {
         // Create new product in destination branch
-        destinationOperationPromise = supabase
+        const { error: insertError } = await supabase
           .from('produk')
           .insert({
-            pelaku_usaha_id: sourceProduct.pelaku_usaha_id,
-            kategori_id: sourceProduct.kategori_id,
-            product_name: sourceProduct.product_name,
-            cost_price: sourceProduct.cost_price,
-            retail_price: sourceProduct.retail_price,
-            member_price_1: sourceProduct.member_price_1,
-            member_price_2: sourceProduct.member_price_2,
-            barcode: sourceProduct.barcode,
-            unit: sourceProduct.unit,
+            pelaku_usaha_id: pelakuUsahaData.pelaku_usaha_id,
+            cabang_id: parseInt(data.cabang_id_to),
+            product_name: product.name,
+            retail_price: product.price,
+            member_price_1: product.member_price_1,
+            member_price_2: product.member_price_2,
             stock: product.quantity,
-            cabang_id: destinationBranchId
+            barcode: product.barcode,
+            unit: product.unit,
+            cost_price: product.cost_price,
+            kategori_id: await getKategoriId(product.category, pelakuUsahaData.pelaku_usaha_id)
           });
-      }
-      
-      // 3. Create transfer record
-      const createTransferRecordPromise = supabase
-        .from('transfer_stok')
-        .insert({
-          cabang_id_from: sourceBranchId,
-          cabang_id_to: destinationBranchId,
-          produk_id: product.id,
-          quantity: product.quantity
-        });
-      
-      transferOperations.push(decreaseSourcePromise);
-      transferOperations.push(destinationOperationPromise);
-      transferOperations.push(createTransferRecordPromise);
-    }
-    
-    // Execute all operations
-    const results = await Promise.all(transferOperations);
-    
-    // Check for errors
-    for (const result of results) {
-      if (result.error) {
-        throw new Error(`Transfer operation failed: ${result.error.message}`);
+          
+        if (insertError) throw insertError;
       }
     }
     
-    // Get the transfer ID from the last operation (should be a transfer_stok insert)
-    const lastOperation = results[results.length - 1];
-    const transferId = lastOperation.data?.[0]?.transfer_id || null;
-    
-    console.log("Stock transfer to branch completed successfully");
     return transferId;
-    
   } catch (error) {
-    console.error("Stock transfer error:", error);
-    throw error;
+    console.error("Error transferring products:", error);
+    toast(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
+    return null;
   }
 };
+
+/**
+ * Helper function to get or create a kategori_id
+ */
+const getKategoriId = async (
+  kategoriName: string | undefined,
+  pelakuUsahaId: number
+): Promise<number> => {
+  if (!kategoriName) {
+    // Get the default category id
+    const { data: defaultCategory } = await supabase
+      .from('kategori_produk')
+      .select('kategori_id')
+      .eq('pelaku_usaha_id', pelakuUsahaId)
+      .eq('kategori_name', 'Umum')
+      .single();
+      
+    if (defaultCategory) {
+      return defaultCategory.kategori_id;
+    }
+    
+    // If no default category exists, create one
+    const { data: newCategory } = await supabase
+      .from('kategori_produk')
+      .insert({
+        pelaku_usaha_id: pelakuUsahaId,
+        kategori_name: 'Umum'
+      })
+      .select('kategori_id')
+      .single();
+      
+    return newCategory ? newCategory.kategori_id : 1; // Fallback to 1 if all else fails
+  }
+  
+  // Try to find the category
+  const { data: category } = await supabase
+    .from('kategori_produk')
+    .select('kategori_id')
+    .eq('pelaku_usaha_id', pelakuUsahaId)
+    .eq('kategori_name', kategoriName)
+    .single();
+    
+  if (category) {
+    return category.kategori_id;
+  }
+  
+  // Create the category if it doesn't exist
+  const { data: newCategory } = await supabase
+    .from('kategori_produk')
+    .insert({
+      pelaku_usaha_id: pelakuUsahaId,
+      kategori_name: kategoriName
+    })
+    .select('kategori_id')
+    .single();
+    
+  return newCategory ? newCategory.kategori_id : 1; // Fallback to 1 if all else fails
+};
+
+// Export the function for use in useTransferToBranch hook
+export const useTransferToBranchSubmit = transferProductsToBranch;

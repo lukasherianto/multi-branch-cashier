@@ -2,31 +2,26 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { CartItem } from "@/types/pos";
+import { ProductWithSelection } from "@/types/pos";
 
-export interface ProductWithSelection extends CartItem {
-  selected: boolean;
-}
-
-export const useCentralProducts = (centralBranchId: number | null) => {
+export const useCentralProducts = (centralBranchId: number) => {
   const [products, setProducts] = useState<ProductWithSelection[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<ProductWithSelection[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  // Fetch products from the central branch
   useEffect(() => {
-    const fetchProducts = async () => {
-      if (!centralBranchId) {
-        setProducts([]);
-        setFilteredProducts([]);
-        setLoading(false);
-        return;
-      }
-      
+    const fetchCentralProducts = async () => {
       try {
         setLoading(true);
-        
+
+        if (!centralBranchId) {
+          setProducts([]);
+          setFilteredProducts([]);
+          setLoading(false);
+          return;
+        }
+
         const { data: pelakuUsahaData } = await supabase
           .from('pelaku_usaha')
           .select('*')
@@ -62,6 +57,7 @@ export const useCentralProducts = (centralBranchId: number | null) => {
           if (productsData) {
             const mappedProducts = productsData.map(product => ({
               id: product.produk_id,
+              produk_id: product.produk_id, // Adding this for compatibility
               name: product.product_name,
               price: product.retail_price,
               member_price_1: product.member_price_1,
@@ -81,18 +77,18 @@ export const useCentralProducts = (centralBranchId: number | null) => {
           }
         }
       } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error('Error fetching central products:', error);
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Gagal mengambil data produk dari pusat",
+          description: "Gagal mengambil data produk pusat",
         });
       } finally {
         setLoading(false);
       }
     };
-    
-    fetchProducts();
+
+    fetchCentralProducts();
   }, [centralBranchId, toast]);
 
   // Handle search functionality
@@ -112,42 +108,20 @@ export const useCentralProducts = (centralBranchId: number | null) => {
     setFilteredProducts(filtered);
   };
 
-  // Product selection handling
+  // Handle product selection
   const handleProductSelection = (productId: number, selected: boolean) => {
-    setFilteredProducts(prev => 
-      prev.map(product => 
-        product.id === productId 
-          ? { ...product, selected } 
-          : product
-      )
+    const updatedProducts = filteredProducts.map(product => 
+      product.id === productId ? { ...product, selected } : product
     );
-    
-    setProducts(prev => 
-      prev.map(product => 
-        product.id === productId 
-          ? { ...product, selected } 
-          : product
-      )
-    );
+    setFilteredProducts(updatedProducts);
   };
 
-  // Quantity change handling
+  // Handle quantity change
   const handleQuantityChange = (productId: number, quantity: number) => {
-    setFilteredProducts(prev => 
-      prev.map(product => 
-        product.id === productId 
-          ? { ...product, quantity: Math.min(quantity, product.stock) } 
-          : product
-      )
+    const updatedProducts = filteredProducts.map(product => 
+      product.id === productId ? { ...product, quantity } : product
     );
-    
-    setProducts(prev => 
-      prev.map(product => 
-        product.id === productId 
-          ? { ...product, quantity: Math.min(quantity, product.stock) } 
-          : product
-      )
-    );
+    setFilteredProducts(updatedProducts);
   };
 
   return {
@@ -156,6 +130,7 @@ export const useCentralProducts = (centralBranchId: number | null) => {
     loading,
     handleSearch,
     handleProductSelection,
-    handleQuantityChange
+    handleQuantityChange,
+    setFilteredProducts
   };
 };

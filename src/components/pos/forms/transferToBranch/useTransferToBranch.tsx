@@ -1,152 +1,128 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { transferToBranchSchema, type TransferToBranchFormValues } from "./schema";
-import { useBranches } from "../transferStock/hooks/useBranches";
+import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 import { useCentralProducts } from "./useCentralProducts";
 import { usePagination } from "./usePagination";
-import { useToast } from "@/hooks/use-toast";
-import { useTransferToBranchSubmit } from "./transferToBranchUtils";
+import { transferToBranchSchema } from "./schema";
+import { transferProductsToBranch, TransferToBranchValues } from "./transferToBranchUtils";
+import { z } from "zod";
 
-export function useTransferToBranch() {
-  const { toast } = useToast();
+export type TransferFormValues = z.infer<typeof transferToBranchSchema>;
+
+export const useTransferToBranch = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [transferring, setTransferring] = useState(false);
+  const [transferId, setTransferId] = useState<number | null>(null);
+  const { cabangList } = useAuth();
   
-  // Initialize form with zod validation
-  const form = useForm<TransferToBranchFormValues>({
+  // Sort branches by ID (lowest first is headquarters)
+  const sortedBranches = [...cabangList].sort((a, b) => a.cabang_id - b.cabang_id);
+  const centralBranchId = sortedBranches.length > 0 ? sortedBranches[0].cabang_id : null;
+  const branchOptions = sortedBranches
+    .filter(branch => branch.cabang_id !== centralBranchId)
+    .map(branch => ({
+      value: branch.cabang_id.toString(),
+      label: branch.branch_name
+    }));
+
+  // Form setup
+  const form = useForm<TransferFormValues>({
     resolver: zodResolver(transferToBranchSchema),
     defaultValues: {
-      cabang_id_to: "",
-      products: []
+      cabang_id_to: branchOptions.length > 0 ? branchOptions[0].value : "",
+      notes: ""
     }
   });
 
-  // Get branches data
-  const { branches, centralBranch, branchesLoading } = useBranches();
-  
-  // Central branch is the source branch (fixed in this component)
-  const sourceBranchId = centralBranch?.cabang_id.toString() || null;
-  
-  // Destination branches exclude the central branch
-  const destinationBranches = branches.filter(b => b.cabang_id !== centralBranch?.cabang_id) || [];
-
   // Get central products
-  const {
-    selectedProducts,
-    filteredProducts,
+  const { 
+    products, 
+    filteredProducts, 
+    loading, 
     handleSearch,
     handleProductSelection,
-    handleQuantityChange,
-    setSelectedProducts,
-    isLoading: productsLoading
-  } = useCentralProducts(sourceBranchId);
+    handleQuantityChange
+  } = useCentralProducts(centralBranchId || 0);
 
-  // Use pagination hook for managing paginated data display
+  // Define a convenience variable for selected products
+  const selectedProducts = filteredProducts.filter(p => p.selected);
+
+  // Pagination
+  const ITEMS_PER_PAGE = 10;
   const {
     currentPage,
     totalPages,
-    paginatedProducts,
-    handleNextPage,
-    handlePreviousPage,
+    paginatedItems,
+    goToNextPage,
+    goToPreviousPage
+  } = usePagination(
+    searchTerm
+      ? filteredProducts.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      : filteredProducts,
     ITEMS_PER_PAGE
-  } = usePagination(filteredProducts);
+  );
 
-  // Use the submission hook for handling form submissions
-  const { isSubmitting, submitTransfer } = useTransferToBranchSubmit();
-
-  // Calculate total cost price for selected products
-  const totalCostPrice = selectedProducts
-    .filter(p => p.selected)
-    .reduce((total, product) => total + (product.cost_price * product.quantity), 0);
+  // Handle search
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    handleSearch(value);
+  };
 
   // Handle form submission
-  const onSubmit = async (values: TransferToBranchFormValues) => {
+  const onSubmit = async (data: TransferFormValues) => {
+    if (!centralBranchId) {
+      toast("Error: No central branch found");
+      return;
+    }
+
     try {
-      console.log("Submitting transfer with values:", values);
-      
-      // Validate that destination branch is selected
-      if (!values.cabang_id_to) {
-        toast({
-          title: "Error",
-          description: "Pilih cabang tujuan",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Validate that source branch (central) exists
-      if (!sourceBranchId) {
-        toast({
-          title: "Error",
-          description: "Cabang pusat tidak terdeteksi",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Add selected products to form data
-      const productsWithSelection = selectedProducts
-        .filter((product) => product.selected)
-        .map((product) => ({
-          produk_id: product.produk_id,
-          quantity: product.quantity,
-          selected: product.selected,
-        }));
-
-      console.log("Products to transfer:", productsWithSelection);
-
-      if (productsWithSelection.length === 0) {
-        toast({
-          title: "Error",
-          description: "Pilih minimal satu produk",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Submit the transfer
-      await submitTransfer(
-        values,
-        selectedProducts,
-        sourceBranchId,
-        () => {
-          // Reset form
-          form.reset({
-            cabang_id_to: "",
-            products: []
-          });
-          setSelectedProducts([]);
-        }
+      setTransferring(true);
+      const result = await transferProductsToBranch(
+        data,
+        centralBranchId,
+        filteredProducts
       );
+
+      if (result) {
+        setTransferId(result);
+        toast(`Transfer berhasil dengan ID: ${result}`);
+        form.reset();
+        // Reset product selection
+        const resetProducts = filteredProducts.map(p => ({ ...p, selected: false, quantity: 1 }));
+        // This will be defined in the useCentralProducts hook
+        handleSearch("");
+        setSearchTerm("");
+      }
     } catch (error) {
-      console.error("Error in transfer submission:", error);
-      toast({
-        title: "Error",
-        description: "Gagal melakukan transfer stok",
-        variant: "destructive",
-      });
+      console.error("Transfer error:", error);
+      toast(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
+    } finally {
+      setTransferring(false);
     }
   };
 
   return {
     form,
-    isSubmitting,
-    branchesLoading,
-    productsLoading,
-    branches,
-    centralBranch,
-    destinationBranches,
+    branchOptions,
+    centralBranchId,
+    products,
+    filteredProducts,
     selectedProducts,
-    paginatedProducts,
+    paginatedItems,
     currentPage,
     totalPages,
-    totalCostPrice,
-    handleSearch,
+    loading,
+    transferring,
+    transferId,
+    handleSearchChange,
     handleProductSelection,
     handleQuantityChange,
-    handlePreviousPage,
-    handleNextPage,
+    goToNextPage,
+    goToPreviousPage,
     onSubmit,
     ITEMS_PER_PAGE
   };
-}
+};

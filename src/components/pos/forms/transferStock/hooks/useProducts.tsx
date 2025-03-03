@@ -1,14 +1,18 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Dispatch, SetStateAction } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { CartItem } from "@/types/pos";
+import { ProductWithSelection } from "@/types/pos";
 
-export interface ProductWithSelection extends CartItem {
-  selected: boolean;
+export interface UseProductsReturn {
+  products: ProductWithSelection[];
+  filteredProducts: ProductWithSelection[];
+  loading: boolean;
+  handleSearch: (searchTerm: string) => void;
+  setFilteredProducts: Dispatch<SetStateAction<ProductWithSelection[]>>;
 }
 
-export const useProducts = (sourceBranchId?: string) => {
+export const useProducts = (sourceBranchId?: string): UseProductsReturn => {
   const [products, setProducts] = useState<ProductWithSelection[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<ProductWithSelection[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,6 +66,7 @@ export const useProducts = (sourceBranchId?: string) => {
           if (productsData) {
             const mappedProducts = productsData.map(product => ({
               id: product.produk_id,
+              produk_id: product.produk_id, // Adding this for compatibility
               name: product.product_name,
               price: product.retail_price,
               member_price_1: product.member_price_1,
