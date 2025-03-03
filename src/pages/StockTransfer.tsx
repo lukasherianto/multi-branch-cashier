@@ -6,7 +6,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { format } from "date-fns";
 import { id } from 'date-fns/locale';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Eye, Info } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Transfer {
   transfer_id: number;
@@ -24,6 +26,8 @@ interface Transfer {
 }
 
 const StockTransfer = () => {
+  const { toast } = useToast();
+  
   const { data: transfers = [] } = useQuery({
     queryKey: ['transfers'],
     queryFn: async () => {
@@ -82,6 +86,13 @@ const StockTransfer = () => {
     }
   });
 
+  const handleViewTransfer = (transferId: number) => {
+    toast({
+      title: "Lihat Transfer",
+      description: `Detail transfer dengan ID: ${transferId}`,
+    });
+  };
+
   return (
     <div className="space-y-8">
       <div>
@@ -110,6 +121,7 @@ const StockTransfer = () => {
                 <TableHead>Dari</TableHead>
                 <TableHead>Ke</TableHead>
                 <TableHead>Jumlah</TableHead>
+                <TableHead>Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -123,11 +135,21 @@ const StockTransfer = () => {
                     <TableCell>{transfer.cabang_from?.branch_name}</TableCell>
                     <TableCell>{transfer.cabang_to?.branch_name}</TableCell>
                     <TableCell>{transfer.quantity}</TableCell>
+                    <TableCell>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleViewTransfer(transfer.transfer_id)}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        Lihat
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground">
                     Belum ada riwayat transfer
                   </TableCell>
                 </TableRow>
