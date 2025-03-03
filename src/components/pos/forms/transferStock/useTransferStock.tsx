@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { executeStockTransfer } from "./utils/transferUtils";
+import { executeStockTransfer } from "./utils/transfer";
 import { schema } from "./schema";
 import { ProductWithSelection, TransferStockFormValues } from "@/types/pos";
 import { useAuth } from "@/hooks/useAuth";
