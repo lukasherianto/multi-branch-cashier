@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
@@ -16,6 +16,15 @@ export const BranchSelector = ({
   sourceBranches, 
   destinationBranches 
 }: BranchSelectorProps) => {
+  // Auto-select first source branch if only one is available
+  useEffect(() => {
+    if (sourceBranches.length === 1 && !form.getValues().cabang_id_from) {
+      const sourceBranchId = sourceBranches[0].cabang_id.toString();
+      form.setValue("cabang_id_from", sourceBranchId);
+      console.log("Auto-selected source branch:", sourceBranchId);
+    }
+  }, [sourceBranches, form]);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <FormField
@@ -24,7 +33,13 @@ export const BranchSelector = ({
         render={({ field }) => (
           <FormItem>
             <FormLabel>Dari Cabang</FormLabel>
-            <Select onValueChange={field.onChange} value={field.value}>
+            <Select 
+              onValueChange={(value) => {
+                field.onChange(value);
+                console.log("Selected source branch:", value);
+              }} 
+              value={field.value}
+            >
               <FormControl>
                 <SelectTrigger>
                   <SelectValue placeholder="Pilih cabang asal" />

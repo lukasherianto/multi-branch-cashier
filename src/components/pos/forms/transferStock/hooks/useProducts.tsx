@@ -10,6 +10,7 @@ export function useProducts(branchId: string | null) {
 
   // Fetch products when branch changes
   useEffect(() => {
+    console.log("Branch ID changed in useProducts:", branchId);
     if (branchId) {
       fetchProductsForBranch(branchId);
     } else {
@@ -68,7 +69,6 @@ export function useProducts(branchId: string | null) {
       }
 
       // Map products to the required format, filtering for products with stock > 0
-      // For branch to central transfers, we want to show all products that exist in this branch
       const formattedProducts: ProductTransfer[] = (branchProducts || [])
         .filter(product => product.stock > 0)
         .map(product => ({

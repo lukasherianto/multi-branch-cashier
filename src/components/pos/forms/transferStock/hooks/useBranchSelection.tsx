@@ -52,6 +52,18 @@ export function useBranchSelection(form: UseFormReturn<TransferStockFormValues>)
     });
   };
 
+  // Update sourceBranchId when form values change
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === 'cabang_id_from' && value.cabang_id_from) {
+        setSourceBranchId(value.cabang_id_from);
+        console.log("Source branch ID updated to:", value.cabang_id_from);
+      }
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [form]);
+
   return {
     fromCentralToBranch,
     toggleDirection,
