@@ -5,10 +5,11 @@ import { useAuth } from "../hooks/useAuth";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  allowedRoles?: string[];
 }
 
-function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { user, isLoading } = useAuth();
+function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+  const { user, userRole, isLoading } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -22,6 +23,14 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
   if (!user) {
     // Redirect to the login page with a return path
     return <Navigate to="/auth" state={{ from: location }} replace />;
+  }
+
+  // If roles are specified, check if user has the required role
+  if (allowedRoles && allowedRoles.length > 0) {
+    if (!userRole || !allowedRoles.includes(userRole)) {
+      // User doesn't have the required role, redirect to home
+      return <Navigate to="/" replace />;
+    }
   }
 
   return <>{children}</>;

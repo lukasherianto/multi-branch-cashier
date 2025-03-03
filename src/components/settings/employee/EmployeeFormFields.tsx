@@ -1,3 +1,4 @@
+
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -74,12 +75,36 @@ export const EmployeeFormFields = ({ form, branches }: EmployeeFormFieldsProps) 
 
       <FormField
         control={form.control}
-        name="role"
+        name="business_role"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Jabatan</FormLabel>
+            <Select onValueChange={field.onChange} value={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih jabatan" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="pelaku_usaha">Pelaku Usaha</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="kasir">Kasir</SelectItem>
+                <SelectItem value="pelayan">Pelayan</SelectItem>
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="role"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Deskripsi Jabatan</FormLabel>
             <FormControl>
-              <Input placeholder="Jabatan karyawan" {...field} />
+              <Input placeholder="Deskripsi jabatan" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>

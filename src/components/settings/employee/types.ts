@@ -9,6 +9,7 @@ export interface Employee {
   name: string;
   email?: string;
   role: string;
+  business_role?: string;
   auth_id?: string;
   is_active?: boolean;
   pelaku_usaha_id: number;
@@ -27,6 +28,7 @@ export interface EmployeeFormData {
   email: string;
   whatsapp_contact: string;
   role: string;
+  business_role: string;
   cabang_id: string;
   password: string;
 }

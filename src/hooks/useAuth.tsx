@@ -2,9 +2,12 @@
 import { useState, useEffect, createContext, useContext } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
+import { UserRole } from "@/types/auth";
+import { toast } from "sonner";
 
 interface AuthContextType {
   user: User | null;
+  userRole: UserRole | null;
   pelakuUsaha: any;
   cabang: any;
   cabangList: any[];
@@ -17,6 +20,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [pelakuUsaha, setPelakuUsaha] = useState<any>(null);
   const [cabangList, setCabangList] = useState<any[]>([]);
   const [cabang, setCabang] = useState<any>(null);
@@ -29,6 +33,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (session?.user) {
         console.log("Active session found:", session.user.id);
         setUser(session.user);
+        
+        // Get user role from user metadata
+        const role = session.user.user_metadata?.business_role;
+        if (role) {
+          setUserRole(role as UserRole);
+        }
       }
       setIsLoading(false);
     });
@@ -41,8 +51,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         setUser(session?.user ?? null);
+        
+        // Get user role from user metadata
+        const role = session?.user?.user_metadata?.business_role;
+        if (role) {
+          setUserRole(role as UserRole);
+        }
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
+        setUserRole(null);
         setPelakuUsaha(null);
         setCabang(null);
         setCabangList([]);
@@ -133,6 +150,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <AuthContext.Provider value={{ 
       user, 
+      userRole,
       pelakuUsaha, 
       cabang,
       cabangList,

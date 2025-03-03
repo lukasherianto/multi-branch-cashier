@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +19,7 @@ export function EmployeeForm() {
       email: "",
       whatsapp_contact: "",
       role: "",
+      business_role: "",
       cabang_id: "",
       password: "",
     },
@@ -64,7 +64,7 @@ export function EmployeeForm() {
             full_name: data.name,
             whatsapp_number: data.whatsapp_contact,
             is_employee: true,
-            business_role: data.role
+            business_role: data.business_role
           }
         }
       });
@@ -104,6 +104,7 @@ export function EmployeeForm() {
           email: data.email,
           whatsapp_contact: data.whatsapp_contact,
           role: data.role,
+          business_role: data.business_role,
           cabang_id: data.cabang_id === "0" ? null : parseInt(data.cabang_id),
           pelaku_usaha_id: pelakuUsaha.pelaku_usaha_id,
           auth_id: authData.user.id,
