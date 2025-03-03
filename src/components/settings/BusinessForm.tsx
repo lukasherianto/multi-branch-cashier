@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +11,6 @@ import { BusinessFormSkeleton } from "./BusinessFormSkeleton";
 import { WhatsAppInput } from "./WhatsAppInput";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-// Define interface for business data to include the new fields
 interface BusinessData {
   pelaku_usaha_id: number;
   user_id: string;
@@ -93,7 +91,6 @@ export const BusinessForm = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type and size
     if (!file.type.startsWith('image/')) {
       toast({
         title: "Error",
@@ -103,7 +100,7 @@ export const BusinessForm = () => {
       return;
     }
 
-    if (file.size > 2 * 1024 * 1024) { // 2MB
+    if (file.size > 2 * 1024 * 1024) {
       toast({
         title: "Error",
         description: "Ukuran gambar maksimal 2MB",
@@ -115,19 +112,16 @@ export const BusinessForm = () => {
     try {
       setUploadingLogo(true);
       
-      // Generate file path
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}.${fileExt}`;
       const filePath = `business_logos/${fileName}`;
       
-      // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('business_assets')
         .upload(filePath, file);
         
       if (uploadError) throw uploadError;
       
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('business_assets')
         .getPublicUrl(filePath);
@@ -180,7 +174,6 @@ export const BusinessForm = () => {
 
       console.log("Saving business data for user:", user.id);
 
-      // Prepare business data with social media
       const businessData = {
         business_name: businessName,
         contact_whatsapp: whatsapp,
@@ -237,7 +230,6 @@ export const BusinessForm = () => {
       <BusinessFormHeader />
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Logo Upload Section */}
           <div className="flex justify-center mb-4">
             <div className="text-center">
               <Avatar className="w-32 h-32 mx-auto mb-2 border-2 border-gray-200">
@@ -290,7 +282,6 @@ export const BusinessForm = () => {
             onChange={setWhatsapp}
           />
           
-          {/* Social Media Fields */}
           <div className="space-y-2">
             <Label htmlFor="instagram" className="flex items-center gap-2">
               <Instagram className="h-4 w-4" />
