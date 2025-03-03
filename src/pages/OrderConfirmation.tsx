@@ -53,13 +53,13 @@ const OrderConfirmation = () => {
     if (id === null) return true; // Null memberId is valid (non-member transaction)
     
     const { data, error } = await supabase
-      .from('member')
-      .select('member_id')
-      .eq('member_id', id)
+      .from('pelanggan')  // Use pelanggan table instead of member
+      .select('pelanggan_id')
+      .eq('pelanggan_id', id)
       .maybeSingle();
       
     if (error || !data) {
-      console.error("Member validation failed:", error || "Member not found");
+      console.error("Pelanggan validation failed:", error || "Pelanggan not found");
       return false;
     }
     
@@ -74,7 +74,7 @@ const OrderConfirmation = () => {
       if (isRegisteredCustomer && memberId) {
         const isValidMember = await validateMemberId(memberId);
         if (!isValidMember) {
-          throw new Error("Data member tidak valid. Silakan periksa kembali pelanggan.");
+          throw new Error("Data pelanggan tidak valid. Silakan periksa kembali pelanggan.");
         }
       }
       

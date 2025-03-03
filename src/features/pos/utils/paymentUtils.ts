@@ -24,13 +24,13 @@ export const createTransactions = async (
   if (memberId !== null) {
     // Periksa apakah member dengan ID ini benar-benar ada di database
     const { data: memberData, error: memberError } = await supabase
-      .from('member')
-      .select('member_id')
-      .eq('member_id', memberId)
+      .from('pelanggan')  // Menggunakan tabel pelanggan, bukan member
+      .select('pelanggan_id')
+      .eq('pelanggan_id', memberId)
       .maybeSingle();
       
     if (memberError || !memberData) {
-      console.log(`Member dengan ID ${memberId} tidak ditemukan, mengatur pelanggan_id ke null`);
+      console.log(`Pelanggan dengan ID ${memberId} tidak ditemukan, mengatur pelanggan_id ke null`);
       validMemberId = null;
     }
   }
