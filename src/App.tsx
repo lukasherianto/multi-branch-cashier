@@ -14,8 +14,6 @@ import Products from "./pages/Products";
 import ProductCategories from "./pages/ProductCategories";
 import History from "./pages/History";
 import Returns from "./pages/Returns";
-import StockTransfer from "./pages/StockTransfer";
-import TransferToBranch from "./pages/TransferToBranch";
 import Reports from "./pages/Reports";
 import Members from "./pages/Members";
 import Kas from "./pages/Kas";
@@ -57,8 +55,6 @@ function App() {
                 <Route path="/pos" element={<POS />} />
                 <Route path="/products" element={<Products />} />
                 <Route path="/products/categories" element={<ProductCategories />} />
-                <Route path="/products/transfer" element={<StockTransfer />} />
-                <Route path="/products/transfer-to-branch" element={<TransferToBranch />} />
                 <Route path="/history" element={<History />} />
                 <Route path="/returns" element={<Returns />} />
                 <Route path="/reports" element={<Reports />} />
