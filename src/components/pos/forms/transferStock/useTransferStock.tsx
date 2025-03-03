@@ -159,10 +159,10 @@ export const useTransferStock = () => {
       console.log("Selected products:", productsToTransfer);
 
       // Execute transfer operation
-      const transferId = await executeStockTransfer(data, productsToTransfer);
+      const success = await executeStockTransfer(data, productsToTransfer);
       
-      if (transferId) {
-        toast(`Transfer stok berhasil dengan ID: ${transferId}`);
+      if (success) {
+        toast(`Transfer stok berhasil dilakukan`);
         
         // Reset form and selection
         form.reset();

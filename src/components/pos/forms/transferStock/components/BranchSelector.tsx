@@ -9,10 +9,12 @@ interface BranchSelectorProps {
   sourceBranches: Array<{
     cabang_id: number;
     branch_name: string;
+    status?: number; // Added status property
   }>;
   destinationBranches: Array<{
     cabang_id: number;
     branch_name: string;
+    status?: number; // Added status property
   }>;
 }
 
@@ -46,7 +48,7 @@ export const BranchSelector = ({
                       key={branch.cabang_id}
                       value={branch.cabang_id.toString()}
                     >
-                      {branch.branch_name}{branch.cabang_id === sourceBranches[0]?.cabang_id && sourceBranches.length === 1 ? " (Pusat)" : ""}
+                      {branch.branch_name}{branch.status === 1 ? " (Pusat)" : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -80,7 +82,7 @@ export const BranchSelector = ({
                       key={branch.cabang_id}
                       value={branch.cabang_id.toString()}
                     >
-                      {branch.branch_name}{branch.cabang_id === destinationBranches[0]?.cabang_id && destinationBranches.length === 1 ? " (Pusat)" : ""}
+                      {branch.branch_name}{branch.status === 1 ? " (Pusat)" : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>

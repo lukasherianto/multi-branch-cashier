@@ -8,6 +8,7 @@ export type Branch = {
   branch_name: string;
   address?: string;
   contact_whatsapp?: string;
+  status?: number; // Added status field
 };
 
 export const useBranches = () => {
@@ -38,7 +39,7 @@ export const useBranches = () => {
         if (pelakuUsaha) {
           const { data: branchesData, error: branchesError } = await supabase
             .from('cabang')
-            .select('cabang_id, branch_name, address, contact_whatsapp')
+            .select('cabang_id, branch_name, address, contact_whatsapp, status')
             .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id)
             .order('cabang_id', { ascending: true });
             
@@ -47,8 +48,8 @@ export const useBranches = () => {
           if (branchesData && branchesData.length > 0) {
             setBranches(branchesData);
             
-            // Identify central branch (first branch with lowest ID)
-            const headBranch = branchesData[0];
+            // Find central branch (status = 1)
+            const headBranch = branchesData.find(b => b.status === 1) || branchesData[0];
             setCentralBranch(headBranch);
           }
         }
