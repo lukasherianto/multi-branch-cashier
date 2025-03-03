@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,7 +22,7 @@ export function useTransferToBranch() {
   });
 
   // Get branches data
-  const { branches, centralBranch, isLoading: branchesLoading } = useBranches();
+  const { branches, centralBranch, branchesLoading } = useBranches();
   
   // Central branch is the source branch (fixed in this component)
   const sourceBranchId = centralBranch?.cabang_id.toString() || null;
