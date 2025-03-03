@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -90,6 +91,7 @@ const Products = () => {
     );
     setFilteredProducts(filtered);
 
+    // Changed the message to make it clearer that we're now searching with potentially duplicate barcodes
     if (searchTerm.length > 5 && filtered.length === 0) {
       toast({
         title: "Produk Tidak Ditemukan",

@@ -97,10 +97,11 @@ export const useProducts = () => {
     );
     setFilteredProducts(filtered);
 
+    // Updated toast message to reflect that we're handling potential duplicate barcodes
     if (searchTerm.length > 5 && filtered.length === 0) {
       toast({
         title: "Produk Tidak Ditemukan",
-        description: "Tidak ada produk dengan barcode tersebut",
+        description: "Tidak ada produk dengan kata kunci tersebut",
         variant: "destructive",
       });
     }

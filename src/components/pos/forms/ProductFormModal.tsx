@@ -81,24 +81,6 @@ export function ProductFormModal({ open, onOpenChange, onSuccess }: ProductFormM
 
       if (!pelakuUsahaData) throw new Error("Data pelaku usaha tidak ditemukan");
 
-      // Check if barcode already exists
-      if (values.barcode) {
-        const { data: existingProduct } = await supabase
-          .from('produk')
-          .select('product_name')
-          .eq('barcode', values.barcode)
-          .single();
-
-        if (existingProduct) {
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: `Barcode sudah digunakan untuk produk: ${existingProduct.product_name}`,
-          });
-          return;
-        }
-      }
-
       const { error } = await supabase
         .from('produk')
         .insert({
