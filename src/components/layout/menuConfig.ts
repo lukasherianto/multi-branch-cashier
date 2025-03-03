@@ -1,40 +1,123 @@
+import {
+  LayoutDashboard,
+  ListChecks,
+  FolderOpen,
+  ArrowLeftRight,
+  Users,
+  CalendarDays,
+  Scale,
+  Wallet,
+  FileBarGraph,
+  Settings,
+  MoveRight,
+} from 'lucide-react';
 
-import { LayoutDashboard, Store, Package2, History, FileBarChart2, Settings, ArrowLeftRight, Banknote, Building2, UserRound, Users, ArrowDownUp } from "lucide-react";
-
-export const menuItems = [
-  { path: "/", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/pos", label: "POS", icon: Store },
-  { 
-    path: "/products",
-    label: "Produk",
-    icon: Package2,
-    subItems: [
-      { path: "/products", label: "Daftar Produk" },
-      { path: "/products/categories", label: "Kategori" },
-      { path: "/products/transfer", label: "Transfer Produk" },
-      { path: "/products/transfer-to-branch", label: "Transfer Ke Cabang" }
-    ]
+const menuConfig = [
+  {
+    title: 'Dashboard',
+    items: [
+      {
+        title: 'Ringkasan',
+        icon: <LayoutDashboard size={18} />,
+        path: '/',
+      },
+    ],
   },
-  { path: "/history", label: "Riwayat", icon: History },
-  { path: "/returns", label: "Retur", icon: ArrowLeftRight },
-  { path: "/reports", label: "Laporan", icon: FileBarChart2 },
-  { path: "/members", label: "Member", icon: Users },
-  { 
-    path: "/kas",
-    label: "Kas",
-    icon: Banknote,
-    subItems: [
-      { path: "/kas", label: "Kas Masuk/Keluar" },
-      { path: "/kas/purchases", label: "Pembelian" }
-    ]
+  {
+    title: 'Produk',
+    items: [
+      {
+        title: 'Daftar Produk',
+        icon: <ListChecks size={18} />,
+        path: '/products',
+      },
+      {
+        title: 'Kategori Produk',
+        icon: <FolderOpen size={18} />,
+        path: '/products/categories',
+      },
+      {
+        title: 'Transfer Stok',
+        icon: <ArrowLeftRight size={18} />,
+        path: '/products/transfer',
+      },
+      {
+        title: 'Transfer ke Cabang',
+        icon: <MoveRight size={18} />,
+        path: '/products/transfer-to-branch',
+      },
+    ],
   },
-  { path: "/branches", label: "Cabang", icon: Building2 },
-  { path: "/attendance", label: "Absensi", icon: UserRound },
-  { path: "/settings", label: "Pengaturan", icon: Settings },
+  {
+    title: 'Kasir',
+    items: [
+      {
+        title: 'POS',
+        icon: <Scale size={18} />,
+        path: '/pos',
+      },
+      {
+        title: 'Riwayat Transaksi',
+        icon: <ListChecks size={18} />,
+        path: '/history',
+      },
+      {
+        title: 'Retur',
+        icon: <ArrowLeftRight size={18} />,
+        path: '/returns',
+      },
+    ],
+  },
+  {
+    title: 'Keuangan',
+    items: [
+      {
+        title: 'Kas',
+        icon: <Wallet size={18} />,
+        path: '/kas',
+      },
+      {
+        title: 'Pembelian',
+        icon: <Wallet size={18} />,
+        path: '/kas/purchases',
+      },
+      {
+        title: 'Laporan',
+        icon: <FileBarGraph size={18} />,
+        path: '/reports',
+      },
+    ],
+  },
+  {
+    title: 'Manajemen',
+    items: [
+      {
+        title: 'Cabang',
+        icon: <LayoutDashboard size={18} />,
+        path: '/branches',
+      },
+      {
+        title: 'Absensi',
+        icon: <CalendarDays size={18} />,
+        path: '/attendance',
+      },
+      {
+        title: 'Data Member',
+        icon: <Users size={18} />,
+        path: '/members',
+      },
+    ],
+  },
+  {
+    title: 'Lainnya',
+    items: [
+      {
+        title: 'Pengaturan',
+        icon: <Settings size={18} />,
+        path: '/settings',
+      },
+    ],
+  },
 ];
 
-// Define hidden routes that don't appear in the menu
-export const hiddenRoutes = [
-  { path: "/order-confirmation", label: "Konfirmasi Pesanan" },
-  { path: "/print-preview", label: "Print Preview" }
-];
+export default menuConfig;

@@ -1,16 +1,8 @@
 
 import * as z from "zod";
 
-export const transferToBranchSchema = z.object({
-  cabang_id_to: z.string(),
-  products: z.array(z.object({
-    produk_id: z.number(),
-    quantity: z.number().min(1, "Jumlah harus lebih dari 0"),
-    selected: z.boolean()
-  }))
-});
-
-export type TransferToBranchFormValues = z.infer<typeof transferToBranchSchema>;
+// Define the structure of a product for transfer
+export const ITEMS_PER_PAGE = 100;
 
 export interface ProductTransfer {
   produk_id: number;
@@ -21,4 +13,16 @@ export interface ProductTransfer {
   cost_price: number;
 }
 
-export const ITEMS_PER_PAGE = 100;
+// Define the validation schema for the transfer form
+export const transferToBranchSchema = z.object({
+  cabang_id_to: z.string({
+    required_error: "Cabang tujuan harus dipilih",
+  }),
+  products: z.array(z.object({
+    produk_id: z.number(),
+    quantity: z.number().min(1, "Jumlah harus lebih dari 0"),
+    selected: z.boolean()
+  })).optional()
+});
+
+export type TransferToBranchFormValues = z.infer<typeof transferToBranchSchema>;
