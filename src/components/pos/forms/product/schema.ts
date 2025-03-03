@@ -13,6 +13,7 @@ export const productFormSchema = z.object({
   retail_price: z.coerce.number().min(0, "Harga jual tidak boleh negatif"),
   member_price_1: z.coerce.number().min(0, "Harga member 1 tidak boleh negatif"),
   member_price_2: z.coerce.number().min(0, "Harga member 2 tidak boleh negatif"),
+  cabang_id: z.coerce.number().optional(),
 });
 
 export type ProductFormValues = z.infer<typeof productFormSchema>;

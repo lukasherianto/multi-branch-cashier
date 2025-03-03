@@ -5,9 +5,11 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { productFormSchema, ProductFormValues } from "./schema";
+import { useAuth } from "@/hooks/useAuth";
 
 export function useProductForm(onSuccess?: () => void, onOpenChange?: (open: boolean) => void) {
   const { toast } = useToast();
+  const { cabang } = useAuth();
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
@@ -18,6 +20,7 @@ export function useProductForm(onSuccess?: () => void, onOpenChange?: (open: boo
       member_price_1: 0,
       member_price_2: 0,
       unit: 'Pcs',
+      cabang_id: cabang?.cabang_id,
     },
   });
 
@@ -52,6 +55,24 @@ export function useProductForm(onSuccess?: () => void, onOpenChange?: (open: boo
 
       if (!pelakuUsahaData) throw new Error("Data pelaku usaha tidak ditemukan");
 
+      // Get the main branch if cabang_id is not provided
+      let branchId = values.cabang_id;
+      if (!branchId) {
+        const { data: mainBranch } = await supabase
+          .from('cabang')
+          .select('cabang_id')
+          .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id)
+          .order('cabang_id', { ascending: true })
+          .limit(1)
+          .single();
+          
+        if (mainBranch) {
+          branchId = mainBranch.cabang_id;
+        } else {
+          throw new Error("Cabang tidak ditemukan");
+        }
+      }
+
       const { error } = await supabase
         .from('produk')
         .insert({
@@ -65,6 +86,7 @@ export function useProductForm(onSuccess?: () => void, onOpenChange?: (open: boo
           member_price_2: values.member_price_2,
           stock: values.stock,
           unit: values.unit,
+          cabang_id: branchId,
         });
 
       if (error) throw error;

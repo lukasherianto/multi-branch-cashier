@@ -35,15 +35,18 @@ export const useProductData = () => {
             barcode,
             unit,
             cost_price,
+            cabang_id,
             kategori_produk (
               kategori_name
             )
           `)
           .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id);
 
-        // If a branch ID is specified, fetch branch-specific products
-        // This would normally involve some relationship or filter based on your schema
-        // For now, fetching all products as an example
+        // If a branch ID is specified, filter products by that branch
+        if (branchId) {
+          query = query.eq('cabang_id', branchId);
+        }
+
         const { data: productsData, error } = await query;
 
         if (error) throw error;
@@ -60,7 +63,8 @@ export const useProductData = () => {
             stock: product.stock,
             barcode: product.barcode,
             unit: product.unit,
-            cost_price: product.cost_price
+            cost_price: product.cost_price,
+            cabang_id: product.cabang_id
           }));
           
           console.log(`Found ${mappedProducts.length} products${branchId ? ` for branch ${branchId}` : ''}`);

@@ -7,12 +7,15 @@ import { ProductList } from "@/components/pos/ProductList";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { ProductFormModal } from "@/components/pos/forms/ProductFormModal";
+import { useAuth } from "@/hooks/useAuth";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const Products = () => {
   const { toast } = useToast();
   const [products, setProducts] = useState<any[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
   const [showAddProduct, setShowAddProduct] = useState(false);
+  const { cabangList, selectedCabangId, setSelectedCabangId } = useAuth();
 
   const fetchProducts = async () => {
     try {
@@ -24,7 +27,7 @@ const Products = () => {
         .single();
 
       if (pelakuUsahaData) {
-        const { data: productsData, error } = await supabase
+        let query = supabase
           .from('produk')
           .select(`
             produk_id,
@@ -36,11 +39,19 @@ const Products = () => {
             barcode,
             cost_price,
             unit,
+            cabang_id,
             kategori_produk (
               kategori_name
             )
           `)
           .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id);
+
+        // Filter by selected branch if one is selected
+        if (selectedCabangId) {
+          query = query.eq('cabang_id', selectedCabangId);
+        }
+
+        const { data: productsData, error } = await query;
 
         if (error) throw error;
 
@@ -57,7 +68,8 @@ const Products = () => {
             stock: product.stock,
             barcode: product.barcode,
             unit: product.unit,
-            cost_price: product.cost_price
+            cost_price: product.cost_price,
+            cabang_id: product.cabang_id
           }));
           setProducts(mappedProducts);
           setFilteredProducts(mappedProducts);
@@ -75,7 +87,7 @@ const Products = () => {
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [selectedCabangId]);
 
   const handleSearch = (searchTerm: string) => {
     console.log("Searching for:", searchTerm);
@@ -91,7 +103,6 @@ const Products = () => {
     );
     setFilteredProducts(filtered);
 
-    // Changed the message to make it clearer that we're now searching with potentially duplicate barcodes
     if (searchTerm.length > 5 && filtered.length === 0) {
       toast({
         title: "Produk Tidak Ditemukan",
@@ -105,10 +116,33 @@ const Products = () => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800">Produk</h2>
-        <Button onClick={() => setShowAddProduct(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Tambah Produk
-        </Button>
+        <div className="flex gap-4">
+          {cabangList.length > 1 && (
+            <Select
+              value={selectedCabangId?.toString()}
+              onValueChange={(value) => setSelectedCabangId(parseInt(value))}
+            >
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Semua Cabang" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Semua Cabang</SelectItem>
+                {cabangList.map((branch) => (
+                  <SelectItem 
+                    key={branch.cabang_id} 
+                    value={branch.cabang_id.toString()}
+                  >
+                    {branch.branch_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Button onClick={() => setShowAddProduct(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Tambah Produk
+          </Button>
+        </div>
       </div>
 
       <ProductSearch onSearch={handleSearch} />

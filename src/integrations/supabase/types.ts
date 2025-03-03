@@ -411,6 +411,7 @@ export type Database = {
       produk: {
         Row: {
           barcode: string | null
+          cabang_id: number
           cost_price: number
           created_at: string
           kategori_id: number
@@ -426,6 +427,7 @@ export type Database = {
         }
         Insert: {
           barcode?: string | null
+          cabang_id: number
           cost_price: number
           created_at?: string
           kategori_id: number
@@ -441,6 +443,7 @@ export type Database = {
         }
         Update: {
           barcode?: string | null
+          cabang_id?: number
           cost_price?: number
           created_at?: string
           kategori_id?: number
@@ -455,6 +458,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "produk_cabang_id_fkey"
+            columns: ["cabang_id"]
+            isOneToOne: false
+            referencedRelation: "cabang"
+            referencedColumns: ["cabang_id"]
+          },
           {
             foreignKeyName: "produk_kategori_id_fkey"
             columns: ["kategori_id"]

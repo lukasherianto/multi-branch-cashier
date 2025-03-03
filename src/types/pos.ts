@@ -11,6 +11,7 @@ export interface CartItem {
   barcode?: string;
   unit: string;
   cost_price: number;
+  cabang_id: number;
 }
 
 export interface Customer {
