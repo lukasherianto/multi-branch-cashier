@@ -3,22 +3,7 @@ import React from "react";
 import { format } from "date-fns";
 import { id } from 'date-fns/locale';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-
-interface Transfer {
-  transfer_id: number;
-  transfer_date: string;
-  quantity: number;
-  produk: {
-    product_name: string;
-  } | null;
-  cabang_from: {
-    branch_name: string;
-  } | null;
-  cabang_to: {
-    branch_name: string;
-  } | null;
-  batch_number?: string;
-}
+import { type Transfer } from "../hooks/useTransferHistory";
 
 interface TransferHistoryTableProps {
   transfers: Transfer[];
