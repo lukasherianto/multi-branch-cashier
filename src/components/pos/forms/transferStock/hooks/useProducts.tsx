@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 export const useProducts = (sourceBranchId: string) => {
   const [filteredProducts, setFilteredProducts] = useState<ProductWithSelection[]>([]);
+  const [allProducts, setAllProducts] = useState<ProductWithSelection[]>([]);
   const [loading, setLoading] = useState(false);
   const { pelakuUsaha } = useAuth();
   
@@ -14,6 +15,7 @@ export const useProducts = (sourceBranchId: string) => {
     const fetchProductsForBranch = async () => {
       if (!sourceBranchId || !pelakuUsaha) {
         console.log("Missing sourceBranchId or pelakuUsaha, skipping fetch");
+        setFilteredProducts([]);
         return;
       }
       
@@ -39,7 +41,8 @@ export const useProducts = (sourceBranchId: string) => {
             )
           `)
           .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id)
-          .eq('cabang_id', parseInt(sourceBranchId));
+          .eq('cabang_id', parseInt(sourceBranchId))
+          .gt('stock', 0); // Only fetch products with stock > 0
           
         if (error) throw error;
         
@@ -63,6 +66,7 @@ export const useProducts = (sourceBranchId: string) => {
         })) : [];
         
         setFilteredProducts(mappedProducts);
+        setAllProducts(mappedProducts);
       } catch (error) {
         console.error("Error fetching products for branch:", error);
       } finally {
@@ -75,20 +79,25 @@ export const useProducts = (sourceBranchId: string) => {
   
   // Search filter function
   const handleSearch = (query: string) => {
-    if (!query) return; // Don't filter if query is empty
+    if (!query.trim()) {
+      // If search is empty, reset to all products
+      setFilteredProducts(allProducts);
+      return;
+    }
     
-    setFilteredProducts(prev => {
-      const searchTerms = query.toLowerCase().split(" ");
+    const searchTerms = query.toLowerCase().split(" ");
+    
+    const results = allProducts.filter(product => {
+      const productName = product.name.toLowerCase();
+      const productBarcode = product.barcode?.toLowerCase() || "";
       
-      return prev.filter(product => {
-        const productName = product.name.toLowerCase();
-        const productBarcode = product.barcode?.toLowerCase() || "";
-        
-        return searchTerms.every(term => 
-          productName.includes(term) || productBarcode.includes(term)
-        );
-      });
+      return searchTerms.every(term => 
+        productName.includes(term) || productBarcode.includes(term)
+      );
     });
+    
+    setFilteredProducts(results);
+    console.log(`Search for "${query}" found ${results.length} products`);
   };
   
   return {

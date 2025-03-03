@@ -47,7 +47,7 @@ export async function executeStockTransfer(
     
     // Insert transfer header
     const { data: transferHeader, error: transferError } = await supabase
-      .from("stock_transfer")
+      .from("transfer_stok")
       .insert({
         cabang_id_from: parseInt(formData.cabang_id_from),
         cabang_id_to: parseInt(formData.cabang_id_to),
@@ -68,24 +68,24 @@ export async function executeStockTransfer(
     console.log("Transfer header created:", transferHeader);
     
     // Insert transfer details
-    const transferDetails = transferProducts.map(product => ({
-      transfer_id: transferHeader.transfer_id,
-      produk_id: product.produk_id,
-      quantity: product.quantity,
-      cabang_id_from: parseInt(formData.cabang_id_from),
-      cabang_id_to: parseInt(formData.cabang_id_to)
-    }));
-    
-    const { error: detailsError } = await supabase
-      .from("stock_transfer_item")
-      .insert(transferDetails);
-      
-    if (detailsError) {
-      console.error("Error creating transfer details:", detailsError);
-      throw new Error("Error creating transfer details: " + detailsError.message);
+    for (const product of transferProducts) {
+      const { error: detailsError } = await supabase
+        .from("transfer_stok_detail")
+        .insert({
+          transfer_id: transferHeader.transfer_id,
+          produk_id: product.produk_id,
+          quantity: product.quantity,
+          retail_price: product.price || 0,
+          cost_price: product.cost_price || 0
+        });
+          
+      if (detailsError) {
+        console.error("Error creating transfer details:", detailsError);
+        throw new Error("Error creating transfer details: " + detailsError.message);
+      }
     }
     
-    console.log("Transfer details created:", transferDetails);
+    console.log("Transfer details created successfully");
     
     // Update stock in source branch (decrease)
     const sourceStockUpdates = transferProducts.map(async (product) => {
@@ -111,7 +111,7 @@ export async function executeStockTransfer(
       const { data: existingProduct, error: checkError } = await supabase
         .from("produk")
         .select("produk_id, stock")
-        .eq("produk_id", product.produk_id)
+        .eq("barcode", product.barcode)
         .eq("cabang_id", parseInt(formData.cabang_id_to))
         .maybeSingle();
         
@@ -127,7 +127,7 @@ export async function executeStockTransfer(
           .update({ 
             stock: existingProduct.stock + product.quantity 
           })
-          .eq("produk_id", product.produk_id)
+          .eq("produk_id", existingProduct.produk_id)
           .eq("cabang_id", parseInt(formData.cabang_id_to));
           
         if (updateError) {
@@ -147,15 +147,24 @@ export async function executeStockTransfer(
           throw new Error(`Error getting product details: ${getError.message}`);
         }
         
-        // Create new product in destination branch
+        // Create new product in destination branch with a new produk_id
+        const newProduct = {
+          product_name: originalProduct.product_name,
+          barcode: originalProduct.barcode,
+          kategori_id: originalProduct.kategori_id,
+          cost_price: originalProduct.cost_price,
+          retail_price: originalProduct.retail_price,
+          member_price_1: originalProduct.member_price_1,
+          member_price_2: originalProduct.member_price_2,
+          stock: product.quantity,
+          cabang_id: parseInt(formData.cabang_id_to),
+          pelaku_usaha_id: originalProduct.pelaku_usaha_id,
+          unit: originalProduct.unit
+        };
+        
         const { error: insertError } = await supabase
           .from("produk")
-          .insert({
-            ...originalProduct,
-            produk_id: undefined, // Let DB generate new ID
-            cabang_id: parseInt(formData.cabang_id_to),
-            stock: product.quantity
-          });
+          .insert(newProduct);
           
         if (insertError) {
           console.error(`Error creating product in destination branch:`, insertError);

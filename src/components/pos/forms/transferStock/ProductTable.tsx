@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ProductWithSelection } from "@/types/pos";
+import { AlertCircle } from "lucide-react";
 
 export interface ProductTableProps {
   products: ProductWithSelection[];
@@ -27,23 +28,27 @@ export const ProductTable = ({
 }: ProductTableProps) => {
   if (loading) {
     return (
-      <div className="p-4 rounded-md bg-gray-50 text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto mb-2"></div>
-        <p>Memuat produk...</p>
+      <div className="p-8 rounded-md bg-gray-50 text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+        <p className="text-gray-600">Memuat produk dari cabang...</p>
       </div>
     );
   }
 
-  if (products.length === 0) {
+  if (!products || products.length === 0) {
     return (
-      <div className="p-4 rounded-md bg-gray-50 text-center">
-        <p>Tidak ada produk yang ditemukan untuk cabang ini atau sesuai dengan pencarian Anda.</p>
+      <div className="p-8 rounded-md bg-gray-50 text-center border border-gray-200">
+        <AlertCircle className="h-8 w-8 text-amber-500 mx-auto mb-4" />
+        <p className="text-gray-700 font-medium">Tidak ada produk yang ditemukan</p>
+        <p className="text-gray-500 text-sm mt-1">
+          Cabang ini mungkin tidak memiliki produk, atau semua produk memiliki stok 0.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="border rounded-md">
+    <div className="border rounded-md overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
