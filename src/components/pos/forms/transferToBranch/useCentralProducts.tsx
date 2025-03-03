@@ -1,39 +1,24 @@
 
 import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { CartItem, ProductWithSelection } from "@/types/pos";
+import { ProductWithSelection } from "@/types/pos";
 
-export const useCentralProducts = (centralBranchId: number) => {
-  const { toast } = useToast();
+export const useCentralProducts = (centralBranchId: number | null) => {
   const [products, setProducts] = useState<ProductWithSelection[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<ProductWithSelection[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const { pelakuUsahaId } = useAuth();
 
+  // Fetch products from central branch
   useEffect(() => {
-    loadCentralProducts();
-  }, [centralBranchId]);
-
-  const loadCentralProducts = async () => {
-    try {
-      setLoading(true);
+    const fetchCentralProducts = async () => {
+      if (!centralBranchId || !pelakuUsahaId) return;
       
-      if (!centralBranchId) {
-        toast({
-          title: "Error",
-          description: "No central branch ID specified"
-        });
-        return;
-      }
-      
-      const { data: pelakuUsahaData } = await supabase
-        .from('pelaku_usaha')
-        .select('*')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
-
-      if (pelakuUsahaData) {
-        const { data: productsData, error } = await supabase
+      try {
+        setLoading(true);
+        
+        const { data, error } = await supabase
           .from('produk')
           .select(`
             produk_id,
@@ -50,13 +35,14 @@ export const useCentralProducts = (centralBranchId: number) => {
               kategori_name
             )
           `)
-          .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id)
-          .eq('cabang_id', centralBranchId);
-
+          .eq('pelaku_usaha_id', pelakuUsahaId)
+          .eq('cabang_id', centralBranchId)
+          .gt('stock', 0); // Only products with stock > 0
+          
         if (error) throw error;
-
-        if (productsData) {
-          const mappedProducts = productsData.map(product => ({
+        
+        if (data) {
+          const mappedProducts: ProductWithSelection[] = data.map(product => ({
             id: product.produk_id,
             name: product.product_name,
             price: product.retail_price,
@@ -65,30 +51,27 @@ export const useCentralProducts = (centralBranchId: number) => {
             quantity: 1,
             category: product.kategori_produk?.kategori_name,
             stock: product.stock,
-            barcode: product.barcode,
+            barcode: product.barcode || "",
             unit: product.unit,
             cost_price: product.cost_price,
             cabang_id: product.cabang_id,
-            selected: false,
-            produk_id: product.produk_id
+            selected: false
           }));
           
           setProducts(mappedProducts);
           setFilteredProducts(mappedProducts);
         }
+      } catch (error) {
+        console.error("Error fetching central products:", error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error fetching central products:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Gagal mengambil data produk pusat"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+    
+    fetchCentralProducts();
+  }, [centralBranchId, pelakuUsahaId]);
 
+  // Search products
   const handleSearch = (searchTerm: string) => {
     if (!searchTerm.trim()) {
       setFilteredProducts(products);
@@ -103,6 +86,7 @@ export const useCentralProducts = (centralBranchId: number) => {
     setFilteredProducts(filtered);
   };
 
+  // Handle product selection
   const handleProductSelection = (productId: number, selected: boolean) => {
     const updatedProducts = filteredProducts.map(product => 
       product.id === productId ? { ...product, selected } : product
@@ -110,9 +94,8 @@ export const useCentralProducts = (centralBranchId: number) => {
     setFilteredProducts(updatedProducts);
   };
 
+  // Handle quantity change
   const handleQuantityChange = (productId: number, quantity: number) => {
-    if (quantity < 1) return; // Don't allow quantities below 1
-    
     const updatedProducts = filteredProducts.map(product => 
       product.id === productId ? { ...product, quantity } : product
     );

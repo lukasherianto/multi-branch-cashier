@@ -716,8 +716,13 @@ export type Database = {
           cabang_id_from: number
           cabang_id_to: number
           created_at: string
+          notes: string | null
+          pelaku_usaha_id: number | null
           produk_id: number
           quantity: number
+          status: string | null
+          total_items: number | null
+          total_quantity: number | null
           transfer_date: string
           transfer_id: number
           updated_at: string
@@ -726,8 +731,13 @@ export type Database = {
           cabang_id_from: number
           cabang_id_to: number
           created_at?: string
+          notes?: string | null
+          pelaku_usaha_id?: number | null
           produk_id: number
           quantity: number
+          status?: string | null
+          total_items?: number | null
+          total_quantity?: number | null
           transfer_date?: string
           transfer_id?: never
           updated_at?: string
@@ -736,8 +746,13 @@ export type Database = {
           cabang_id_from?: number
           cabang_id_to?: number
           created_at?: string
+          notes?: string | null
+          pelaku_usaha_id?: number | null
           produk_id?: number
           quantity?: number
+          status?: string | null
+          total_items?: number | null
+          total_quantity?: number | null
           transfer_date?: string
           transfer_id?: never
           updated_at?: string
@@ -763,6 +778,54 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "produk"
             referencedColumns: ["produk_id"]
+          },
+        ]
+      }
+      transfer_stok_detail: {
+        Row: {
+          cost_price: number
+          created_at: string
+          detail_id: number
+          produk_id: number
+          quantity: number
+          retail_price: number
+          transfer_id: number
+          updated_at: string
+        }
+        Insert: {
+          cost_price: number
+          created_at?: string
+          detail_id?: number
+          produk_id: number
+          quantity: number
+          retail_price: number
+          transfer_id: number
+          updated_at?: string
+        }
+        Update: {
+          cost_price?: number
+          created_at?: string
+          detail_id?: number
+          produk_id?: number
+          quantity?: number
+          retail_price?: number
+          transfer_id?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transfer_stok_detail_produk_id_fkey"
+            columns: ["produk_id"]
+            isOneToOne: false
+            referencedRelation: "produk"
+            referencedColumns: ["produk_id"]
+          },
+          {
+            foreignKeyName: "transfer_stok_detail_transfer_id_fkey"
+            columns: ["transfer_id"]
+            isOneToOne: false
+            referencedRelation: "transfer_stok"
+            referencedColumns: ["transfer_id"]
           },
         ]
       }

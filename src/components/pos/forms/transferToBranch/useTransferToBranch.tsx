@@ -1,140 +1,144 @@
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
+import { useForm } from "react-hook-form";
 import { useAuth } from "@/hooks/useAuth";
-import { useCentralProducts } from "./useCentralProducts";
+import { useCentralProducts } from "./useCentralProducts"; 
 import { usePagination } from "./usePagination";
-import { transferToBranchSchema } from "./schema";
-import { transferProductsToBranch, TransferToBranchValues } from "./transferToBranchUtils";
-import { z } from "zod";
-import { ProductWithSelection } from "@/types/pos";
-
-export type TransferFormValues = z.infer<typeof transferToBranchSchema>;
+import { toast } from "sonner";
+import { schema } from "./schema";
+import { executeTransferToBranch, useTransferToBranchSubmit } from "./transferToBranchUtils";
+import { ProductWithSelection, TransferToBranchValues } from "@/types/pos";
 
 export const useTransferToBranch = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [transferring, setTransferring] = useState(false);
-  const [transferId, setTransferId] = useState<number | null>(null);
   const { cabangList } = useAuth();
-  
-  // Sort branches by ID (lowest first is headquarters)
-  const sortedBranches = [...cabangList].sort((a, b) => a.cabang_id - b.cabang_id);
-  const centralBranchId = sortedBranches.length > 0 ? sortedBranches[0].cabang_id : null;
-  const branchOptions = sortedBranches
-    .filter(branch => branch.cabang_id !== centralBranchId)
-    .map(branch => ({
-      value: branch.cabang_id.toString(),
-      label: branch.branch_name
-    }));
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [centralBranchId, setCentralBranchId] = useState<number | null>(null);
+  const [branchesLoading, setBranchesLoading] = useState(false);
 
-  // Form setup
-  const form = useForm<TransferFormValues>({
-    resolver: zodResolver(transferToBranchSchema),
+  // Find the central branch (assuming it's the first branch)
+  useEffect(() => {
+    setBranchesLoading(true);
+    if (cabangList && cabangList.length > 0) {
+      // Sort branches by ID, assume lowest ID is headquarters
+      const sortedBranches = [...cabangList].sort((a, b) => a.cabang_id - b.cabang_id);
+      setCentralBranchId(sortedBranches[0].cabang_id);
+    }
+    setBranchesLoading(false);
+  }, [cabangList]);
+
+  // Get destination branches (all except central)
+  const destinationBranches = centralBranchId 
+    ? cabangList.filter(branch => branch.cabang_id !== centralBranchId)
+    : [];
+
+  // Create branch options for dropdown
+  const branchOptions = destinationBranches.map(branch => ({
+    value: branch.cabang_id.toString(),
+    label: branch.branch_name
+  }));
+
+  // Initialize form with default values
+  const form = useForm<TransferToBranchValues>({
+    resolver: zodResolver(schema),
     defaultValues: {
-      cabang_id_to: branchOptions.length > 0 ? branchOptions[0].value : ""
+      cabang_id_to: "",
+      products: [],
+      notes: ""
     }
   });
 
-  // Get central products
-  const { 
-    products, 
-    filteredProducts, 
-    loading, 
+  // Get central branch products
+  const {
+    products,
+    filteredProducts,
+    loading: productsLoading,
     handleSearch,
     handleProductSelection,
     handleQuantityChange
-  } = useCentralProducts(centralBranchId || 0);
+  } = useCentralProducts(centralBranchId);
 
-  // Define a convenience variable for selected products
-  const selectedProducts = filteredProducts.filter(p => p.selected);
-  
-  // Calculate total cost price
-  const totalCostPrice = selectedProducts.reduce(
-    (sum, p) => sum + (p.cost_price * p.quantity), 
-    0
-  );
-
-  // Pagination
-  const ITEMS_PER_PAGE = 10;
+  // Setup pagination
   const {
     currentPage,
     totalPages,
     paginatedProducts,
     handleNextPage,
-    handlePreviousPage
-  } = usePagination(
-    searchTerm
-      ? filteredProducts.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
-      : filteredProducts,
+    handlePreviousPage,
     ITEMS_PER_PAGE
+  } = usePagination(filteredProducts);
+
+  // Get selected products for transfer
+  const selectedProducts = filteredProducts.filter(product => product.selected);
+
+  // Calculate total cost price
+  const totalCostPrice = selectedProducts.reduce(
+    (total, product) => total + (product.cost_price * product.quantity),
+    0
   );
 
-  // Handle search
-  const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
-    handleSearch(value);
-  };
-
   // Handle form submission
-  const onSubmit = async (data: TransferFormValues) => {
-    if (!centralBranchId) {
-      toast("Error: No central branch found");
-      return;
-    }
-
+  const onSubmit = async (data: TransferToBranchValues) => {
     try {
-      setTransferring(true);
-      const result = await transferProductsToBranch(
-        data,
-        centralBranchId,
-        filteredProducts
-      );
+      if (!centralBranchId) {
+        toast("Cabang pusat belum ditemukan");
+        return;
+      }
 
-      if (result) {
-        setTransferId(result);
-        toast(`Transfer berhasil dengan ID: ${result}`);
+      if (selectedProducts.length === 0) {
+        toast("Pilih minimal satu produk untuk ditransfer");
+        return;
+      }
+
+      setIsSubmitting(true);
+      
+      // Ensure form values are complete
+      const transferData: TransferToBranchValues = {
+        cabang_id_to: data.cabang_id_to,
+        notes: data.notes
+      };
+
+      // Execute transfer
+      const transferId = await executeTransferToBranch(
+        transferData, 
+        selectedProducts,
+        centralBranchId
+      );
+      
+      if (transferId) {
+        toast(`Transfer stok berhasil dengan ID: ${transferId}`);
+        
+        // Reset form and selection
         form.reset();
-        // Reset product selection
-        const resetProducts = filteredProducts.map(p => ({ ...p, selected: false, quantity: 1 }));
-        // This will be defined in the useCentralProducts hook
-        handleSearch("");
-        setSearchTerm("");
+        // Reset product selection would happen here
       }
     } catch (error) {
       console.error("Transfer error:", error);
       toast(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
     } finally {
-      setTransferring(false);
+      setIsSubmitting(false);
     }
   };
 
   return {
     form,
+    onSubmit,
     branchOptions,
-    centralBranchId,
-    products,
-    filteredProducts,
+    branchesLoading,
+    productsLoading,
+    isSubmitting,
+    centralBranch: cabangList.find(branch => branch.cabang_id === centralBranchId),
+    destinationBranches,
     selectedProducts,
     paginatedProducts,
+    totalCostPrice,
     currentPage,
     totalPages,
-    loading,
-    transferring,
-    transferId,
-    handleSearchChange,
-    handleProductSelection,
-    handleQuantityChange,
     handleNextPage,
     handlePreviousPage,
-    onSubmit,
     ITEMS_PER_PAGE,
-    isSubmitting: transferring,
-    productsLoading: loading,
-    centralBranch: sortedBranches.length > 0 ? sortedBranches[0] : null,
-    destinationBranches: branchOptions,
-    totalCostPrice,
-    handleSearch: handleSearchChange
+    handleSearch,
+    handleProductSelection,
+    handleQuantityChange
   };
 };

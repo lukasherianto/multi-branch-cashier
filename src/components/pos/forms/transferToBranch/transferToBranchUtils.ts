@@ -1,31 +1,40 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { ProductWithSelection, TransferToBranchValues } from "@/types/pos";
 import { toast } from "sonner";
-import { ProductWithSelection } from "@/types/pos";
-
-export interface TransferToBranchValues {
-  cabang_id_to: string;
-  notes?: string;
-}
 
 /**
- * Transfers products from central branch to other branches
+ * Validates if the selected products have enough stock for transfer
  */
-export const transferProductsToBranch = async (
+export const validateStockForTransfer = async (
+  selectedProducts: ProductWithSelection[],
+  centralBranchId: number
+): Promise<boolean> => {
+  try {
+    // Check each product for sufficient stock
+    for (const product of selectedProducts) {
+      if (product.quantity > product.stock) {
+        toast(`Stok ${product.name} tidak cukup (${product.stock} tersedia)`);
+        return false;
+      }
+    }
+    return true;
+  } catch (error) {
+    console.error("Error validating stock:", error);
+    toast(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
+    return false;
+  }
+};
+
+/**
+ * Executes the stock transfer from central to branch operation
+ */
+export const executeTransferToBranch = async (
   data: TransferToBranchValues,
-  centralBranchId: number,
-  products: ProductWithSelection[]
+  selectedProducts: ProductWithSelection[],
+  centralBranchId: number
 ): Promise<number | null> => {
   try {
-    // Filter selected products
-    const selectedProducts = products.filter(p => p.selected);
-    
-    // Validate if any products are selected
-    if (selectedProducts.length === 0) {
-      toast("Pilih minimal satu produk untuk ditransfer");
-      return null;
-    }
-    
     // Get user's pelaku_usaha_id
     const { data: userData } = await supabase.auth.getUser();
     const { data: pelakuUsahaData } = await supabase
@@ -48,7 +57,7 @@ export const transferProductsToBranch = async (
         status: 'completed',
         total_items: selectedProducts.length,
         total_quantity: selectedProducts.reduce((sum, p) => sum + p.quantity, 0),
-        notes: data.notes || 'Transfer dari Pusat ke Cabang'
+        notes: data.notes || 'Transfer Stok dari Pusat ke Cabang'
       })
       .select('transfer_id')
       .single();
@@ -58,8 +67,8 @@ export const transferProductsToBranch = async (
     
     const transferId = transferData.transfer_id;
     
-    // 2. Create transfer details and update stocks
-    // Prepare detail records for batch insert
+    // 2. Create transfer details
+    // Prepare detail records array for batch insert
     const detailRecords = selectedProducts.map(product => ({
       transfer_id: transferId,
       produk_id: product.id,
@@ -75,9 +84,9 @@ export const transferProductsToBranch = async (
       
     if (detailsError) throw detailsError;
     
-    // 3. Process each product
+    // 3. Update source and destination branch stocks
     for (const product of selectedProducts) {
-      // Update stock in source branch (decrease)
+      // Update stock in central branch (decrease)
       const { error: sourceStockError } = await supabase
         .from('produk')
         .update({ 
@@ -144,11 +153,20 @@ export const transferProductsToBranch = async (
     
     return transferId;
   } catch (error) {
-    console.error("Error transferring products:", error);
+    console.error("Error executing transfer:", error);
     toast(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
     return null;
   }
 };
 
-// Export the function for use in useTransferToBranch hook
-export const useTransferToBranchSubmit = transferProductsToBranch;
+// Export the submit function
+export const useTransferToBranchSubmit = (centralBranchId: number) => {
+  return async (data: TransferToBranchValues, selectedProducts: ProductWithSelection[]) => {
+    // Validate and execute the transfer
+    const isValid = await validateStockForTransfer(selectedProducts, centralBranchId);
+    if (!isValid) return null;
+    
+    const transferId = await executeTransferToBranch(data, selectedProducts, centralBranchId);
+    return transferId;
+  };
+};

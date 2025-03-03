@@ -29,3 +29,25 @@ export interface Customer {
 export interface ProductWithSelection extends CartItem {
   selected: boolean;
 }
+
+// Define the transfer form values type
+export interface TransferStockFormValues {
+  cabang_id_from: string;
+  cabang_id_to: string;
+  products?: {
+    selected?: boolean;
+    produk_id?: number;
+    quantity?: number;
+  }[];
+  notes?: string;
+}
+
+export interface TransferToBranchValues {
+  cabang_id_to: string;
+  products?: {
+    selected?: boolean;
+    produk_id?: number;
+    quantity?: number;
+  }[];
+  notes?: string;
+}
