@@ -72,7 +72,10 @@ export const ProductTable = ({
                   }}
                 />
               </TableCell>
-              <TableCell className="font-medium">{product.name}</TableCell>
+              <TableCell className="font-medium">
+                {product.name}
+                <span className="text-xs text-gray-500 block">ID: {product.produk_id || product.id}</span>
+              </TableCell>
               <TableCell>{product.category || '-'}</TableCell>
               <TableCell>{product.stock}</TableCell>
               <TableCell>{product.unit}</TableCell>
