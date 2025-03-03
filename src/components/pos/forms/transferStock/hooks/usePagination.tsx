@@ -1,27 +1,48 @@
 
-import { useState } from "react";
-import { ProductWithSelection } from "./useProducts";
+import { useState, useEffect } from "react";
+import { ProductWithSelection } from "@/types/pos";
 
-export const usePagination = (items: ProductWithSelection[], itemsPerPage: number = 10) => {
+export const usePagination = (items: ProductWithSelection[], itemsPerPage: number) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.ceil(items.length / itemsPerPage);
+  const [totalPages, setTotalPages] = useState(1);
+  const [paginatedItems, setPaginatedItems] = useState<ProductWithSelection[]>([]);
 
-  const paginatedItems = items.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  useEffect(() => {
+    if (items.length === 0) {
+      setTotalPages(1);
+      setPaginatedItems([]);
+      return;
+    }
+
+    const calculatedTotalPages = Math.ceil(items.length / itemsPerPage);
+    setTotalPages(calculatedTotalPages);
+
+    // Reset currentPage if it's beyond the new total pages
+    if (currentPage > calculatedTotalPages) {
+      setCurrentPage(1);
+    }
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    setPaginatedItems(items.slice(startIndex, endIndex));
+  }, [items, currentPage, itemsPerPage]);
 
   const goToNextPage = () => {
-    setCurrentPage((page) => Math.min(page + 1, totalPages));
+    if (currentPage < totalPages) {
+      setCurrentPage(prev => prev + 1);
+    }
   };
 
   const goToPreviousPage = () => {
-    setCurrentPage((page) => Math.max(page - 1, 1));
+    if (currentPage > 1) {
+      setCurrentPage(prev => prev - 1);
+    }
   };
 
   const goToPage = (page: number) => {
-    const pageNumber = Math.max(1, Math.min(page, totalPages));
-    setCurrentPage(pageNumber);
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
   };
 
   return {
@@ -30,6 +51,6 @@ export const usePagination = (items: ProductWithSelection[], itemsPerPage: numbe
     paginatedItems,
     goToNextPage,
     goToPreviousPage,
-    goToPage,
+    goToPage
   };
 };

@@ -59,20 +59,24 @@ export const transferProductsToBranch = async (
     const transferId = transferData.transfer_id;
     
     // 2. Create transfer details and update stocks
-    for (const product of selectedProducts) {
-      // Create transfer detail record
-      const { error: detailError } = await supabase
-        .from('transfer_stok_detail')
-        .insert({
-          transfer_id: transferId,
-          produk_id: product.id,
-          quantity: product.quantity,
-          retail_price: product.price,
-          cost_price: product.cost_price
-        });
-        
-      if (detailError) throw detailError;
+    // Prepare detail records for batch insert
+    const detailRecords = selectedProducts.map(product => ({
+      transfer_id: transferId,
+      produk_id: product.id,
+      quantity: product.quantity,
+      retail_price: product.price,
+      cost_price: product.cost_price
+    }));
+    
+    // Insert transfer details
+    const { error: detailsError } = await supabase
+      .from('transfer_stok_detail')
+      .insert(detailRecords);
       
+    if (detailsError) throw detailsError;
+    
+    // 3. Process each product
+    for (const product of selectedProducts) {
       // Update stock in source branch (decrease)
       const { error: sourceStockError } = await supabase
         .from('produk')
@@ -109,6 +113,15 @@ export const transferProductsToBranch = async (
         if (updateError) throw updateError;
       } else {
         // Create new product in destination branch
+        const { data: categoryData } = await supabase
+          .from('kategori_produk')
+          .select('kategori_id')
+          .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id)
+          .eq('kategori_name', product.category || 'Umum')
+          .maybeSingle();
+          
+        const kategoriId = categoryData?.kategori_id || 1; // Default to 1 if not found
+        
         const { error: insertError } = await supabase
           .from('produk')
           .insert({
@@ -122,7 +135,7 @@ export const transferProductsToBranch = async (
             barcode: product.barcode,
             unit: product.unit,
             cost_price: product.cost_price,
-            kategori_id: await getKategoriId(product.category, pelakuUsahaData.pelaku_usaha_id)
+            kategori_id: kategoriId
           });
           
         if (insertError) throw insertError;
@@ -135,64 +148,6 @@ export const transferProductsToBranch = async (
     toast(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
     return null;
   }
-};
-
-/**
- * Helper function to get or create a kategori_id
- */
-const getKategoriId = async (
-  kategoriName: string | undefined,
-  pelakuUsahaId: number
-): Promise<number> => {
-  if (!kategoriName) {
-    // Get the default category id
-    const { data: defaultCategory } = await supabase
-      .from('kategori_produk')
-      .select('kategori_id')
-      .eq('pelaku_usaha_id', pelakuUsahaId)
-      .eq('kategori_name', 'Umum')
-      .single();
-      
-    if (defaultCategory) {
-      return defaultCategory.kategori_id;
-    }
-    
-    // If no default category exists, create one
-    const { data: newCategory } = await supabase
-      .from('kategori_produk')
-      .insert({
-        pelaku_usaha_id: pelakuUsahaId,
-        kategori_name: 'Umum'
-      })
-      .select('kategori_id')
-      .single();
-      
-    return newCategory ? newCategory.kategori_id : 1; // Fallback to 1 if all else fails
-  }
-  
-  // Try to find the category
-  const { data: category } = await supabase
-    .from('kategori_produk')
-    .select('kategori_id')
-    .eq('pelaku_usaha_id', pelakuUsahaId)
-    .eq('kategori_name', kategoriName)
-    .single();
-    
-  if (category) {
-    return category.kategori_id;
-  }
-  
-  // Create the category if it doesn't exist
-  const { data: newCategory } = await supabase
-    .from('kategori_produk')
-    .insert({
-      pelaku_usaha_id: pelakuUsahaId,
-      kategori_name: kategoriName
-    })
-    .select('kategori_id')
-    .single();
-    
-  return newCategory ? newCategory.kategori_id : 1; // Fallback to 1 if all else fails
 };
 
 // Export the function for use in useTransferToBranch hook

@@ -1,48 +1,50 @@
 
 import { useState, useEffect } from "react";
-import { ProductWithSelection } from "./useCentralProducts";
+import { ProductWithSelection } from "@/types/pos";
 
-export const usePagination = (products: ProductWithSelection[]) => {
+export const usePagination = (items: ProductWithSelection[], itemsPerPage: number) => {
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [paginatedProducts, setPaginatedProducts] = useState<ProductWithSelection[]>([]);
-  
-  const ITEMS_PER_PAGE = 10;
-  
-  // Calculate total pages
-  const totalPages = Math.ceil(products.length / ITEMS_PER_PAGE);
-  
-  // Update paginated products when products or page changes
+
   useEffect(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    setPaginatedProducts(products.slice(startIndex, endIndex));
-    
-    // If current page is now greater than total pages, reset to page 1
-    if (currentPage > totalPages && totalPages > 0) {
+    if (items.length === 0) {
+      setTotalPages(1);
+      setPaginatedProducts([]);
+      return;
+    }
+
+    const calculatedTotalPages = Math.ceil(items.length / itemsPerPage);
+    setTotalPages(calculatedTotalPages);
+
+    // Reset currentPage if it's beyond the new total pages
+    if (currentPage > calculatedTotalPages) {
       setCurrentPage(1);
     }
-  }, [products, currentPage, totalPages]);
-  
-  // Handle next page
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    setPaginatedProducts(items.slice(startIndex, endIndex));
+  }, [items, currentPage, itemsPerPage]);
+
   const handleNextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(prev => prev + 1);
     }
   };
-  
-  // Handle previous page
+
   const handlePreviousPage = () => {
     if (currentPage > 1) {
       setCurrentPage(prev => prev - 1);
     }
   };
-  
+
   return {
     currentPage,
     totalPages,
     paginatedProducts,
     handleNextPage,
     handlePreviousPage,
-    ITEMS_PER_PAGE
+    ITEMS_PER_PAGE: itemsPerPage
   };
 };

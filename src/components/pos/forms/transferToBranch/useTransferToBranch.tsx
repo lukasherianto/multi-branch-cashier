@@ -9,6 +9,7 @@ import { usePagination } from "./usePagination";
 import { transferToBranchSchema } from "./schema";
 import { transferProductsToBranch, TransferToBranchValues } from "./transferToBranchUtils";
 import { z } from "zod";
+import { ProductWithSelection } from "@/types/pos";
 
 export type TransferFormValues = z.infer<typeof transferToBranchSchema>;
 
@@ -32,8 +33,7 @@ export const useTransferToBranch = () => {
   const form = useForm<TransferFormValues>({
     resolver: zodResolver(transferToBranchSchema),
     defaultValues: {
-      cabang_id_to: branchOptions.length > 0 ? branchOptions[0].value : "",
-      notes: ""
+      cabang_id_to: branchOptions.length > 0 ? branchOptions[0].value : ""
     }
   });
 
@@ -49,15 +49,21 @@ export const useTransferToBranch = () => {
 
   // Define a convenience variable for selected products
   const selectedProducts = filteredProducts.filter(p => p.selected);
+  
+  // Calculate total cost price
+  const totalCostPrice = selectedProducts.reduce(
+    (sum, p) => sum + (p.cost_price * p.quantity), 
+    0
+  );
 
   // Pagination
   const ITEMS_PER_PAGE = 10;
   const {
     currentPage,
     totalPages,
-    paginatedItems,
-    goToNextPage,
-    goToPreviousPage
+    paginatedProducts,
+    handleNextPage,
+    handlePreviousPage
   } = usePagination(
     searchTerm
       ? filteredProducts.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -111,7 +117,7 @@ export const useTransferToBranch = () => {
     products,
     filteredProducts,
     selectedProducts,
-    paginatedItems,
+    paginatedProducts,
     currentPage,
     totalPages,
     loading,
@@ -120,9 +126,15 @@ export const useTransferToBranch = () => {
     handleSearchChange,
     handleProductSelection,
     handleQuantityChange,
-    goToNextPage,
-    goToPreviousPage,
+    handleNextPage,
+    handlePreviousPage,
     onSubmit,
-    ITEMS_PER_PAGE
+    ITEMS_PER_PAGE,
+    isSubmitting: transferring,
+    productsLoading: loading,
+    centralBranch: sortedBranches.length > 0 ? sortedBranches[0] : null,
+    destinationBranches: branchOptions,
+    totalCostPrice,
+    handleSearch: handleSearchChange
   };
 };
