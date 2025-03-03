@@ -621,6 +621,76 @@ export type Database = {
           },
         ]
       }
+      riwayat_transfer_stok: {
+        Row: {
+          cabang_id_from: number | null
+          cabang_id_to: number | null
+          created_at: string
+          harga_satuan: number
+          id: number
+          jumlah_produk: number
+          nama_produk: string
+          nomor_transfer: string
+          produk_id: number | null
+          satuan: string
+          tanggal_transfer: string
+          total_harga: number
+          updated_at: string
+        }
+        Insert: {
+          cabang_id_from?: number | null
+          cabang_id_to?: number | null
+          created_at?: string
+          harga_satuan: number
+          id?: number
+          jumlah_produk: number
+          nama_produk: string
+          nomor_transfer: string
+          produk_id?: number | null
+          satuan: string
+          tanggal_transfer?: string
+          total_harga: number
+          updated_at?: string
+        }
+        Update: {
+          cabang_id_from?: number | null
+          cabang_id_to?: number | null
+          created_at?: string
+          harga_satuan?: number
+          id?: number
+          jumlah_produk?: number
+          nama_produk?: string
+          nomor_transfer?: string
+          produk_id?: number | null
+          satuan?: string
+          tanggal_transfer?: string
+          total_harga?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "riwayat_transfer_stok_cabang_id_from_fkey"
+            columns: ["cabang_id_from"]
+            isOneToOne: false
+            referencedRelation: "cabang"
+            referencedColumns: ["cabang_id"]
+          },
+          {
+            foreignKeyName: "riwayat_transfer_stok_cabang_id_to_fkey"
+            columns: ["cabang_id_to"]
+            isOneToOne: false
+            referencedRelation: "cabang"
+            referencedColumns: ["cabang_id"]
+          },
+          {
+            foreignKeyName: "riwayat_transfer_stok_produk_id_fkey"
+            columns: ["produk_id"]
+            isOneToOne: false
+            referencedRelation: "produk"
+            referencedColumns: ["produk_id"]
+          },
+        ]
+      }
       supplier: {
         Row: {
           alamat: string | null

@@ -8,15 +8,15 @@ import { TransferHeaderData } from "./types";
 
 /**
  * Main function to execute a stock transfer between branches
- * This version directly updates stock in source and destination branches
- * without storing transfer records (since tables were removed)
+ * This version updates stock in source and destination branches
+ * and records transfer history in the riwayat_transfer_stok table
  */
 export async function executeStockTransfer(
   formData: TransferStockFormValues,
   selectedProducts: ProductWithSelection[]
 ): Promise<boolean> {
   try {
-    console.log("Executing direct stock transfer with data:", formData);
+    console.log("Executing stock transfer with data:", formData);
     console.log("Selected products:", selectedProducts);
     
     // Validate the form data
@@ -53,12 +53,31 @@ export async function executeStockTransfer(
       return false;
     }
     
-    // Create log entry in console (we're not storing in DB anymore)
-    logTransferData(
-      formData, 
-      transferProducts, 
-      pelakuUsaha.pelaku_usaha_id
-    );
+    // Generate a transfer number (format: TRF-{timestamp})
+    const transferNumber = `TRF-${Date.now()}`;
+    
+    // Create history entries
+    const historyEntries = transferProducts.map(product => ({
+      nomor_transfer: transferNumber,
+      produk_id: product.produk_id || product.id,
+      nama_produk: product.name,
+      jumlah_produk: product.quantity,
+      harga_satuan: product.price || 0,
+      satuan: product.unit || 'Pcs',
+      total_harga: (product.price || 0) * product.quantity,
+      cabang_id_from: parseInt(formData.cabang_id_from),
+      cabang_id_to: parseInt(formData.cabang_id_to)
+    }));
+    
+    // Save history to database
+    const { error: historyError } = await supabase
+      .from('riwayat_transfer_stok')
+      .insert(historyEntries);
+      
+    if (historyError) {
+      console.error("Error saving transfer history:", historyError);
+      throw new Error("Error saving transfer history");
+    }
     
     // Update stock in source branch (decrease)
     await updateSourceBranchStock(
@@ -77,34 +96,4 @@ export async function executeStockTransfer(
     console.error("Error in executeStockTransfer:", error);
     throw error;
   }
-}
-
-/**
- * Log transfer data to console (replacement for DB storage)
- */
-function logTransferData(
-  formData: TransferStockFormValues,
-  transferProducts: ProductWithSelection[],
-  pelakuUsahaId: number
-): void {
-  // Create a header data object for logging
-  const headerData: TransferHeaderData = {
-    cabang_id_from: parseInt(formData.cabang_id_from),
-    cabang_id_to: parseInt(formData.cabang_id_to),
-    pelaku_usaha_id: pelakuUsahaId,
-    status: "completed",
-    total_items: transferProducts.length,
-    total_quantity: transferProducts.reduce((total, p) => total + p.quantity, 0),
-    notes: formData.notes || ""
-  };
-  
-  console.log("Transfer data:", {
-    header: headerData,
-    details: transferProducts.map(product => ({
-      produk_id: product.produk_id || product.id,
-      quantity: product.quantity,
-      retail_price: product.price || 0,
-      cost_price: product.cost_price || 0
-    }))
-  });
 }
