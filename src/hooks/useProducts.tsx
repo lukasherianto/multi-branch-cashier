@@ -8,9 +8,15 @@ export const useProducts = () => {
   const { toast } = useToast();
   const [products, setProducts] = useState<CartItem[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   const fetchProducts = async (branchId?: string | null) => {
     try {
+      setLoading(true);
+      setError(null);
+      console.log(`Fetching products for branch ID: ${branchId || 'all'}`);
+      
       const { data: pelakuUsahaData } = await supabase
         .from('pelaku_usaha')
         .select('*')
@@ -66,11 +72,14 @@ export const useProducts = () => {
       }
     } catch (error) {
       console.error('Error fetching products:', error);
+      setError(error instanceof Error ? error : new Error('Unknown error fetching products'));
       toast({
         variant: "destructive",
         title: "Error",
         description: "Gagal mengambil data produk",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -103,5 +112,12 @@ export const useProducts = () => {
     fetchProducts();
   }, []);
 
-  return { products, filteredProducts, handleSearch, fetchProducts };
+  return { 
+    products, 
+    filteredProducts, 
+    handleSearch, 
+    fetchProducts,
+    loading,
+    error
+  };
 };

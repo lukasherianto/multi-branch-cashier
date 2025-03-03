@@ -17,21 +17,21 @@ export function useBranchSelection(form: UseFormReturn<TransferStockFormValues>)
 
   // Set appropriate source and destination branches based on the transfer direction
   useEffect(() => {
-    if (centralBranch) {
-      // When direction changes, reset the form values
-      if (fromCentralToBranch) {
-        // Central to Branch: Source is Central, Destination are other branches
-        form.setValue("cabang_id_from", centralBranch.cabang_id.toString());
-        form.setValue("cabang_id_to", "");
-        setSourceBranchId(centralBranch.cabang_id.toString());
-        console.log("Direction changed to central→branch, source ID:", centralBranch.cabang_id.toString());
-      } else {
-        // Branch to Central: Source is empty (to be chosen), Destination is Central
-        form.setValue("cabang_id_from", "");
-        form.setValue("cabang_id_to", centralBranch.cabang_id.toString());
-        setSourceBranchId(null);
-        console.log("Direction changed to branch→central, source ID reset to null");
-      }
+    if (!centralBranch) return;
+    
+    // When direction changes, reset the form values
+    if (fromCentralToBranch) {
+      // Central to Branch: Source is Central, Destination are other branches
+      form.setValue("cabang_id_from", centralBranch.cabang_id.toString());
+      form.setValue("cabang_id_to", "");
+      setSourceBranchId(centralBranch.cabang_id.toString());
+      console.log("Direction changed to central→branch, source ID:", centralBranch.cabang_id.toString());
+    } else {
+      // Branch to Central: Source is empty (to be chosen), Destination is Central
+      form.setValue("cabang_id_from", "");
+      form.setValue("cabang_id_to", centralBranch.cabang_id.toString());
+      setSourceBranchId(null);
+      console.log("Direction changed to branch→central, source ID reset to null");
     }
   }, [centralBranch, fromCentralToBranch, form]);
 
@@ -53,6 +53,16 @@ export function useBranchSelection(form: UseFormReturn<TransferStockFormValues>)
       products: []
     });
   };
+
+  // Auto-select source branch if there's only one option (for branch to central)
+  useEffect(() => {
+    if (!fromCentralToBranch && sourceBranches.length === 1) {
+      const autoSelectedBranchId = sourceBranches[0].cabang_id.toString();
+      form.setValue("cabang_id_from", autoSelectedBranchId);
+      setSourceBranchId(autoSelectedBranchId);
+      console.log("Auto-selected source branch:", autoSelectedBranchId);
+    }
+  }, [fromCentralToBranch, sourceBranches, form]);
 
   // Update sourceBranchId when form values change
   useEffect(() => {
