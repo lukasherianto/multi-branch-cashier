@@ -38,6 +38,27 @@ const PrintPreview = () => {
     transactionId
   } = location.state || {};
   
+  // Initialize receipt data early to ensure hooks order is consistent
+  const receiptData = {
+    items: items || [],
+    total: total || 0,
+    pointsUsed: pointsUsed || 0,
+    pointsEarned: pointsEarned || 0,
+    businessName: businessName || (pelakuUsaha?.business_name || ""),
+    branchName: branchName || "",
+    customerName: customerName || null,
+    whatsappNumber: whatsappNumber || null,
+    paymentMethod: paymentMethod || null,
+    transactionId: transactionId || null,
+    logoUrl: businessDetails?.logo_url || null,
+    instagramUrl: businessDetails?.instagram_url || null,
+    facebookUrl: businessDetails?.facebook_url || null,
+    businessWhatsapp: businessDetails?.contact_whatsapp || null
+  };
+  
+  // Use the receipt hook for functionality (before useEffect)
+  const { invoiceNumber, handlePrint, handleWhatsApp, handleBack, handleDownloadPDF } = useReceipt(receiptData);
+  
   useEffect(() => {
     // If we already have the pelaku_usaha details from auth context, use that
     if (pelakuUsaha) {
@@ -89,26 +110,6 @@ const PrintPreview = () => {
       </div>
     );
   }
-
-  // Use the receipt hook for functionality
-  const receiptData = {
-    items,
-    total,
-    pointsUsed,
-    pointsEarned,
-    businessName,
-    branchName,
-    customerName,
-    whatsappNumber,
-    paymentMethod,
-    transactionId,
-    logoUrl: businessDetails?.logo_url || null,
-    instagramUrl: businessDetails?.instagram_url || null,
-    facebookUrl: businessDetails?.facebook_url || null,
-    businessWhatsapp: businessDetails?.contact_whatsapp || null
-  };
-  
-  const { invoiceNumber, handlePrint, handleWhatsApp, handleBack, handleDownloadPDF } = useReceipt(receiptData);
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
