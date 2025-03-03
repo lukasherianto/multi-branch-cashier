@@ -6,8 +6,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { format } from "date-fns";
 import { id } from 'date-fns/locale';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info, AlertTriangle } from "lucide-react";
+import { Info, AlertTriangle, Filter } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Transfer {
   transfer_id: number;
@@ -26,7 +28,8 @@ interface Transfer {
 
 const StockTransfer = () => {
   const [renderError, setRenderError] = useState<Error | null>(null);
-
+  const [branchFilter, setBranchFilter] = useState<string>("all");
+  
   // Add error boundary to catch any rendering errors
   useEffect(() => {
     try {
@@ -136,6 +139,50 @@ const StockTransfer = () => {
       staleTime: 30000,
     });
 
+    // Query to get branches for the filter
+    const { data: branches = [] } = useQuery({
+      queryKey: ['branches-for-filter'],
+      queryFn: async () => {
+        const userResponse = await supabase.auth.getUser();
+        
+        if (!userResponse.data.user) {
+          return [];
+        }
+        
+        const { data: pelakuUsaha } = await supabase
+          .from('pelaku_usaha')
+          .select('pelaku_usaha_id')
+          .eq('user_id', userResponse.data.user.id)
+          .maybeSingle();
+
+        if (!pelakuUsaha) {
+          return [];
+        }
+        
+        const { data } = await supabase
+          .from('cabang')
+          .select('cabang_id, branch_name')
+          .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id)
+          .order('branch_name', { ascending: true });
+          
+        return data || [];
+      },
+      retry: 1,
+      staleTime: 60000,
+    });
+
+    // Filter transfers based on selected branch
+    const filteredTransfers = transfers.filter(transfer => {
+      if (branchFilter === "all") {
+        return true;
+      }
+      
+      return (
+        transfer.cabang_from?.branch_name === branchFilter ||
+        transfer.cabang_to?.branch_name === branchFilter
+      );
+    });
+
     // Enhanced loading state with more visible UI
     if (isLoading) {
       return (
@@ -186,6 +233,28 @@ const StockTransfer = () => {
 
         <div>
           <h3 className="text-lg font-semibold mb-4">Riwayat Transfer</h3>
+          
+          <div className="flex items-center justify-end mb-4 gap-2">
+            <Filter className="h-4 w-4 text-gray-500" />
+            <span className="text-sm text-gray-700">Filter cabang:</span>
+            <Select 
+              value={branchFilter} 
+              onValueChange={setBranchFilter}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Pilih cabang" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Cabang</SelectItem>
+                {branches.map((branch) => (
+                  <SelectItem key={branch.cabang_id} value={branch.branch_name}>
+                    {branch.branch_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
           <div className="rounded-md border">
             <Table>
               <TableHeader>
@@ -198,8 +267,8 @@ const StockTransfer = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {transfers && transfers.length > 0 ? (
-                  transfers.map((transfer) => (
+                {filteredTransfers && filteredTransfers.length > 0 ? (
+                  filteredTransfers.map((transfer) => (
                     <TableRow key={transfer.transfer_id}>
                       <TableCell>
                         {format(new Date(transfer.transfer_date), 'PPpp', { locale: id })}
@@ -212,8 +281,10 @@ const StockTransfer = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground">
-                      Belum ada riwayat transfer
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-4">
+                      {branchFilter !== "all" 
+                        ? `Belum ada riwayat transfer untuk cabang ${branchFilter}`
+                        : "Belum ada riwayat transfer"}
                     </TableCell>
                   </TableRow>
                 )}
