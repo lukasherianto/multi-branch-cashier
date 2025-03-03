@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductForm } from "./forms/ProductForm";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ProductManagementProps {
   onSuccess?: () => void;
@@ -24,6 +26,7 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [categories, setCategories] = useState<Array<{ kategori_id: number; kategori_name: string }>>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { cabang } = useAuth();
 
   useEffect(() => {
     const checkAuthAndFetchCategories = async () => {
@@ -155,6 +158,24 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
         return;
       }
 
+      // Get the main branch if cabang is not available
+      let branchId = cabang?.cabang_id;
+      if (!branchId) {
+        const { data: mainBranch } = await supabase
+          .from('cabang')
+          .select('cabang_id')
+          .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id)
+          .order('cabang_id', { ascending: true })
+          .limit(1)
+          .single();
+          
+        if (mainBranch) {
+          branchId = mainBranch.cabang_id;
+        } else {
+          throw new Error("Cabang tidak ditemukan");
+        }
+      }
+
       const { error } = await supabase
         .from('produk')
         .insert({
@@ -168,6 +189,7 @@ export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
           stock: parseInt(formData.stock),
           barcode: formData.barcode || null,
           unit: formData.unit,
+          cabang_id: branchId
         });
 
       if (error) throw error;

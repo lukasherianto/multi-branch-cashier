@@ -10,7 +10,7 @@ export const useProductData = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchProducts = async (branchId?: string | null) => {
+  const fetchProducts = async (branchId?: number | null) => {
     try {
       setLoading(true);
       setError(null);
