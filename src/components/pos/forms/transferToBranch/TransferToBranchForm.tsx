@@ -20,7 +20,6 @@ export function TransferToBranchForm() {
       isSubmitting,
       branchesLoading,
       branches,
-      destinationBranch,
       destinationBranches,
       selectedProducts,
       paginatedProducts,

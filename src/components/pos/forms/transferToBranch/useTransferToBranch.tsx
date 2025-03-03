@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { transferToBranchSchema, type TransferToBranchFormValues } from "./schema";
 import { useBranches } from "../transferStock/hooks/useBranches";
 import { useCentralProducts } from "./useCentralProducts";
-import { usePagination } from "../transferStock/hooks/usePagination";
+import { usePagination } from "./usePagination";
 import { useToast } from "@/hooks/use-toast";
 import { useTransferToBranchSubmit } from "./transferToBranchUtils";
 
