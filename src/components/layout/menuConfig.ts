@@ -1,4 +1,3 @@
-
 import {
   LayoutDashboard,
   ListChecks,
@@ -8,11 +7,10 @@ import {
   CalendarDays,
   Scale,
   Wallet,
-  FileBarGraph,
+  FileText,
   Settings,
   MoveRight,
 } from 'lucide-react';
-import React from 'react';
 
 const menuConfig = [
   {
@@ -85,7 +83,7 @@ const menuConfig = [
       },
       {
         title: 'Laporan',
-        icon: FileBarGraph,
+        icon: FileText,
         path: '/reports',
       },
     ],

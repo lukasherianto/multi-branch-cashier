@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { AppHeader } from "./layout/AppHeader";
 import { MenuContent } from "./layout/MenuContent";
-import { menuItems } from "./layout/menuConfig";
+import menuConfig from "./layout/menuConfig";
 
 const Layout = () => {
   const location = useLocation();
@@ -53,13 +52,14 @@ const Layout = () => {
   };
 
   useEffect(() => {
-    const parentMenu = menuItems.find(item => 
-      item.subItems?.some(sub => location.pathname === sub.path)
-    );
-    if (parentMenu && !expandedMenus.includes(parentMenu.path)) {
-      setExpandedMenus(prev => [...prev, parentMenu.path]);
+    for (const section of menuConfig) {
+      const foundItem = section.items.find(item => location.pathname === item.path);
+      if (foundItem && !expandedMenus.includes(foundItem.path)) {
+        setExpandedMenus(prev => [...prev, foundItem.path]);
+        break;
+      }
     }
-  }, [location.pathname]);
+  }, [location.pathname, expandedMenus]);
 
   if (isMobile) {
     return (
