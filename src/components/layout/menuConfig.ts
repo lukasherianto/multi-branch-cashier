@@ -1,3 +1,4 @@
+
 import {
   LayoutDashboard,
   ListChecks,
@@ -11,6 +12,7 @@ import {
   Settings,
   MoveRight,
 } from 'lucide-react';
+import React from 'react';
 
 const menuConfig = [
   {
@@ -18,7 +20,7 @@ const menuConfig = [
     items: [
       {
         title: 'Ringkasan',
-        icon: <LayoutDashboard size={18} />,
+        icon: LayoutDashboard,
         path: '/',
       },
     ],
@@ -28,22 +30,22 @@ const menuConfig = [
     items: [
       {
         title: 'Daftar Produk',
-        icon: <ListChecks size={18} />,
+        icon: ListChecks,
         path: '/products',
       },
       {
         title: 'Kategori Produk',
-        icon: <FolderOpen size={18} />,
+        icon: FolderOpen,
         path: '/products/categories',
       },
       {
         title: 'Transfer Stok',
-        icon: <ArrowLeftRight size={18} />,
+        icon: ArrowLeftRight,
         path: '/products/transfer',
       },
       {
         title: 'Transfer ke Cabang',
-        icon: <MoveRight size={18} />,
+        icon: MoveRight,
         path: '/products/transfer-to-branch',
       },
     ],
@@ -53,17 +55,17 @@ const menuConfig = [
     items: [
       {
         title: 'POS',
-        icon: <Scale size={18} />,
+        icon: Scale,
         path: '/pos',
       },
       {
         title: 'Riwayat Transaksi',
-        icon: <ListChecks size={18} />,
+        icon: ListChecks,
         path: '/history',
       },
       {
         title: 'Retur',
-        icon: <ArrowLeftRight size={18} />,
+        icon: ArrowLeftRight,
         path: '/returns',
       },
     ],
@@ -73,17 +75,17 @@ const menuConfig = [
     items: [
       {
         title: 'Kas',
-        icon: <Wallet size={18} />,
+        icon: Wallet,
         path: '/kas',
       },
       {
         title: 'Pembelian',
-        icon: <Wallet size={18} />,
+        icon: Wallet,
         path: '/kas/purchases',
       },
       {
         title: 'Laporan',
-        icon: <FileBarGraph size={18} />,
+        icon: FileBarGraph,
         path: '/reports',
       },
     ],
@@ -93,17 +95,17 @@ const menuConfig = [
     items: [
       {
         title: 'Cabang',
-        icon: <LayoutDashboard size={18} />,
+        icon: LayoutDashboard,
         path: '/branches',
       },
       {
         title: 'Absensi',
-        icon: <CalendarDays size={18} />,
+        icon: CalendarDays,
         path: '/attendance',
       },
       {
         title: 'Data Member',
-        icon: <Users size={18} />,
+        icon: Users,
         path: '/members',
       },
     ],
@@ -113,7 +115,7 @@ const menuConfig = [
     items: [
       {
         title: 'Pengaturan',
-        icon: <Settings size={18} />,
+        icon: Settings,
         path: '/settings',
       },
     ],
