@@ -86,7 +86,7 @@ export function TransferStockForm() {
           />
 
           <BranchSelector 
-            form={form} 
+            form={form}
             sourceBranches={sourceBranches} 
             destinationBranches={destinationBranches} 
           />
@@ -99,7 +99,6 @@ export function TransferStockForm() {
             products={paginatedProducts}
             onSelectProduct={handleProductSelection}
             onQuantityChange={handleQuantityChange}
-            loading={false}
           />
 
           <Pagination 

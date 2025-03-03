@@ -95,20 +95,3 @@ export const useProducts = (sourceBranchId?: string) => {
     setFilteredProducts 
   };
 };
-
-export type ProductWithSelection = {
-  id: number;
-  produk_id: number;
-  name: string;
-  price: number;
-  quantity: number;
-  stock: number;
-  cost_price: number;
-  cabang_id: number;
-  member_price_1?: number | null;
-  member_price_2?: number | null;
-  category?: string;
-  barcode?: string;
-  unit: string;
-  selected: boolean;
-};

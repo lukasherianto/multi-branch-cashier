@@ -102,7 +102,6 @@ export const useCentralProducts = (centralBranchId: number | null) => {
   };
 
   return { 
-    products, 
     filteredProducts, 
     loading, 
     handleSearch,

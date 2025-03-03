@@ -47,7 +47,7 @@ export const executeStockTransfer = async (
     }
     
     // 1. Create transfer record
-    const { data: transferData, error: transferError } = await supabase
+    const { data: transferRecord, error: transferError } = await supabase
       .from('transfer_stok')
       .insert({
         cabang_id_from: parseInt(data.cabang_id_from),
@@ -62,9 +62,9 @@ export const executeStockTransfer = async (
       .single();
       
     if (transferError) throw transferError;
-    if (!transferData) throw new Error("Failed to create transfer record");
+    if (!transferRecord) throw new Error("Failed to create transfer record");
     
-    const transferId = transferData.transfer_id;
+    const transferId = transferRecord.transfer_id;
     
     // 2. Create transfer details
     // Prepare detail records array for batch insert

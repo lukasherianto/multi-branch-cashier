@@ -12,6 +12,17 @@ export const executeTransferToBranch = async (
   centralBranchId: number
 ): Promise<number | null> => {
   try {
+    // Validate data
+    if (!data.cabang_id_to) {
+      toast("Pilih cabang tujuan terlebih dahulu");
+      return null;
+    }
+
+    if (selectedProducts.length === 0) {
+      toast("Pilih minimal satu produk untuk ditransfer");
+      return null;
+    }
+
     // Get user's pelaku_usaha_id
     const { data: userData } = await supabase.auth.getUser();
     const { data: pelakuUsahaData } = await supabase
@@ -24,16 +35,8 @@ export const executeTransferToBranch = async (
       throw new Error("Pelaku usaha data not found");
     }
     
-    // Validate products have enough stock
-    for (const product of selectedProducts) {
-      if (product.quantity > product.stock) {
-        toast(`Stok ${product.name} tidak cukup (${product.stock} tersedia)`);
-        return null;
-      }
-    }
-    
     // 1. Create transfer record
-    const { data: transferData, error: transferError } = await supabase
+    const { data: transferRecord, error: transferError } = await supabase
       .from('transfer_stok')
       .insert({
         cabang_id_from: centralBranchId,
@@ -48,9 +51,9 @@ export const executeTransferToBranch = async (
       .single();
       
     if (transferError) throw transferError;
-    if (!transferData) throw new Error("Failed to create transfer record");
+    if (!transferRecord) throw new Error("Failed to create transfer record");
     
-    const transferId = transferData.transfer_id;
+    const transferId = transferRecord.transfer_id;
     
     // 2. Create transfer details
     const detailRecords = selectedProducts.map(product => ({
@@ -61,6 +64,7 @@ export const executeTransferToBranch = async (
       cost_price: product.cost_price
     }));
     
+    // Insert transfer details
     const { error: detailsError } = await supabase
       .from('transfer_stok_detail')
       .insert(detailRecords);
@@ -89,7 +93,7 @@ export const executeTransferToBranch = async (
         .eq('product_name', product.name)
         .maybeSingle();
         
-      if (fetchError && fetchError.code !== 'PGRST116') {
+      if (fetchError && fetchError.code !== 'PGRST116') { // Not found is not an error here
         throw fetchError;
       }
       
@@ -112,7 +116,7 @@ export const executeTransferToBranch = async (
           .eq('kategori_name', product.category || 'Umum')
           .maybeSingle();
           
-        const kategoriId = categoryData?.kategori_id || 1;
+        const kategoriId = categoryData?.kategori_id || 1; // Default to 1 if not found
         
         const { error: insertError } = await supabase
           .from('produk')
@@ -140,10 +144,4 @@ export const executeTransferToBranch = async (
     toast(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
     return null;
   }
-};
-
-export const useTransferToBranchSubmit = () => {
-  return {
-    executeTransferToBranch
-  };
 };

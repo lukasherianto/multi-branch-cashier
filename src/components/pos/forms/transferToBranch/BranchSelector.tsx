@@ -1,18 +1,17 @@
 
+import React from 'react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UseFormReturn } from "react-hook-form";
-import { TransferToBranchFormValues } from "./schema";
+import { UseFormReturn } from 'react-hook-form';
+import { TransferToBranchValues } from './schema';
 
-interface BranchSelectorProps {
-  form: UseFormReturn<TransferToBranchFormValues>;
-  destinationBranches: Array<{
-    cabang_id: number;
-    branch_name: string;
-  }>;
+export interface BranchSelectorProps {
+  form: UseFormReturn<TransferToBranchValues, any>;
+  branchOptions: { value: string; label: string }[];
+  loading: boolean;
 }
 
-export function BranchSelector({ form, destinationBranches }: BranchSelectorProps) {
+export const BranchSelector: React.FC<BranchSelectorProps> = ({ form, branchOptions, loading }) => {
   return (
     <FormField
       control={form.control}
@@ -20,29 +19,29 @@ export function BranchSelector({ form, destinationBranches }: BranchSelectorProp
       render={({ field }) => (
         <FormItem>
           <FormLabel>Cabang Tujuan</FormLabel>
-          <Select
-            onValueChange={field.onChange}
-            defaultValue={field.value}
-          >
-            <FormControl>
-              <SelectTrigger>
-                <SelectValue placeholder="Pilih Cabang Tujuan" />
+          <FormControl>
+            <Select
+              disabled={loading}
+              onValueChange={field.onChange}
+              value={field.value}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Pilih cabang tujuan" />
               </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-              {destinationBranches.map((branch) => (
-                <SelectItem
-                  key={branch.cabang_id}
-                  value={branch.cabang_id.toString()}
-                >
-                  {branch.branch_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+              <SelectContent>
+                {branchOptions.map((branch) => (
+                  <SelectItem key={branch.value} value={branch.value}>
+                    {branch.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </FormControl>
           <FormMessage />
         </FormItem>
       )}
     />
   );
-}
+};
+
+export default BranchSelector;
