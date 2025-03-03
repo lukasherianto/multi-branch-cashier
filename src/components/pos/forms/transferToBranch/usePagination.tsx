@@ -2,36 +2,37 @@
 import { useState, useEffect } from "react";
 import { ProductWithSelection } from "@/types/pos";
 
-const ITEMS_PER_PAGE = 10;
-
-export const usePagination = (items: ProductWithSelection[]) => {
+export const usePagination = (products: ProductWithSelection[]) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [paginatedProducts, setPaginatedProducts] = useState<ProductWithSelection[]>([]);
-  
-  // Calculate total pages
-  const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
-  
-  // Update paginated products when items or currentPage changes
+  const ITEMS_PER_PAGE = 10;
+
   useEffect(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const endIndex = startIndex + ITEMS_PER_PAGE;
-    setPaginatedProducts(items.slice(startIndex, endIndex));
-  }, [items, currentPage]);
-  
-  // Go to next page
+    setPaginatedProducts(products.slice(startIndex, endIndex));
+    
+    // Reset to page 1 if products change and current page is out of bounds
+    const totalPages = Math.ceil(products.length / ITEMS_PER_PAGE);
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [products, currentPage]);
+
+  const totalPages = Math.max(1, Math.ceil(products.length / ITEMS_PER_PAGE));
+
   const handleNextPage = () => {
     if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
+      setCurrentPage(prev => prev + 1);
     }
   };
-  
-  // Go to previous page
+
   const handlePreviousPage = () => {
     if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+      setCurrentPage(prev => prev - 1);
     }
   };
-  
+
   return {
     currentPage,
     totalPages,

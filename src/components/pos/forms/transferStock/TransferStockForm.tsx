@@ -1,16 +1,16 @@
 
 import { Form } from "@/components/ui/form";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ProductSearch } from "@/components/pos/ProductSearch";
 import { useTransferStock } from "./useTransferStock";
 import { ProductTable } from "./ProductTable";
 import { Pagination } from "./Pagination";
 import { useState } from "react";
-import { AlertTriangle, Info } from "lucide-react";
 import { DirectionToggle } from "./components/DirectionToggle";
 import { BranchSelector } from "./components/BranchSelector";
 import { TransferSubmitButton } from "./components/TransferSubmitButton";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ProductSearch } from "@/components/pos/ProductSearch";
+import { Info } from "lucide-react";
 
 export function TransferStockForm() {
   const [renderError, setRenderError] = useState<Error | null>(null);
@@ -20,7 +20,7 @@ export function TransferStockForm() {
       form,
       isSubmitting,
       branchesLoading,
-      branches,
+      cabangList,
       centralBranch,
       sourceBranches,
       destinationBranches,
@@ -54,11 +54,10 @@ export function TransferStockForm() {
     }
 
     // If branches array is undefined or empty
-    if (!branches || branches.length === 0) {
+    if (!cabangList || cabangList.length === 0) {
       return (
         <Alert>
           <Info className="h-4 w-4" />
-          <AlertTitle>Informasi</AlertTitle>
           <AlertDescription>
             Tidak ada cabang yang tersedia. Silakan tambahkan cabang terlebih dahulu di halaman Pengaturan.
           </AlertDescription>
@@ -66,7 +65,7 @@ export function TransferStockForm() {
       );
     }
 
-    if (branches.length < 2) {
+    if (cabangList.length < 2) {
       return (
         <Alert variant="destructive">
           <AlertDescription>
@@ -97,9 +96,10 @@ export function TransferStockForm() {
           </div>
 
           <ProductTable 
-            paginatedProducts={paginatedProducts}
-            handleProductSelection={handleProductSelection}
-            handleQuantityChange={handleQuantityChange}
+            products={paginatedProducts}
+            onSelectProduct={handleProductSelection}
+            onQuantityChange={handleQuantityChange}
+            loading={false}
           />
 
           <Pagination 

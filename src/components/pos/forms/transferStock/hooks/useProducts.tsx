@@ -3,26 +3,21 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductWithSelection } from "@/types/pos";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 export const useProducts = (sourceBranchId?: string) => {
+  const { toast } = useToast();
+  const { pelakuUsaha } = useAuth();
   const [products, setProducts] = useState<ProductWithSelection[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<ProductWithSelection[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { pelakuUsahaId } = useAuth();
+  const [loading, setLoading] = useState(false);
 
-  // Fetch products for a specific branch
   useEffect(() => {
-    const fetchBranchProducts = async () => {
-      if (!sourceBranchId || !pelakuUsahaId) {
-        setProducts([]);
-        setFilteredProducts([]);
-        setLoading(false);
-        return;
-      }
-      
+    const fetchProducts = async () => {
+      if (!sourceBranchId || !pelakuUsaha?.pelaku_usaha_id) return;
+
+      setLoading(true);
       try {
-        setLoading(true);
-        
         const { data, error } = await supabase
           .from('produk')
           .select(`
@@ -40,43 +35,45 @@ export const useProducts = (sourceBranchId?: string) => {
               kategori_name
             )
           `)
-          .eq('pelaku_usaha_id', pelakuUsahaId)
-          .eq('cabang_id', parseInt(sourceBranchId))
-          .gt('stock', 0); // Only products with stock > 0
-          
+          .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id)
+          .eq('cabang_id', parseInt(sourceBranchId));
+
         if (error) throw error;
-        
-        if (data) {
-          const mappedProducts: ProductWithSelection[] = data.map(product => ({
-            id: product.produk_id,
-            name: product.product_name,
-            price: product.retail_price,
-            member_price_1: product.member_price_1,
-            member_price_2: product.member_price_2,
-            quantity: 1,
-            category: product.kategori_produk?.kategori_name,
-            stock: product.stock,
-            barcode: product.barcode || "",
-            unit: product.unit,
-            cost_price: product.cost_price,
-            cabang_id: product.cabang_id,
-            selected: false
-          }));
-          
-          setProducts(mappedProducts);
-          setFilteredProducts(mappedProducts);
-        }
+
+        const mappedProducts = (data || []).map(product => ({
+          id: product.produk_id,
+          produk_id: product.produk_id,
+          name: product.product_name,
+          price: product.retail_price,
+          member_price_1: product.member_price_1,
+          member_price_2: product.member_price_2,
+          quantity: 1,
+          category: product.kategori_produk?.kategori_name,
+          stock: product.stock,
+          barcode: product.barcode,
+          unit: product.unit,
+          cost_price: product.cost_price,
+          cabang_id: product.cabang_id,
+          selected: false
+        }));
+
+        setProducts(mappedProducts);
+        setFilteredProducts(mappedProducts);
       } catch (error) {
-        console.error("Error fetching branch products:", error);
+        console.error('Error fetching products:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Gagal mengambil data produk",
+        });
       } finally {
         setLoading(false);
       }
     };
-    
-    fetchBranchProducts();
-  }, [sourceBranchId, pelakuUsahaId]);
 
-  // Search products
+    fetchProducts();
+  }, [sourceBranchId, pelakuUsaha, toast]);
+
   const handleSearch = (searchTerm: string) => {
     if (!searchTerm.trim()) {
       setFilteredProducts(products);
@@ -85,17 +82,33 @@ export const useProducts = (sourceBranchId?: string) => {
 
     const filtered = products.filter(product => 
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (product.barcode && product.barcode.includes(searchTerm)) ||
-      (product.category && product.category.toLowerCase().includes(searchTerm.toLowerCase()))
+      product.barcode?.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredProducts(filtered);
   };
 
-  return {
-    products,
-    filteredProducts,
-    loading,
+  return { 
+    products, 
+    filteredProducts, 
+    loading, 
     handleSearch,
-    setFilteredProducts
+    setFilteredProducts 
   };
+};
+
+export type ProductWithSelection = {
+  id: number;
+  produk_id: number;
+  name: string;
+  price: number;
+  quantity: number;
+  stock: number;
+  cost_price: number;
+  cabang_id: number;
+  member_price_1?: number | null;
+  member_price_2?: number | null;
+  category?: string;
+  barcode?: string;
+  unit: string;
+  selected: boolean;
 };

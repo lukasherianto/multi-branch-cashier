@@ -56,8 +56,7 @@ export const executeStockTransfer = async (
         status: 'completed',
         total_items: selectedProducts.length,
         total_quantity: selectedProducts.reduce((sum, p) => sum + p.quantity, 0),
-        notes: data.notes || 'Transfer Stok Antar Cabang',
-        // We no longer need to specify produk_id and quantity here as they go into detail
+        notes: data.notes || 'Transfer Stok Antar Cabang'
       })
       .select('transfer_id')
       .single();
@@ -71,7 +70,7 @@ export const executeStockTransfer = async (
     // Prepare detail records array for batch insert
     const detailRecords = selectedProducts.map(product => ({
       transfer_id: transferId,
-      produk_id: product.id,
+      produk_id: product.produk_id,
       quantity: product.quantity,
       retail_price: product.price,
       cost_price: product.cost_price
@@ -92,7 +91,7 @@ export const executeStockTransfer = async (
         .update({ 
           stock: product.stock - product.quantity 
         })
-        .eq('produk_id', product.id)
+        .eq('produk_id', product.produk_id)
         .eq('cabang_id', parseInt(data.cabang_id_from));
         
       if (sourceStockError) throw sourceStockError;

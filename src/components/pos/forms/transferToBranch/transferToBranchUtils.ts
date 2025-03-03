@@ -4,30 +4,7 @@ import { ProductWithSelection, TransferToBranchValues } from "@/types/pos";
 import { toast } from "sonner";
 
 /**
- * Validates if the selected products have enough stock for transfer
- */
-export const validateStockForTransfer = async (
-  selectedProducts: ProductWithSelection[],
-  centralBranchId: number
-): Promise<boolean> => {
-  try {
-    // Check each product for sufficient stock
-    for (const product of selectedProducts) {
-      if (product.quantity > product.stock) {
-        toast(`Stok ${product.name} tidak cukup (${product.stock} tersedia)`);
-        return false;
-      }
-    }
-    return true;
-  } catch (error) {
-    console.error("Error validating stock:", error);
-    toast(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
-    return false;
-  }
-};
-
-/**
- * Executes the stock transfer from central to branch operation
+ * Executes the stock transfer operation from central to branch
  */
 export const executeTransferToBranch = async (
   data: TransferToBranchValues,
@@ -45,6 +22,14 @@ export const executeTransferToBranch = async (
       
     if (!pelakuUsahaData) {
       throw new Error("Pelaku usaha data not found");
+    }
+    
+    // Validate products have enough stock
+    for (const product of selectedProducts) {
+      if (product.quantity > product.stock) {
+        toast(`Stok ${product.name} tidak cukup (${product.stock} tersedia)`);
+        return null;
+      }
     }
     
     // 1. Create transfer record
@@ -68,16 +53,14 @@ export const executeTransferToBranch = async (
     const transferId = transferData.transfer_id;
     
     // 2. Create transfer details
-    // Prepare detail records array for batch insert
     const detailRecords = selectedProducts.map(product => ({
       transfer_id: transferId,
-      produk_id: product.id,
+      produk_id: product.produk_id,
       quantity: product.quantity,
       retail_price: product.price,
       cost_price: product.cost_price
     }));
     
-    // Insert transfer details
     const { error: detailsError } = await supabase
       .from('transfer_stok_detail')
       .insert(detailRecords);
@@ -86,13 +69,13 @@ export const executeTransferToBranch = async (
     
     // 3. Update source and destination branch stocks
     for (const product of selectedProducts) {
-      // Update stock in central branch (decrease)
+      // Update stock in source branch (decrease)
       const { error: sourceStockError } = await supabase
         .from('produk')
         .update({ 
           stock: product.stock - product.quantity 
         })
-        .eq('produk_id', product.id)
+        .eq('produk_id', product.produk_id)
         .eq('cabang_id', centralBranchId);
         
       if (sourceStockError) throw sourceStockError;
@@ -106,7 +89,7 @@ export const executeTransferToBranch = async (
         .eq('product_name', product.name)
         .maybeSingle();
         
-      if (fetchError && fetchError.code !== 'PGRST116') { // Not found is not an error here
+      if (fetchError && fetchError.code !== 'PGRST116') {
         throw fetchError;
       }
       
@@ -129,7 +112,7 @@ export const executeTransferToBranch = async (
           .eq('kategori_name', product.category || 'Umum')
           .maybeSingle();
           
-        const kategoriId = categoryData?.kategori_id || 1; // Default to 1 if not found
+        const kategoriId = categoryData?.kategori_id || 1;
         
         const { error: insertError } = await supabase
           .from('produk')
@@ -159,14 +142,8 @@ export const executeTransferToBranch = async (
   }
 };
 
-// Export the submit function
-export const useTransferToBranchSubmit = (centralBranchId: number) => {
-  return async (data: TransferToBranchValues, selectedProducts: ProductWithSelection[]) => {
-    // Validate and execute the transfer
-    const isValid = await validateStockForTransfer(selectedProducts, centralBranchId);
-    if (!isValid) return null;
-    
-    const transferId = await executeTransferToBranch(data, selectedProducts, centralBranchId);
-    return transferId;
+export const useTransferToBranchSubmit = () => {
+  return {
+    executeTransferToBranch
   };
 };

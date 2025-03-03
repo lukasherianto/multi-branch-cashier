@@ -2,13 +2,13 @@
 import { Form } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProductTable } from "./ProductTable";
-import { TransferFilter } from "../transferStock/components/TransferFilter";
 import { Pagination } from "../transferStock/Pagination";
 import { TransferSubmitButton } from "./TransferSubmitButton";
 import { BranchSelector } from "./BranchSelector";
 import { Textarea } from "@/components/ui/textarea";
 import { FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { useTransferToBranch } from "./useTransferToBranch";
+import { ProductSearch } from "@/components/pos/ProductSearch";
 
 export const TransferToBranchForm = () => {
   const {
@@ -25,6 +25,7 @@ export const TransferToBranchForm = () => {
     handleSearch,
     currentPage,
     totalPages,
+    totalItems,
     handleNextPage,
     handlePreviousPage,
     ITEMS_PER_PAGE,
@@ -47,15 +48,16 @@ export const TransferToBranchForm = () => {
             {/* Branch Selection */}
             <div className="grid grid-cols-1 gap-6">
               <BranchSelector
-                control={form.control}
-                branches={destinationBranches}
+                form={form}
                 branchOptions={branchOptions}
                 loading={branchesLoading}
               />
             </div>
             
             {/* Product Filter */}
-            <TransferFilter onSearch={handleSearch} />
+            <div className="mb-4">
+              <ProductSearch onSearch={handleSearch} />
+            </div>
             
             {/* Product Table */}
             <ProductTable
@@ -69,6 +71,8 @@ export const TransferToBranchForm = () => {
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
+              itemsPerPage={ITEMS_PER_PAGE}
+              totalItems={totalItems}
               onNextPage={handleNextPage}
               onPreviousPage={handlePreviousPage}
             />

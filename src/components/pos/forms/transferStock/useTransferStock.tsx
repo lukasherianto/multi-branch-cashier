@@ -3,127 +3,149 @@ import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useBranchSelection } from "./hooks/useBranchSelection";
-import { useProductsWithPagination } from "./hooks/usePagination";
-import { useProducts as useStockProducts } from "./hooks/useProducts";
+import { useProducts } from "./hooks/useProducts";
 import { toast } from "sonner";
 import { executeStockTransfer } from "./utils/transferUtils";
 import { schema } from "./schema";
 import { ProductWithSelection, TransferStockFormValues } from "@/types/pos";
+import { useAuth } from "@/hooks/useAuth";
 
 export const useTransferStock = () => {
-  const {
-    branchesLoading,
-    sourceBranches,
-    destinationBranches,
-    sourceBranch,
-    destinationBranch,
-    handleSourceBranchChange,
-    handleDestinationBranchChange,
-    centralBranch,
-    branches,
-    handleSelectSourceBranch,
-    handleSelectDestinationBranch,
-    toggleDirection
-  } = useBranchSelection();
-
+  const { cabangList } = useAuth();
   const [fromCentralToBranch, setFromCentralToBranch] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<ProductWithSelection[]>([]);
+  const [branchesLoading, setBranchesLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [paginatedProducts, setPaginatedProducts] = useState<ProductWithSelection[]>([]);
+  const ITEMS_PER_PAGE = 10;
+  const [centralBranch, setCentralBranch] = useState<any>(null);
+  const [sourceBranches, setSourceBranches] = useState<any[]>([]);
+  const [destinationBranches, setDestinationBranches] = useState<any[]>([]);
 
-  // Initialize form with default values
+  // Initialize the form
   const form = useForm<TransferStockFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       cabang_id_from: "",
       cabang_id_to: "",
-      products: []
+      products: [],
+      notes: ""
     }
   });
 
-  const handleToggleDirection = () => {
-    setFromCentralToBranch(!fromCentralToBranch);
-    toggleDirection();
+  // Setup branches when cabangList is loaded
+  useEffect(() => {
+    if (!cabangList || cabangList.length === 0) return;
+    
+    setBranchesLoading(true);
+    
+    try {
+      // Identify the central branch (first/lowest ID)
+      const sortedBranches = [...cabangList].sort((a, b) => a.cabang_id - b.cabang_id);
+      const central = sortedBranches[0];
+      setCentralBranch(central);
+      
+      if (fromCentralToBranch) {
+        // From central to branch: source is central, destinations are all others
+        setSourceBranches([central]);
+        setDestinationBranches(sortedBranches.filter(b => b.cabang_id !== central.cabang_id));
+        
+        // Auto-select central as source
+        form.setValue('cabang_id_from', central.cabang_id.toString());
+      } else {
+        // From branch to central: sources are all others, destination is central
+        setSourceBranches(sortedBranches);
+        setDestinationBranches(sortedBranches);
+      }
+    } catch (error) {
+      console.error("Error setting up branches:", error);
+    } finally {
+      setBranchesLoading(false);
+    }
+  }, [cabangList, fromCentralToBranch, form]);
+
+  // Toggle direction changes how branches are filtered
+  const toggleDirection = () => {
+    setFromCentralToBranch(prev => !prev);
+    // Reset the form values when direction changes
+    form.setValue('cabang_id_from', '');
+    form.setValue('cabang_id_to', '');
   };
 
-  // Get the appropriate source branch ID
+  // Watch for source branch changes to load products
   const sourceBranchId = form.watch("cabang_id_from");
-
+  
   // Get products for the selected source branch
   const { 
-    products, 
     filteredProducts, 
     loading: productsLoading, 
     handleSearch,
     setFilteredProducts 
-  } = useStockProducts(sourceBranchId);
+  } = useProducts(sourceBranchId);
 
-  // Get paginated products
-  const {
-    ITEMS_PER_PAGE,
-    paginatedProducts,
-    currentPage,
-    totalPages,
-    handleNextPage,
-    handlePreviousPage
-  } = useProductsWithPagination(filteredProducts);
+  // Update paginated products when currentPage or filteredProducts change
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    setPaginatedProducts(filteredProducts.slice(startIndex, endIndex));
+    
+    // Update selectedProducts when filteredProducts change
+    setSelectedProducts(filteredProducts.filter(p => p.selected));
+  }, [currentPage, filteredProducts]);
+
+  // Calculate total pages
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
+
+  // Handle pagination
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(prev => prev + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(prev => prev - 1);
+    }
+  };
 
   // Handle product selection
   const handleProductSelection = (productId: number, selected: boolean) => {
-    const updatedFilteredProducts = filteredProducts.map(product => 
+    const updatedProducts = filteredProducts.map(product => 
       product.id === productId ? { ...product, selected } : product
     );
-    setFilteredProducts(updatedFilteredProducts);
+    setFilteredProducts(updatedProducts);
   };
 
   // Handle quantity change
   const handleQuantityChange = (productId: number, quantity: number) => {
-    const updatedFilteredProducts = filteredProducts.map(product => 
+    const updatedProducts = filteredProducts.map(product => 
       product.id === productId ? { ...product, quantity } : product
     );
-    setFilteredProducts(updatedFilteredProducts);
+    setFilteredProducts(updatedProducts);
   };
-
-  // Calculate total cost
-  const totalCostPrice = filteredProducts
-    .filter(product => product.selected)
-    .reduce((total, product) => total + (product.cost_price * product.quantity), 0);
-
-  // Update selectedProducts when filteredProducts change
-  useEffect(() => {
-    const selected = filteredProducts.filter(product => product.selected);
-    setSelectedProducts(selected);
-  }, [filteredProducts]);
 
   // Handle form submission
   const onSubmit = async (data: TransferStockFormValues) => {
     try {
       setIsSubmitting(true);
-      console.log("Form data:", data);
-      console.log("Selected products:", selectedProducts);
-
+      
       if (selectedProducts.length === 0) {
         toast("Pilih minimal satu produk untuk ditransfer");
         return;
       }
 
-      // Make sure the form values include selected products
-      const transferData: TransferStockFormValues = {
-        ...data,
-        cabang_id_from: data.cabang_id_from,
-        cabang_id_to: data.cabang_id_to,
-        notes: data.notes
-      };
-
       // Execute transfer operation
-      const transferId = await executeStockTransfer(transferData, selectedProducts);
+      const transferId = await executeStockTransfer(data, selectedProducts);
       
       if (transferId) {
         toast(`Transfer stok berhasil dengan ID: ${transferId}`);
         
         // Reset form and selection
         form.reset();
+        setFilteredProducts([]);
         setSelectedProducts([]);
-        setFilteredProducts(products.map(p => ({ ...p, selected: false })));
       }
     } catch (error) {
       console.error("Transfer error:", error);
@@ -139,14 +161,14 @@ export const useTransferStock = () => {
     branchesLoading,
     productsLoading,
     isSubmitting,
+    cabangList,
     centralBranch,
     sourceBranches,
     destinationBranches,
     fromCentralToBranch,
-    toggleDirection: handleToggleDirection,
+    toggleDirection,
     selectedProducts,
     paginatedProducts,
-    totalCostPrice,
     handleSearch,
     currentPage,
     totalPages,

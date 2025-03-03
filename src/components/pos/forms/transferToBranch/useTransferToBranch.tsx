@@ -7,7 +7,7 @@ import { useCentralProducts } from "./useCentralProducts";
 import { usePagination } from "./usePagination";
 import { toast } from "sonner";
 import { schema } from "./schema";
-import { executeTransferToBranch, useTransferToBranchSubmit } from "./transferToBranchUtils";
+import { executeTransferToBranch } from "./transferToBranchUtils";
 import { ProductWithSelection, TransferToBranchValues } from "@/types/pos";
 
 export const useTransferToBranch = () => {
@@ -15,6 +15,10 @@ export const useTransferToBranch = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [centralBranchId, setCentralBranchId] = useState<number | null>(null);
   const [branchesLoading, setBranchesLoading] = useState(false);
+  const [productsLoading, setProductsLoading] = useState(false);
+  const [selectedProducts, setSelectedProducts] = useState<ProductWithSelection[]>([]);
+  const [totalCostPrice, setTotalCostPrice] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
 
   // Find the central branch (assuming it's the first branch)
   useEffect(() => {
@@ -50,9 +54,8 @@ export const useTransferToBranch = () => {
 
   // Get central branch products
   const {
-    products,
     filteredProducts,
-    loading: productsLoading,
+    loading,
     handleSearch,
     handleProductSelection,
     handleQuantityChange
@@ -68,14 +71,20 @@ export const useTransferToBranch = () => {
     ITEMS_PER_PAGE
   } = usePagination(filteredProducts);
 
-  // Get selected products for transfer
-  const selectedProducts = filteredProducts.filter(product => product.selected);
-
-  // Calculate total cost price
-  const totalCostPrice = selectedProducts.reduce(
-    (total, product) => total + (product.cost_price * product.quantity),
-    0
-  );
+  // Update selected products and total cost price when filtered products change
+  useEffect(() => {
+    const selected = filteredProducts.filter(product => product.selected);
+    setSelectedProducts(selected);
+    
+    // Calculate total cost price
+    const total = selected.reduce(
+      (sum, product) => sum + (product.cost_price * product.quantity),
+      0
+    );
+    setTotalCostPrice(total);
+    setTotalItems(selected.length);
+    setProductsLoading(loading);
+  }, [filteredProducts, loading]);
 
   // Handle form submission
   const onSubmit = async (data: TransferToBranchValues) => {
@@ -92,15 +101,9 @@ export const useTransferToBranch = () => {
 
       setIsSubmitting(true);
       
-      // Ensure form values are complete
-      const transferData: TransferToBranchValues = {
-        cabang_id_to: data.cabang_id_to,
-        notes: data.notes
-      };
-
       // Execute transfer
       const transferId = await executeTransferToBranch(
-        transferData, 
+        data, 
         selectedProducts,
         centralBranchId
       );
@@ -134,6 +137,7 @@ export const useTransferToBranch = () => {
     totalCostPrice,
     currentPage,
     totalPages,
+    totalItems,
     handleNextPage,
     handlePreviousPage,
     ITEMS_PER_PAGE,
