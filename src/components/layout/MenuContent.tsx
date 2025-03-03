@@ -4,6 +4,7 @@ import { LogOut } from "lucide-react";
 import { MenuItem } from "./MenuItem";
 import menuConfig from "./menuConfig";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useMenuAccess } from "@/hooks/useMenuAccess";
 
 interface MenuContentProps {
   expandedMenus: string[];
@@ -20,33 +21,43 @@ export const MenuContent = ({
   onToggleSubmenu,
   onLogout 
 }: MenuContentProps) => {
+  const { hasAccess } = useMenuAccess();
+
   return (
     <div className="flex flex-col h-full">
       <ScrollArea className="flex-grow">
         <div className="space-y-0.5 py-2 pr-2">
-          {menuConfig.map((section) => (
-            <div key={section.title} className="mb-3">
-              <h3 className="px-2 text-xs uppercase font-medium text-muted-foreground mb-1">
-                {section.title}
-              </h3>
-              <div className="space-y-1">
-                {section.items.map((item) => (
-                  <MenuItem
-                    key={item.path}
-                    item={{
-                      path: item.path,
-                      label: item.title,
-                      icon: item.icon
-                    }}
-                    isActive={location.pathname === item.path}
-                    isExpanded={expandedMenus.includes(item.path)}
-                    onToggle={() => onToggleSubmenu(item.path)}
-                    onNavigate={onNavigate}
-                  />
-                ))}
+          {menuConfig.map((section) => {
+            // Filter items based on user's access
+            const accessibleItems = section.items.filter(item => hasAccess(item.path));
+            
+            // Skip sections with no accessible items
+            if (accessibleItems.length === 0) return null;
+            
+            return (
+              <div key={section.title} className="mb-3">
+                <h3 className="px-2 text-xs uppercase font-medium text-muted-foreground mb-1">
+                  {section.title}
+                </h3>
+                <div className="space-y-1">
+                  {accessibleItems.map((item) => (
+                    <MenuItem
+                      key={item.path}
+                      item={{
+                        path: item.path,
+                        label: item.title,
+                        icon: item.icon
+                      }}
+                      isActive={location.pathname === item.path}
+                      isExpanded={expandedMenus.includes(item.path)}
+                      onToggle={() => onToggleSubmenu(item.path)}
+                      onNavigate={onNavigate}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </ScrollArea>
       <div className="mt-auto p-2 border-t">

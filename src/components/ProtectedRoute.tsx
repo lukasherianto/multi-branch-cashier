@@ -2,6 +2,7 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { useMenuAccess } from "../hooks/useMenuAccess";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -10,6 +11,7 @@ interface ProtectedRouteProps {
 
 function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { user, userRole, isLoading } = useAuth();
+  const { hasAccess } = useMenuAccess();
   const location = useLocation();
 
   if (isLoading) {
@@ -31,6 +33,12 @@ function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
       // User doesn't have the required role, redirect to home
       return <Navigate to="/" replace />;
     }
+  }
+
+  // Check if the user has access to the current path based on their role
+  if (!hasAccess(location.pathname)) {
+    // User doesn't have access to this page, redirect to home
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;
