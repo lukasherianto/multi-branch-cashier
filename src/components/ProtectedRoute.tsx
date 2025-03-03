@@ -2,15 +2,18 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { useMenuAccess } from "../hooks/useMenuAccess";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: string[]; // We'll keep this prop for compatibility, but we won't use it
+  allowedRoles?: string[]; // We'll keep this prop for compatibility, but we'll use our enhanced access control
 }
 
 function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
+  const { hasAccess, isLoading: accessLoading } = useMenuAccess();
   const location = useLocation();
+  const isLoading = authLoading || accessLoading;
 
   if (isLoading) {
     return (
@@ -25,7 +28,13 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // All authenticated users have access to all routes
+  // Check if the user has access to the current path
+  if (!hasAccess(location.pathname)) {
+    // Redirect to the dashboard if they don't have access
+    return <Navigate to="/" replace />;
+  }
+
+  // User is authenticated and has access to this route
   return <>{children}</>;
 }
 

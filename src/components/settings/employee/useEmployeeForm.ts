@@ -51,6 +51,28 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
         return;
       }
 
+      // Map business_role to the appropriate value based on user_status
+      let mappedBusinessRole = data.business_role;
+      
+      // This ensures compatibility with the user_status table
+      switch (data.business_role) {
+        case 'pelaku_usaha':
+          // Status ID 1 in user_status table
+          break;
+        case 'admin':
+          // Status ID 2 in user_status table
+          break;
+        case 'kasir':
+          // Status ID 3 in user_status table
+          break;
+        case 'pelayan':
+          // Status ID 4 in user_status table
+          break;
+        default:
+          // Default to 'kasir' if unknown role
+          mappedBusinessRole = 'kasir';
+      }
+
       // Create Supabase auth account for employee
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
@@ -60,7 +82,7 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
             full_name: data.name,
             whatsapp_number: data.whatsapp_contact,
             is_employee: true,
-            business_role: data.business_role
+            business_role: mappedBusinessRole
           }
         }
       });
@@ -100,7 +122,7 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
           email: data.email,
           whatsapp_contact: data.whatsapp_contact,
           role: data.role,
-          business_role: data.business_role,
+          business_role: mappedBusinessRole,
           cabang_id: data.cabang_id === "0" ? null : parseInt(data.cabang_id),
           pelaku_usaha_id: pelakuUsaha.pelaku_usaha_id,
           auth_id: authData.user.id,

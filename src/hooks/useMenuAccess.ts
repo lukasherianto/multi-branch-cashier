@@ -1,37 +1,151 @@
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useAuth } from "./useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useMenuAccess = () => {
-  const { userRole } = useAuth();
+  const { user, userRole } = useAuth();
+  const [userPermissions, setUserPermissions] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const allowedMenuPaths = useMemo(() => {
-    // All users can access all paths regardless of role
-    return [
-      '/',                    // Dashboard
-      '/products',            // Product List
-      '/products/categories', // Product Categories
-      '/stock-transfer',      // Stock Transfer
-      '/pos',                 // POS
-      '/history',             // Transaction History
-      '/returns',             // Returns
-      '/kas',                 // Cash
-      '/kas/purchases',       // Purchases
-      '/reports',             // Reports
-      '/branches',            // Branches
-      '/attendance',          // Attendance
-      '/members',             // Members
-      '/settings',            // Settings
-    ];
+  useEffect(() => {
+    const fetchUserStatus = async () => {
+      if (!userRole) {
+        setUserPermissions(null);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        // Convert userRole to status_id based on known values
+        let status_id: number | null = null;
+        
+        switch (userRole) {
+          case 'pelaku_usaha':
+            status_id = 1;
+            break;
+          case 'admin':
+            status_id = 2;
+            break;
+          case 'kasir':
+            status_id = 3;
+            break;
+          case 'pelayan':
+            status_id = 4;
+            break;
+          default:
+            status_id = null;
+        }
+
+        if (status_id) {
+          const { data, error } = await supabase
+            .from('user_status')
+            .select('wewenang')
+            .eq('status_id', status_id)
+            .single();
+
+          if (error) {
+            console.error('Error fetching user status:', error);
+          } else if (data) {
+            setUserPermissions(data.wewenang);
+          }
+        }
+      } catch (error) {
+        console.error('Error in fetchUserStatus:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserStatus();
   }, [userRole]);
 
+  const allowedMenuPaths = useMemo(() => {
+    // Default paths for any authenticated user
+    const defaultPaths = ['/'];
+
+    // If still loading or no permissions specified, return default paths
+    if (isLoading || !userPermissions) {
+      return defaultPaths;
+    }
+
+    // For users with full access
+    if (userPermissions.includes('Akses penuh') || userPermissions.includes('Full access')) {
+      return [
+        '/',                    // Dashboard
+        '/products',            // Product List
+        '/products/categories', // Product Categories
+        '/stock-transfer',      // Stock Transfer
+        '/pos',                 // POS
+        '/history',             // Transaction History
+        '/returns',             // Returns
+        '/kas',                 // Cash
+        '/kas/purchases',       // Purchases
+        '/reports',             // Reports
+        '/branches',            // Branches
+        '/attendance',          // Attendance
+        '/members',             // Members
+        '/settings',            // Settings
+      ];
+    }
+
+    // For admin (access to all except POS)
+    if (userPermissions.includes('Akses ke semua fitur kecuali POS')) {
+      return [
+        '/',                    // Dashboard
+        '/products',            // Product List
+        '/products/categories', // Product Categories
+        '/stock-transfer',      // Stock Transfer
+        '/history',             // Transaction History
+        '/returns',             // Returns
+        '/kas',                 // Cash
+        '/kas/purchases',       // Purchases
+        '/reports',             // Reports
+        '/branches',            // Branches
+        '/attendance',          // Attendance
+        '/members',             // Members
+        '/settings',            // Settings
+      ];
+    }
+
+    // For cashier (limited access)
+    if (userPermissions.includes('Akses terbatas ke POS, Riwayat Transaksi, Absensi, dan Retur')) {
+      return [
+        '/',                    // Dashboard
+        '/pos',                 // POS
+        '/history',             // Transaction History
+        '/returns',             // Returns
+        '/attendance',          // Attendance
+      ];
+    }
+
+    // For server/waiter (only attendance)
+    if (userPermissions.includes('Akses terbatas hanya ke Absensi')) {
+      return [
+        '/',                    // Dashboard
+        '/attendance',          // Attendance
+      ];
+    }
+
+    // If no specific permissions match, return just the dashboard
+    return defaultPaths;
+  }, [isLoading, userPermissions]);
+
   const hasAccess = (path: string) => {
-    // All users have access to all paths
-    return true;
+    // Admin and business owners can access everything
+    if (userRole === 'pelaku_usaha' || userRole === 'admin') {
+      return true;
+    }
+
+    // For other roles, check if the path is in the allowed paths
+    return allowedMenuPaths.includes(path) || 
+           allowedMenuPaths.some(allowedPath => 
+             path.startsWith(allowedPath + '/'));
   };
 
   return {
     allowedMenuPaths,
-    hasAccess
+    hasAccess,
+    isLoading
   };
 };
