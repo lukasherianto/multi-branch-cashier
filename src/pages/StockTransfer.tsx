@@ -24,7 +24,7 @@ interface Transfer {
 }
 
 const StockTransfer = () => {
-  const { data: transfers = [] } = useQuery({
+  const { data: transfers = [], isLoading, error } = useQuery({
     queryKey: ['transfers'],
     queryFn: async () => {
       try {
@@ -81,6 +81,12 @@ const StockTransfer = () => {
       }
     }
   });
+
+  // Add loading state display
+  if (isLoading) return <div className="p-8">Memuat data transfer stok...</div>;
+  
+  // Add error state display
+  if (error) return <div className="p-8 text-red-500">Error: Gagal memuat data transfer stok</div>;
 
   return (
     <div className="space-y-8">
