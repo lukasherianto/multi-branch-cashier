@@ -26,7 +26,7 @@ const TransferHistoryTable = ({ transfers }: TransferHistoryTableProps) => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>ID</TableHead>
+            <TableHead>No. Transfer</TableHead>
             <TableHead>Tanggal</TableHead>
             <TableHead>Dari</TableHead>
             <TableHead>Ke</TableHead>
@@ -37,7 +37,7 @@ const TransferHistoryTable = ({ transfers }: TransferHistoryTableProps) => {
         <TableBody>
           {transfers.map((transfer) => (
             <TableRow key={transfer.transfer_id}>
-              <TableCell className="font-medium">#{transfer.transfer_id}</TableCell>
+              <TableCell className="font-medium">{transfer.nomor_transfer}</TableCell>
               <TableCell>
                 {format(new Date(transfer.transfer_date), 'dd/MM/yyyy HH:mm')}
               </TableCell>

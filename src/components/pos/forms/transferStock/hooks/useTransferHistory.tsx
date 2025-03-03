@@ -13,6 +13,7 @@ export type TransferHistoryItem = {
   from_branch_name: string;
   to_branch_name: string;
   product_name: string;
+  nomor_transfer: string;
 };
 
 export const useTransferHistory = () => {
@@ -57,6 +58,7 @@ export const useTransferHistory = () => {
       if (data) {
         const mappedData: TransferHistoryItem[] = data.map(item => ({
           transfer_id: item.id,
+          nomor_transfer: item.nomor_transfer,
           cabang_id_from: item.cabang_id_from,
           cabang_id_to: item.cabang_id_to,
           produk_id: item.produk_id,

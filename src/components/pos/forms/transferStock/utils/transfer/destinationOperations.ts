@@ -17,7 +17,7 @@ export async function updateDestinationBranchStock(
       // Check if product exists in destination branch
       const { data: existingProduct, error: checkError } = await supabase
         .from("produk")
-        .select("produk_id, stock")
+        .select("produk_id, stock, kategori_id, cost_price, pelaku_usaha_id")
         .eq("barcode", product.barcode)
         .eq("cabang_id", destinationBranchId)
         .maybeSingle();

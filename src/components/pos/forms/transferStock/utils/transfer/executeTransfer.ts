@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { ProductWithSelection, TransferStockFormValues } from "@/types/pos";
 import { updateSourceBranchStock } from "./sourceOperations";
 import { updateDestinationBranchStock } from "./destinationOperations";
-import { TransferHeaderData } from "./types";
 
 /**
  * Main function to execute a stock transfer between branches
@@ -66,7 +65,8 @@ export async function executeStockTransfer(
       satuan: product.unit || 'Pcs',
       total_harga: (product.price || 0) * product.quantity,
       cabang_id_from: parseInt(formData.cabang_id_from),
-      cabang_id_to: parseInt(formData.cabang_id_to)
+      cabang_id_to: parseInt(formData.cabang_id_to),
+      tanggal_transfer: new Date().toISOString()
     }));
     
     // Save history to database
