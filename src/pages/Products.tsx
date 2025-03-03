@@ -119,14 +119,14 @@ const Products = () => {
         <div className="flex gap-4">
           {cabangList.length > 1 && (
             <Select
-              value={selectedCabangId?.toString()}
-              onValueChange={(value) => setSelectedCabangId(parseInt(value))}
+              value={selectedCabangId ? selectedCabangId.toString() : undefined}
+              onValueChange={(value) => setSelectedCabangId(value ? parseInt(value) : null)}
             >
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Semua Cabang" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Semua Cabang</SelectItem>
+                <SelectItem value="0">Semua Cabang</SelectItem>
                 {cabangList.map((branch) => (
                   <SelectItem 
                     key={branch.cabang_id} 
