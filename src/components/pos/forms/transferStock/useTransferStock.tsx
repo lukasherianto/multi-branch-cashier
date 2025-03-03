@@ -77,14 +77,14 @@ export function useTransferStock() {
     setSelectedProducts,
   } = useProducts(sourceBranchId);
 
-  // Pagination
+  // Pagination - Fix: usePagination expects only one argument
   const {
     currentPage,
     totalPages,
     paginatedProducts,
     handleNextPage,
     handlePreviousPage,
-  } = usePagination(selectedProducts, ITEMS_PER_PAGE);
+  } = usePagination(selectedProducts);
 
   // Submit functionality
   const { isSubmitting, submitTransfer } = useTransferSubmit();
