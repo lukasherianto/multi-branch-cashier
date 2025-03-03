@@ -20,6 +20,10 @@ export interface ReceiptData {
   whatsappNumber: string | null;
   paymentMethod: string | null;
   transactionId: string | null;
+  logoUrl?: string | null;
+  instagramUrl?: string | null;
+  facebookUrl?: string | null;
+  businessWhatsapp?: string | null;
 }
 
 export const generateInvoiceNumber = () => {
@@ -50,6 +54,12 @@ export const generateReceiptHTML = (data: ReceiptData, invoiceNumber: string, is
         .header {
           text-align: center;
           margin-bottom: 8px;
+        }
+        .business-logo {
+          max-width: 60px;
+          max-height: 60px;
+          margin: 0 auto 5px;
+          display: block;
         }
         .business-name {
           font-size: 14px;
@@ -104,6 +114,16 @@ export const generateReceiptHTML = (data: ReceiptData, invoiceNumber: string, is
           font-size: 8px;
           text-align: center;
         }
+        .social-media {
+          text-align: center;
+          font-size: 8px;
+          margin-top: 5px;
+          color: #555;
+        }
+        .social-media a {
+          color: #555;
+          text-decoration: none;
+        }
         ${isPdfMode ? `
         @media print {
           body {
@@ -119,6 +139,7 @@ export const generateReceiptHTML = (data: ReceiptData, invoiceNumber: string, is
     <body>
       <div class="receipt">
         <div class="header">
+          ${data.logoUrl ? `<img src="${data.logoUrl}" class="business-logo" alt="${data.businessName}" />` : ''}
           <div class="business-name">${data.businessName}</div>
           <div>${data.branchName}</div>
           <div class="timestamp">${formatInTimeZone(new Date(), 'Asia/Jakarta', 'dd MMMM yyyy HH:mm', { locale: id })}</div>
@@ -175,6 +196,14 @@ export const generateReceiptHTML = (data: ReceiptData, invoiceNumber: string, is
         <div class="footer">
           Terima kasih atas kunjungan Anda!
         </div>
+        
+        ${(data.instagramUrl || data.facebookUrl || data.businessWhatsapp) ? `
+        <div class="social-media">
+          ${data.instagramUrl ? `<div>Instagram: @${data.instagramUrl}</div>` : ''}
+          ${data.facebookUrl ? `<div>Facebook: ${data.facebookUrl}</div>` : ''}
+          ${data.businessWhatsapp ? `<div>WhatsApp: ${data.businessWhatsapp}</div>` : ''}
+        </div>
+        ` : ''}
       </div>
       <script>
         window.onload = function() {
@@ -230,6 +259,14 @@ export const generateWhatsAppMessage = (data: ReceiptData, invoiceNumber: string
   }
 
   message += 'Terima kasih atas kunjungan Anda!';
+
+  // Add social media
+  if (data.instagramUrl || data.facebookUrl || data.businessWhatsapp) {
+    message += '\n\n';
+    if (data.instagramUrl) message += `Instagram: @${data.instagramUrl}\n`;
+    if (data.facebookUrl) message += `Facebook: ${data.facebookUrl}\n`;
+    if (data.businessWhatsapp) message += `WhatsApp: ${data.businessWhatsapp}\n`;
+  }
 
   return message;
 };

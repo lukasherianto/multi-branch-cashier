@@ -4,6 +4,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import { id } from "date-fns/locale";
 import { Card } from "@/components/ui/card";
 import { TransactionItem } from "@/utils/receiptUtils";
+import { Instagram, Facebook, Phone } from "lucide-react";
 
 interface ReceiptDisplayProps {
   businessName: string;
@@ -16,6 +17,10 @@ interface ReceiptDisplayProps {
   total: number;
   paymentMethod: string | null;
   pointsEarned: number;
+  logoUrl?: string | null;
+  instagramUrl?: string | null;
+  facebookUrl?: string | null;
+  businessWhatsapp?: string | null;
 }
 
 export const ReceiptDisplay: React.FC<ReceiptDisplayProps> = ({
@@ -28,12 +33,27 @@ export const ReceiptDisplay: React.FC<ReceiptDisplayProps> = ({
   pointsUsed,
   total,
   paymentMethod,
-  pointsEarned
+  pointsEarned,
+  logoUrl,
+  instagramUrl,
+  facebookUrl,
+  businessWhatsapp
 }) => {
   return (
     <Card className="max-w-2xl mx-auto p-6 space-y-6">
       <div className="space-y-4 print:space-y-2">
         <div className="text-center">
+          {logoUrl && (
+            <img 
+              src={logoUrl} 
+              alt={businessName} 
+              className="h-16 mx-auto mb-2"
+              onError={(e) => {
+                // Handle image loading errors
+                (e.target as HTMLImageElement).style.display = 'none';
+              }} 
+            />
+          )}
           <h1 className="text-2xl font-bold">{businessName}</h1>
           <p className="text-gray-600">{branchName}</p>
           <p className="text-sm text-gray-500">
@@ -90,6 +110,32 @@ export const ReceiptDisplay: React.FC<ReceiptDisplayProps> = ({
         <p className="text-center text-sm text-gray-500 pt-4">
           Terima kasih atas kunjungan Anda!
         </p>
+        
+        {/* Social Media Information */}
+        {(instagramUrl || facebookUrl || businessWhatsapp) && (
+          <div className="border-t pt-3 mt-3">
+            <div className="flex flex-col items-center gap-1 text-xs text-gray-500">
+              {instagramUrl && (
+                <div className="flex items-center gap-1">
+                  <Instagram className="h-3 w-3" />
+                  <span>@{instagramUrl}</span>
+                </div>
+              )}
+              {facebookUrl && (
+                <div className="flex items-center gap-1">
+                  <Facebook className="h-3 w-3" />
+                  <span>{facebookUrl}</span>
+                </div>
+              )}
+              {businessWhatsapp && (
+                <div className="flex items-center gap-1">
+                  <Phone className="h-3 w-3" />
+                  <span>{businessWhatsapp}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </Card>
   );
