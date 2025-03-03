@@ -1,15 +1,16 @@
 
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ProductSearch } from "@/components/pos/ProductSearch";
 import { useTransferStock } from "./useTransferStock";
 import { ProductTable } from "./ProductTable";
 import { Pagination } from "./Pagination";
-import { useEffect, useState } from "react";
-import { AlertTriangle, Info, ArrowUpDown } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { useState } from "react";
+import { AlertTriangle, Info } from "lucide-react";
+import { DirectionToggle } from "./components/DirectionToggle";
+import { BranchSelector } from "./components/BranchSelector";
+import { TransferSubmitButton } from "./components/TransferSubmitButton";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 export function TransferStockForm() {
   const [renderError, setRenderError] = useState<Error | null>(null);
@@ -38,36 +39,9 @@ export function TransferStockForm() {
       ITEMS_PER_PAGE
     } = useTransferStock();
 
-    // Add logging when component mounts
-    useEffect(() => {
-      try {
-        console.log("TransferStockForm mounted");
-        console.log("Branches loaded:", branches);
-        console.log("Central branch:", centralBranch);
-        console.log("Source branches:", sourceBranches);
-        console.log("Destination branches:", destinationBranches);
-      } catch (error) {
-        console.error("Error in TransferStockForm useEffect:", error);
-        setRenderError(error as Error);
-      }
-    }, [branches, centralBranch, sourceBranches, destinationBranches]);
-
     // If there's a render error, show it
     if (renderError) {
-      return (
-        <div className="p-4">
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>
-              {renderError.message}
-              <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto">
-                {renderError.stack}
-              </pre>
-            </AlertDescription>
-          </Alert>
-        </div>
-      );
+      return <ErrorBoundary error={renderError} />;
     }
 
     if (branchesLoading) {
@@ -102,74 +76,21 @@ export function TransferStockForm() {
       );
     }
 
+    const selectedProductsCount = selectedProducts.filter(p => p.selected).length;
+
     return (
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <div className="flex items-center justify-end mb-4">
-            <span className="text-sm mr-2">
-              {fromCentralToBranch ? "Pusat ke Cabang" : "Cabang ke Pusat"}
-            </span>
-            <div className="flex items-center space-x-2">
-              <Switch
-                checked={!fromCentralToBranch}
-                onCheckedChange={() => toggleDirection()}
-                aria-label="Toggle transfer direction"
-              />
-              <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-            </div>
-          </div>
+          <DirectionToggle 
+            fromCentralToBranch={fromCentralToBranch} 
+            toggleDirection={toggleDirection} 
+          />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="cabang_id_from"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Dari Cabang</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih cabang asal" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {sourceBranches.map((branch) => (
-                        <SelectItem key={branch.cabang_id} value={branch.cabang_id.toString()}>
-                          {branch.branch_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="cabang_id_to"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Ke Cabang</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih cabang tujuan" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {destinationBranches.map((branch) => (
-                        <SelectItem key={branch.cabang_id} value={branch.cabang_id.toString()}>
-                          {branch.branch_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+          <BranchSelector 
+            form={form} 
+            sourceBranches={sourceBranches} 
+            destinationBranches={destinationBranches} 
+          />
 
           <div className="mb-4">
             <ProductSearch onSearch={handleSearch} />
@@ -190,36 +111,16 @@ export function TransferStockForm() {
             onNextPage={handleNextPage}
           />
 
-          <Button 
-            type="submit" 
-            disabled={isSubmitting || form.getValues("cabang_id_from") === "" || 
-                      form.getValues("cabang_id_to") === "" || 
-                      selectedProducts.filter(p => p.selected).length === 0}
-            className="w-full md:w-auto"
-          >
-            {isSubmitting ? "Memproses..." : "Transfer Stok"}
-          </Button>
+          <TransferSubmitButton 
+            isSubmitting={isSubmitting} 
+            form={form}
+            selectedProductsCount={selectedProductsCount}
+          />
         </form>
       </Form>
     );
   } catch (error) {
     console.error("Uncaught error in TransferStockForm:", error);
-    return (
-      <div className="p-4">
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>
-            Terjadi kesalahan saat memuat form transfer stok. Silakan coba muat ulang halaman.
-            {error instanceof Error && (
-              <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto">
-                {error.message}
-                {error.stack}
-              </pre>
-            )}
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
+    return <ErrorBoundary error={error instanceof Error ? error : new Error(String(error))} />;
   }
 }
