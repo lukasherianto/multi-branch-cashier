@@ -1,18 +1,20 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { ProductWithSelection, TransferToBranchValues } from "@/types/pos";
+import { ProductWithSelection } from "@/types/pos";
 import { toast } from "sonner";
 
 /**
  * Execute a transfer of stock from central to a branch
  */
 export async function transferToBranch(
-  formData: TransferToBranchValues,
-  selectedProducts: ProductWithSelection[]
+  centralBranchId: number,
+  destinationBranchId: number,
+  selectedProducts: ProductWithSelection[],
+  notes?: string
 ): Promise<boolean> {
   try {
-    if (!formData.cabang_id_to) {
-      toast("Pilih cabang tujuan");
+    if (!destinationBranchId) {
+      toast.error("Pilih cabang tujuan");
       return false;
     }
 
@@ -39,7 +41,7 @@ export async function transferToBranch(
     const transferProducts = selectedProducts.filter(product => product.selected);
     
     if (transferProducts.length === 0) {
-      toast("Pilih minimal satu produk untuk ditransfer");
+      toast.error("Pilih minimal satu produk untuk ditransfer");
       return false;
     }
     
@@ -53,7 +55,7 @@ export async function transferToBranch(
         .from("produk")
         .select("produk_id, stock")
         .eq("barcode", product.barcode)
-        .eq("cabang_id", parseInt(formData.cabang_id_to))
+        .eq("cabang_id", destinationBranchId)
         .maybeSingle();
         
       if (checkError) {
@@ -69,7 +71,7 @@ export async function transferToBranch(
             stock: existingProduct.stock + product.quantity 
           })
           .eq("produk_id", existingProduct.produk_id)
-          .eq("cabang_id", parseInt(formData.cabang_id_to));
+          .eq("cabang_id", destinationBranchId);
           
         if (updateError) {
           console.error("Error updating stock:", updateError);
@@ -98,7 +100,7 @@ export async function transferToBranch(
           member_price_1: originalProduct.member_price_1,
           member_price_2: originalProduct.member_price_2,
           stock: product.quantity,
-          cabang_id: parseInt(formData.cabang_id_to),
+          cabang_id: destinationBranchId,
           pelaku_usaha_id: originalProduct.pelaku_usaha_id,
           unit: originalProduct.unit
         };
@@ -122,8 +124,8 @@ export async function transferToBranch(
         harga_satuan: product.price || 0,
         satuan: product.unit || 'Pcs',
         total_harga: (product.price || 0) * product.quantity,
-        cabang_id_from: product.cabang_id,
-        cabang_id_to: parseInt(formData.cabang_id_to),
+        cabang_id_from: centralBranchId,
+        cabang_id_to: destinationBranchId,
         tanggal_transfer: new Date().toISOString()
       };
       

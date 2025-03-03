@@ -11,7 +11,7 @@ export function validateTransferData(
 ): boolean {
   // Validate branch selection
   if (!formData.cabang_id_from || !formData.cabang_id_to) {
-    toast("Pilih cabang asal dan tujuan");
+    toast.error("Pilih cabang asal dan tujuan");
     return false;
   }
 
@@ -20,7 +20,7 @@ export function validateTransferData(
   
   // Validate product selection
   if (transferProducts.length === 0) {
-    toast("Pilih minimal satu produk untuk ditransfer");
+    toast.error("Pilih minimal satu produk untuk ditransfer");
     return false;
   }
 

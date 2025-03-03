@@ -3,27 +3,20 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { schema } from "./schema";
 import { TransferToBranchValues } from "@/types/pos";
-import { useCentralProducts } from "./useCentralProducts";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { transferProductToBranch } from "./transferToBranchUtils";
+import { transferToBranch } from "./transferToBranchUtils";
+import { useCentralProducts } from "./useCentralProducts";
+import { usePagination } from "./usePagination";
 
 export const useTransferToBranch = () => {
   const [branchOptions, setBranchOptions] = useState<any[]>([]);
   const [centralBranch, setCentralBranch] = useState<any>(null);
   const [branchesLoading, setBranchesLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
   const [totalCostPrice, setTotalCostPrice] = useState(0);
-
-  // Get central products
-  const {
-    filteredProducts,
-    loading: productsLoading, 
-    handleSearch,
-    handleProductSelection,
-    handleQuantityChange
-  } = useCentralProducts();
 
   // Initialize the form
   const form = useForm<TransferToBranchValues>({
@@ -47,14 +40,14 @@ export const useTransferToBranch = () => {
         if (error) throw error;
 
         if (branchData && branchData.length > 0) {
-          // Find central branch
-          const central = branchData.find(branch => branch.is_pusat === true);
+          // Find central branch (assuming status 1 is for central branch)
+          const central = branchData.find(branch => branch.status === 1);
           if (central) {
             setCentralBranch(central);
           }
           
           // Filter out central branch from options
-          const branches = branchData.filter(branch => !branch.is_pusat);
+          const branches = branchData.filter(branch => branch.status !== 1);
           setBranchOptions(branches);
         }
       } catch (error) {
@@ -67,6 +60,25 @@ export const useTransferToBranch = () => {
 
     fetchBranches();
   }, []);
+
+  // Get central products
+  const {
+    filteredProducts,
+    loading: productsLoading, 
+    handleSearch,
+    handleProductSelection,
+    handleQuantityChange
+  } = useCentralProducts(centralBranch?.cabang_id);
+
+  // Set up pagination
+  const {
+    currentPage,
+    totalPages,
+    paginatedProducts,
+    handleNextPage,
+    handlePreviousPage,
+    ITEMS_PER_PAGE
+  } = usePagination(filteredProducts);
 
   // Calculate totals when products change
   useEffect(() => {
@@ -83,6 +95,7 @@ export const useTransferToBranch = () => {
   // Handle form submission
   const onSubmit = async (data: TransferToBranchValues) => {
     try {
+      setIsSubmitting(true);
       const selectedProducts = filteredProducts.filter(p => p.selected);
       
       if (selectedProducts.length === 0) {
@@ -96,7 +109,7 @@ export const useTransferToBranch = () => {
       }
 
       // Execute transfer
-      await transferProductToBranch(
+      await transferToBranch(
         centralBranch.cabang_id,
         parseInt(data.cabang_id_to),
         selectedProducts,
@@ -110,8 +123,13 @@ export const useTransferToBranch = () => {
     } catch (error) {
       console.error("Transfer error:", error);
       toast.error(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  // Get selected products
+  const selectedProducts = filteredProducts.filter(p => p.selected);
 
   return {
     form,
@@ -125,6 +143,14 @@ export const useTransferToBranch = () => {
     handleProductSelection,
     handleQuantityChange,
     totalCostPrice,
-    totalItems
+    totalItems,
+    isSubmitting,
+    selectedProducts,
+    paginatedProducts,
+    currentPage,
+    totalPages,
+    handleNextPage,
+    handlePreviousPage,
+    ITEMS_PER_PAGE
   };
 };
