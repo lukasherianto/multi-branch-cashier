@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { LucideIcon } from "lucide-react";
 import clsx from "clsx";
+import { useLocation } from "react-router-dom";
 
 interface MenuItemProps {
   item: {
@@ -21,6 +22,7 @@ interface MenuItemProps {
 }
 
 export const MenuItem = ({ item, isActive, isExpanded, onToggle, onNavigate }: MenuItemProps) => {
+  const location = useLocation();
   const Icon = item.icon;
   const hasSubItems = item.subItems && item.subItems.length > 0;
 

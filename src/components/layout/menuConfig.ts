@@ -10,6 +10,7 @@ import {
   Wallet,
   FileText,
   Settings,
+  Package,
 } from 'lucide-react';
 
 const menuConfig = [
@@ -35,6 +36,11 @@ const menuConfig = [
         title: 'Kategori Produk',
         icon: FolderOpen,
         path: '/products/categories',
+      },
+      {
+        title: 'Transfer Stok',
+        icon: Package,
+        path: '/stock-transfer',
       },
     ],
   },
