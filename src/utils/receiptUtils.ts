@@ -26,7 +26,7 @@ export const generateInvoiceNumber = () => {
   return `INV-${formatInTimeZone(new Date(), 'Asia/Jakarta', 'yyyyMMdd')}-${Math.floor(1000 + Math.random() * 9000)}`;
 };
 
-export const generateReceiptHTML = (data: ReceiptData, invoiceNumber: string): string => {
+export const generateReceiptHTML = (data: ReceiptData, invoiceNumber: string, isPdfMode: boolean = false): string => {
   return `
     <!DOCTYPE html>
     <html>
@@ -104,6 +104,16 @@ export const generateReceiptHTML = (data: ReceiptData, invoiceNumber: string): s
           font-size: 8px;
           text-align: center;
         }
+        ${isPdfMode ? `
+        @media print {
+          body {
+            width: 100%;
+          }
+          .receipt {
+            max-width: 100%;
+          }
+        }
+        ` : ''}
       </style>
     </head>
     <body>
@@ -168,10 +178,12 @@ export const generateReceiptHTML = (data: ReceiptData, invoiceNumber: string): s
       </div>
       <script>
         window.onload = function() {
+          ${isPdfMode ? '' : `
           window.print();
           setTimeout(function() {
             window.close();
           }, 500);
+          `}
         };
       </script>
     </body>

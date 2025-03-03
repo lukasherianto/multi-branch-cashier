@@ -41,7 +41,7 @@ const PrintPreview = () => {
     transactionId
   };
   
-  const { invoiceNumber, handlePrint, handleWhatsApp, handleBack } = useReceipt(receiptData);
+  const { invoiceNumber, handlePrint, handleWhatsApp, handleBack, handleDownloadPDF } = useReceipt(receiptData);
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
@@ -63,6 +63,7 @@ const PrintPreview = () => {
           onPrint={handlePrint}
           onWhatsApp={handleWhatsApp}
           onBack={handleBack}
+          onDownloadPDF={handleDownloadPDF}
         />
       </div>
     </div>

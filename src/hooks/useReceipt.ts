@@ -1,5 +1,6 @@
 
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { 
   ReceiptData, 
   generateInvoiceNumber, 
@@ -18,7 +19,7 @@ export const useReceipt = (receiptData: ReceiptData) => {
     const printWindow = window.open('', '_blank');
     
     if (!printWindow) {
-      alert('Please allow pop-ups to print the receipt.');
+      toast.error('Please allow pop-ups to print the receipt.');
       return;
     }
     
@@ -28,6 +29,41 @@ export const useReceipt = (receiptData: ReceiptData) => {
     printWindow.document.open();
     printWindow.document.write(receiptContent);
     printWindow.document.close();
+  };
+
+  const handleDownloadPDF = async () => {
+    try {
+      // Create a new window with receipt content for PDF generation
+      const printWindow = window.open('', '_blank');
+      
+      if (!printWindow) {
+        toast.error('Please allow pop-ups to generate PDF.');
+        return;
+      }
+      
+      // Generate the receipt content
+      const receiptContent = generateReceiptHTML(receiptData, invoiceNumber, true);
+      
+      printWindow.document.open();
+      printWindow.document.write(receiptContent);
+      
+      // Wait for content to load
+      setTimeout(() => {
+        printWindow.document.close();
+        
+        // Trigger PDF download
+        printWindow.print();
+        
+        // Close the window after a short delay
+        setTimeout(() => {
+          printWindow.close();
+          toast.success('PDF prepared successfully');
+        }, 1000);
+      }, 500);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Failed to generate PDF');
+    }
   };
 
   const handleWhatsApp = () => {
@@ -50,6 +86,7 @@ export const useReceipt = (receiptData: ReceiptData) => {
     invoiceNumber,
     handlePrint,
     handleWhatsApp,
-    handleBack
+    handleBack,
+    handleDownloadPDF
   };
 };

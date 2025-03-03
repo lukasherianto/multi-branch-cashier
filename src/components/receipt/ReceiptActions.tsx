@@ -1,23 +1,25 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Printer, MessageSquare, ArrowLeft } from "lucide-react";
+import { Printer, MessageSquare, ArrowLeft, FileDown } from "lucide-react";
 import { ReceiptData } from "@/utils/receiptUtils";
 
 interface ReceiptActionsProps {
   onPrint: () => void;
   onWhatsApp: () => void;
   onBack: () => void;
+  onDownloadPDF: () => void;
 }
 
 export const ReceiptActions: React.FC<ReceiptActionsProps> = ({
   onPrint,
   onWhatsApp,
-  onBack
+  onBack,
+  onDownloadPDF
 }) => {
   return (
     <>
-      <div className="flex gap-4 justify-center print:hidden">
+      <div className="flex gap-4 justify-center print:hidden flex-wrap">
         <Button onClick={onPrint} className="w-40">
           <Printer className="mr-2 h-4 w-4" />
           Cetak Struk
@@ -25,6 +27,10 @@ export const ReceiptActions: React.FC<ReceiptActionsProps> = ({
         <Button onClick={onWhatsApp} className="w-40">
           <MessageSquare className="mr-2 h-4 w-4" />
           Kirim WhatsApp
+        </Button>
+        <Button onClick={onDownloadPDF} className="w-40">
+          <FileDown className="mr-2 h-4 w-4" />
+          Download PDF
         </Button>
       </div>
       
