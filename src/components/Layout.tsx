@@ -83,9 +83,11 @@ const Layout = () => {
                   <MenuIcon className="h-4 w-4" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-56 flex flex-col">
-                <AppHeader userEmail={user?.email} />
-                <div className="flex-1 mt-4">
+              <SheetContent side="left" className="w-56 flex flex-col p-0">
+                <div className="p-3">
+                  <AppHeader userEmail={user?.email} />
+                </div>
+                <div className="flex-1 overflow-hidden">
                   <MenuContent 
                     expandedMenus={expandedMenus}
                     location={location}
@@ -110,7 +112,7 @@ const Layout = () => {
     <div className="min-h-screen lg:grid lg:grid-cols-[200px_1fr]">
       <aside className="fixed top-0 z-50 h-screen w-48 border-r bg-background p-3 lg:static flex flex-col">
         <AppHeader userEmail={user?.email} />
-        <div className="flex-1 mt-4">
+        <div className="flex-1 overflow-hidden mt-4">
           <MenuContent 
             expandedMenus={expandedMenus}
             location={location}
