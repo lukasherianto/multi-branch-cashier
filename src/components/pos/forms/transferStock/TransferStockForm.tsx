@@ -7,6 +7,7 @@ import { ProductSearch } from "@/components/pos/ProductSearch";
 import { useTransferStock } from "./useTransferStock";
 import { ProductTable } from "./ProductTable";
 import { Pagination } from "./Pagination";
+import { useEffect } from "react";
 
 export function TransferStockForm() {
   const {
@@ -29,8 +30,21 @@ export function TransferStockForm() {
     ITEMS_PER_PAGE
   } = useTransferStock();
 
+  // Add logging when component mounts
+  useEffect(() => {
+    console.log("TransferStockForm mounted");
+    console.log("Branches loaded:", branches);
+    console.log("Central branch:", centralBranch);
+    console.log("Destination branches:", destinationBranches);
+  }, [branches, centralBranch, destinationBranches]);
+
   if (branchesLoading) {
-    return <div>Memuat data cabang...</div>;
+    return (
+      <div className="p-4 rounded-md bg-gray-50 border text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto mb-2"></div>
+        <p>Memuat data cabang...</p>
+      </div>
+    );
   }
 
   if (branches.length < 2) {
@@ -46,7 +60,7 @@ export function TransferStockForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormItem>
             <FormLabel>Dari Cabang (Pusat)</FormLabel>
             <div className="rounded-md border px-3 py-2 text-sm bg-gray-50">
@@ -102,6 +116,7 @@ export function TransferStockForm() {
         <Button 
           type="submit" 
           disabled={isSubmitting || selectedProducts.filter(p => p.selected).length === 0}
+          className="w-full md:w-auto"
         >
           {isSubmitting ? "Memproses..." : "Transfer Stok"}
         </Button>

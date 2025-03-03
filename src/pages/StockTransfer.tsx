@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { id } from 'date-fns/locale';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
+import { useEffect } from "react";
 
 interface Transfer {
   transfer_id: number;
@@ -24,9 +25,15 @@ interface Transfer {
 }
 
 const StockTransfer = () => {
+  // Add a useEffect to log when component mounts
+  useEffect(() => {
+    console.log("StockTransfer component mounted");
+  }, []);
+
   const { data: transfers = [], isLoading, error } = useQuery({
     queryKey: ['transfers'],
     queryFn: async () => {
+      console.log("Starting transfer data fetch");
       try {
         const { data: pelakuUsaha } = await supabase
           .from('pelaku_usaha')
@@ -34,7 +41,11 @@ const StockTransfer = () => {
           .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
           .single();
 
-        if (!pelakuUsaha) return [];
+        console.log("Pelaku usaha data:", pelakuUsaha);
+        if (!pelakuUsaha) {
+          console.log("No pelaku usaha found");
+          return [];
+        }
 
         // Fetch transfers with proper joins
         const { data: transferData, error } = await supabase
@@ -60,6 +71,8 @@ const StockTransfer = () => {
           return [];
         }
 
+        console.log("Transfer data fetched:", transferData);
+
         // Transform the data to match the Transfer interface
         const formattedTransfers: Transfer[] = (transferData || []).map(transfer => ({
           transfer_id: transfer.transfer_id,
@@ -82,11 +95,35 @@ const StockTransfer = () => {
     }
   });
 
-  // Add loading state display
-  if (isLoading) return <div className="p-8">Memuat data transfer stok...</div>;
+  // Enhanced loading state with more visible UI
+  if (isLoading) {
+    return (
+      <div className="p-8 flex flex-col items-center justify-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+        <p className="text-lg">Memuat data transfer stok...</p>
+      </div>
+    );
+  }
   
-  // Add error state display
-  if (error) return <div className="p-8 text-red-500">Error: Gagal memuat data transfer stok</div>;
+  // Enhanced error state display
+  if (error) {
+    console.error("Error in transfers query:", error);
+    return (
+      <div className="p-8">
+        <Alert variant="destructive">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            Gagal memuat data transfer stok. Silakan coba lagi nanti.
+            <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto">
+              {JSON.stringify(error, null, 2)}
+            </pre>
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  console.log("Rendering StockTransfer component with transfers:", transfers);
 
   return (
     <div className="space-y-8">
