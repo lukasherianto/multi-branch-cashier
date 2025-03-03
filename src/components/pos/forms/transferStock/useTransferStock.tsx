@@ -2,8 +2,8 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { transferStockSchema, type ProductTransfer, type TransferStockFormValues, ITEMS_PER_PAGE } from "./schema";
-import { useBranches } from "./hooks/useBranches";
+import { transferStockSchema, type TransferStockFormValues } from "./schema";
+import { useBranchSelection } from "./hooks/useBranchSelection";
 import { useProducts } from "./hooks/useProducts";
 import { usePagination } from "./hooks/usePagination";
 import { useTransferSubmit } from "./utils/transferUtils";
@@ -11,10 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 
 export function useTransferStock() {
   const { toast } = useToast();
-  const [fromCentralToBranch, setFromCentralToBranch] = useState(true);
-  const [sourceBranchId, setSourceBranchId] = useState<string | null>(null);
   
-  // Default form values
+  // Initialize form with zod validation
   const form = useForm<TransferStockFormValues>({
     resolver: zodResolver(transferStockSchema),
     defaultValues: {
@@ -24,51 +22,19 @@ export function useTransferStock() {
     }
   });
 
-  // Fetch branch data
-  const { 
-    branches, 
-    branchesLoading, 
-    centralBranch 
-  } = useBranches();
+  // Use the branch selection hook for all branch-related state and logic
+  const {
+    fromCentralToBranch,
+    toggleDirection,
+    sourceBranchId,
+    sourceBranches,
+    destinationBranches,
+    branches,
+    branchesLoading,
+    centralBranch
+  } = useBranchSelection(form);
 
-  // Set appropriate source and destination branches based on the transfer direction
-  useEffect(() => {
-    if (centralBranch) {
-      // When direction changes, reset the form values
-      if (fromCentralToBranch) {
-        // Central to Branch: Source is Central, Destination are other branches
-        form.setValue("cabang_id_from", centralBranch.cabang_id.toString());
-        form.setValue("cabang_id_to", "");
-        setSourceBranchId(centralBranch.cabang_id.toString());
-      } else {
-        // Branch to Central: Source is empty (to be chosen), Destination is Central
-        form.setValue("cabang_id_from", "");
-        form.setValue("cabang_id_to", centralBranch.cabang_id.toString());
-        setSourceBranchId(null);
-      }
-    }
-  }, [centralBranch, fromCentralToBranch, form]);
-
-  // Create filtered branch lists for source and destination
-  const sourceBranches = fromCentralToBranch 
-    ? [centralBranch].filter(Boolean) 
-    : branches.filter(branch => branch.cabang_id !== centralBranch?.cabang_id);
-  
-  const destinationBranches = fromCentralToBranch 
-    ? branches.filter(branch => branch.cabang_id !== centralBranch?.cabang_id) 
-    : [centralBranch].filter(Boolean);
-
-  // Handle direction toggle
-  const toggleDirection = () => {
-    setFromCentralToBranch(!fromCentralToBranch);
-    form.reset({
-      cabang_id_from: "",
-      cabang_id_to: "",
-      products: []
-    });
-  };
-
-  // Product related functionality
+  // Use the products hook for product selection and management
   const {
     selectedProducts,
     handleSearch,
@@ -77,18 +43,20 @@ export function useTransferStock() {
     setSelectedProducts,
   } = useProducts(sourceBranchId);
 
-  // Pagination - Fix: usePagination expects only one argument
+  // Use pagination hook for managing paginated data display
   const {
     currentPage,
     totalPages,
     paginatedProducts,
     handleNextPage,
     handlePreviousPage,
+    ITEMS_PER_PAGE
   } = usePagination(selectedProducts);
 
-  // Submit functionality
+  // Use the submission hook for handling form submissions
   const { isSubmitting, submitTransfer } = useTransferSubmit();
 
+  // Handle form submission
   const onSubmit = async (values: TransferStockFormValues) => {
     try {
       console.log("Submitting transfer with values:", values);
@@ -137,7 +105,7 @@ export function useTransferStock() {
       await submitTransfer(
         values,
         selectedProducts,
-        values.cabang_id_from, // Use the selected source branch
+        values.cabang_id_from,
         () => {
           // Reset form
           form.reset({

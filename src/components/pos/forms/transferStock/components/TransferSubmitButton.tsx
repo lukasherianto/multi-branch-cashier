@@ -16,8 +16,8 @@ export const TransferSubmitButton = ({
   selectedProductsCount
 }: TransferSubmitButtonProps) => {
   const isDisabled = isSubmitting || 
-    form.getValues("cabang_id_from") === "" || 
-    form.getValues("cabang_id_to") === "" || 
+    !form.getValues("cabang_id_from") || 
+    !form.getValues("cabang_id_to") || 
     selectedProductsCount === 0;
 
   return (
