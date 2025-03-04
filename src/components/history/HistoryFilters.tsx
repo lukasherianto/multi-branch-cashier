@@ -3,7 +3,7 @@ import React from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon, Download } from 'lucide-react';
+import { Calendar as CalendarIcon, Download, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -51,6 +51,12 @@ export const HistoryFilters = ({
     } else {
       toast.error('Failed to export transaction data');
     }
+  };
+  
+  const resetFilters = () => {
+    onStartDateChange(undefined);
+    onEndDateChange(undefined);
+    onBranchChange(undefined);
   };
   
   return (
@@ -122,18 +128,6 @@ export const HistoryFilters = ({
             </SelectContent>
           </Select>
         </div>
-
-        <Button 
-          variant="outline" 
-          className="h-9 px-3 py-1"
-          onClick={() => {
-            onStartDateChange(undefined);
-            onEndDateChange(undefined);
-            onBranchChange(undefined);
-          }}
-        >
-          Reset Filter
-        </Button>
       </div>
       
       <div className="flex justify-between items-center">
@@ -144,6 +138,15 @@ export const HistoryFilters = ({
         >
           <Download className="h-4 w-4 mr-2" />
           Download Excel
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          className="h-9 px-3 py-1"
+          onClick={resetFilters}
+        >
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Reset Filter
         </Button>
       </div>
     </div>
