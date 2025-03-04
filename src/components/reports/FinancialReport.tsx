@@ -31,11 +31,22 @@ const FinancialReport = () => {
 
       const branchIds = branches.map(b => b.cabang_id);
 
-      // Format date range for query
-      const startDate = dateRange.start ? dateRange.start.toISOString() : undefined;
-      const endDate = dateRange.end 
-        ? new Date(dateRange.end.setHours(23, 59, 59, 999)).toISOString() 
-        : undefined;
+      // Format date range for query with special handling for daily period
+      let startDate, endDate;
+      
+      if (dateRange.period === 'daily') {
+        // For daily period, ensure we're getting just today's data
+        const today = new Date();
+        startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0).toISOString();
+        endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999).toISOString();
+      } else {
+        startDate = dateRange.start ? dateRange.start.toISOString() : undefined;
+        endDate = dateRange.end 
+          ? new Date(dateRange.end.setHours(23, 59, 59, 999)).toISOString() 
+          : undefined;
+      }
+
+      console.log('Date range:', { period: dateRange.period, startDate, endDate });
 
       // Fetch cash transactions with date filtering
       const { data: kasData, error: kasError } = await supabase

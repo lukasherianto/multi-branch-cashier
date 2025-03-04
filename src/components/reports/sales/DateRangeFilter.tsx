@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
@@ -29,7 +30,9 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({ onFilterChange }) => 
     
     switch (value) {
       case 'daily':
-        start = today;
+        // For daily, set both start and end to today
+        start = new Date(today.setHours(0, 0, 0, 0));
+        end = new Date(new Date().setHours(23, 59, 59, 999));
         break;
       case 'monthly':
         start = new Date(today.getFullYear(), today.getMonth(), 1);

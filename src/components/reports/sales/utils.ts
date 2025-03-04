@@ -1,9 +1,11 @@
+
 // Get start date for period filtering
 export const getStartDateForPeriod = (period: 'daily' | 'weekly' | 'monthly' | 'yearly') => {
   const today = new Date();
   switch (period) {
     case 'daily':
-      return new Date(today.setHours(0, 0, 0, 0));
+      // For daily period, set to the start of today (midnight)
+      return new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
     case 'weekly':
       const day = today.getDay();
       return new Date(today.setDate(today.getDate() - day));
