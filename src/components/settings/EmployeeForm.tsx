@@ -1,6 +1,6 @@
 
 import { Users, UserPlus } from "lucide-react";
-import { EmployeeList } from "./employee/EmployeeList";
+import { EmployeeList } from "./employee/list";
 import { useEmployeeData } from "./employee/useEmployeeData";
 import { useEmployeeForm } from "./employee/useEmployeeForm";
 import { useEmployeeDelete } from "./employee/useEmployeeDelete";
