@@ -5,7 +5,7 @@ export type UserRole = 'pelaku_usaha' | 'admin' | 'kasir' | 'pelayan';
 
 export interface AuthContextType {
   user: User | null;
-  userRole: UserRole | null;
+  userRole: string | null;
   userStatusId: number | null;
   pelakuUsaha: any;
   cabang: any;
