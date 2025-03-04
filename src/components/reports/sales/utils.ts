@@ -1,4 +1,3 @@
-
 // Get start date for period filtering
 export const getStartDateForPeriod = (period: 'daily' | 'weekly' | 'monthly' | 'yearly') => {
   const today = new Date();
@@ -67,8 +66,8 @@ export const calculateSalesStats = (salesData: any[] | null) => {
 };
 
 // Process product sales data
-export const processProductSales = (filteredSales: any[]) => {
-  const productSalesMap = filteredSales.reduce((acc, sale) => {
+export const processProductSales = (filteredSales: any[]): ProductSale[] => {
+  const productSalesMap = filteredSales.reduce((acc: Record<string, ProductSale>, sale) => {
     if (sale.produk && sale.produk.product_name) {
       const productName = sale.produk.product_name;
       const productId = sale.produk.produk_id;
@@ -117,3 +116,11 @@ export const processCategorySales = (filteredSales: any[]) => {
     return acc;
   }, {});
 };
+
+export interface ProductSale {
+  name: string;
+  quantity: number;
+  revenue: number;
+  cost: number;
+  profit: number;
+}

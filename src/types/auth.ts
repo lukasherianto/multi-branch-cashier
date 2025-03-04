@@ -7,3 +7,9 @@ export interface UserWithRole {
   role: UserRole;
   name?: string;
 }
+
+export interface PelakuUsaha {
+  pelaku_usaha_id: string;
+  business_name?: string;
+  user_id?: string;
+}
