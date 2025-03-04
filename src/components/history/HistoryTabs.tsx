@@ -12,6 +12,7 @@ interface HistoryTabsProps {
   onPrint: (transaction: TransactionForTable) => void;
   onWhatsApp: (transaction: TransactionForTable) => void;
   onReturSuccess: () => void;
+  onCancelTransaction: (transactionId: number) => void;
 }
 
 export const HistoryTabs = ({
@@ -22,6 +23,7 @@ export const HistoryTabs = ({
   onPrint,
   onWhatsApp,
   onReturSuccess,
+  onCancelTransaction,
 }: HistoryTabsProps) => {
   return (
     <Tabs defaultValue="all">
@@ -45,6 +47,7 @@ export const HistoryTabs = ({
             onPrint={onPrint}
             onWhatsApp={onWhatsApp}
             onReturSuccess={onReturSuccess}
+            onCancelTransaction={onCancelTransaction}
           />
         )}
       </TabsContent>
@@ -62,6 +65,7 @@ export const HistoryTabs = ({
             onPrint={onPrint}
             onWhatsApp={onWhatsApp}
             onReturSuccess={onReturSuccess}
+            onCancelTransaction={onCancelTransaction}
           />
         )}
       </TabsContent>
@@ -79,6 +83,7 @@ export const HistoryTabs = ({
             onPrint={onPrint}
             onWhatsApp={onWhatsApp}
             onReturSuccess={onReturSuccess}
+            onCancelTransaction={onCancelTransaction}
           />
         )}
       </TabsContent>
@@ -96,6 +101,7 @@ export const HistoryTabs = ({
             onPrint={onPrint}
             onWhatsApp={onWhatsApp}
             onReturSuccess={onReturSuccess}
+            onCancelTransaction={onCancelTransaction}
           />
         )}
       </TabsContent>

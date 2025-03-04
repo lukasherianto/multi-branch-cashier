@@ -27,6 +27,7 @@ interface TransactionTableProps {
   onPrint: (transaction: Transaction) => void;
   onWhatsApp: (transaction: Transaction) => void;
   onReturSuccess: () => void;
+  onCancelTransaction: (transactionId: number) => void;
 }
 
 export const TransactionTable = ({
@@ -36,6 +37,7 @@ export const TransactionTable = ({
   onPrint,
   onWhatsApp,
   onReturSuccess,
+  onCancelTransaction,
 }: TransactionTableProps) => {
   if (!transactions || transactions.length === 0) {
     return (
@@ -103,6 +105,7 @@ export const TransactionTable = ({
                     onWhatsApp={() => onWhatsApp(transaction)}
                     onPayDebt={() => onPayDebt(transaction.transaksi_id)}
                     onReturSuccess={onReturSuccess}
+                    onCancelTransaction={onCancelTransaction}
                   />
                 </td>
               </tr>

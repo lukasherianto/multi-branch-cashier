@@ -15,7 +15,8 @@ const History = () => {
     handlePayDebt,
     handlePrint,
     handleWhatsApp,
-    handleReturSuccess
+    handleReturSuccess,
+    handleCancelTransaction
   } = useTransactionActions();
 
   useEffect(() => {
@@ -41,6 +42,7 @@ const History = () => {
             onPrint={handlePrint}
             onWhatsApp={handleWhatsApp}
             onReturSuccess={handleReturSuccess}
+            onCancelTransaction={handleCancelTransaction}
           />
         </CardContent>
       </Card>

@@ -1,7 +1,8 @@
 
 import { Button } from "@/components/ui/button";
-import { Printer, MessageSquare, CreditCard } from "lucide-react";
+import { Printer, MessageSquare, CreditCard, XCircle } from "lucide-react";
 import { ReturForm } from "@/components/history/ReturForm";
+import { useAuth } from "@/hooks/auth";
 
 interface TransactionActionsProps {
   transaction: {
@@ -17,6 +18,7 @@ interface TransactionActionsProps {
   onWhatsApp: () => void;
   onPayDebt: () => void;
   onReturSuccess: () => void;
+  onCancelTransaction: (transactionId: number) => void;
 }
 
 export const TransactionActions = ({ 
@@ -24,8 +26,14 @@ export const TransactionActions = ({
   onPrint, 
   onWhatsApp, 
   onPayDebt,
-  onReturSuccess 
+  onReturSuccess,
+  onCancelTransaction
 }: TransactionActionsProps) => {
+  const { userRole } = useAuth();
+  
+  // Only pelaku_usaha and admin can cancel transactions
+  const canCancelTransaction = userRole === 'pelaku_usaha' || userRole === 'admin';
+
   return (
     <div className="flex space-x-1">
       {transaction.payment_status === 0 && (
@@ -66,6 +74,19 @@ export const TransactionActions = ({
         }]}
         onSuccess={onReturSuccess}
       />
+      
+      {/* Cancel button only for authorized users */}
+      {canCancelTransaction && transaction.payment_status !== 2 && (
+        <Button
+          variant="destructive"
+          size="sm"
+          className="h-7 text-xs px-2"
+          onClick={() => onCancelTransaction(transaction.transaksi_id)}
+        >
+          <XCircle className="w-3 h-3 mr-1" />
+          Batal
+        </Button>
+      )}
     </div>
   );
 };
