@@ -36,14 +36,29 @@ const Layout = () => {
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      console.log("Attempting to sign out...");
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("Error during logout:", error);
+        toast({
+          title: "Gagal keluar",
+          description: "Terjadi kesalahan saat mencoba keluar: " + error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      console.log("Sign out successful");
       toast({
         title: "Berhasil keluar",
         description: "Anda telah keluar dari sistem",
       });
-      navigate("/auth");
+      
+      // Force navigation to auth page
+      navigate("/auth", { replace: true });
     } catch (error) {
-      console.error("Error logging out:", error);
+      console.error("Exception during logout:", error);
       toast({
         title: "Gagal keluar",
         description: "Terjadi kesalahan saat mencoba keluar",
