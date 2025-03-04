@@ -3,10 +3,10 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
-import { Branch } from "./types";
+import { Branch, EmployeeFormData } from "./types";
 
 interface EmployeeFormFieldsProps {
-  form: UseFormReturn<any>;
+  form: UseFormReturn<EmployeeFormData>;
   branches: Branch[];
 }
 
@@ -79,7 +79,7 @@ export const EmployeeFormFields = ({ form, branches }: EmployeeFormFieldsProps) 
         render={({ field }) => (
           <FormItem>
             <FormLabel>Jabatan <span className="text-red-500">*</span></FormLabel>
-            <Select onValueChange={field.onChange} value={field.value}>
+            <Select onValueChange={field.onChange} value={field.value || undefined}>
               <FormControl>
                 <SelectTrigger>
                   <SelectValue placeholder="Pilih jabatan" />
@@ -117,7 +117,7 @@ export const EmployeeFormFields = ({ form, branches }: EmployeeFormFieldsProps) 
         render={({ field }) => (
           <FormItem>
             <FormLabel>Cabang <span className="text-red-500">*</span></FormLabel>
-            <Select onValueChange={field.onChange} value={field.value}>
+            <Select onValueChange={field.onChange} value={field.value || undefined}>
               <FormControl>
                 <SelectTrigger>
                   <SelectValue placeholder="Pilih cabang" />

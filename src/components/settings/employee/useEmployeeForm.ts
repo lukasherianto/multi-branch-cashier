@@ -50,13 +50,14 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
         return;
       }
 
-      const { data: pelakuUsaha } = await supabase
+      const { data: pelakuUsaha, error: pelakuUsahaError } = await supabase
         .from("pelaku_usaha")
         .select("pelaku_usaha_id")
         .eq("user_id", user.id)
         .single();
 
-      if (!pelakuUsaha) {
+      if (pelakuUsahaError || !pelakuUsaha) {
+        console.error("Error fetching pelaku usaha:", pelakuUsahaError);
         toast({
           title: "Error",
           description: "Data usaha tidak ditemukan",
@@ -119,18 +120,33 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
         console.error("Error updating profile status_id:", profileError);
       }
 
-      // Verify if the selected branch exists (if one was selected)
+      // Check if the cabang_id is valid
+      let cabangId: number | null = null;
       if (data.cabang_id && data.cabang_id !== "0") {
-        const { data: branchData, error: branchError } = await supabase
-          .from("cabang")
-          .select("cabang_id")
-          .eq("cabang_id", parseInt(data.cabang_id))
-          .single();
+        const parsedCabangId = parseInt(data.cabang_id, 10);
+        if (!isNaN(parsedCabangId)) {
+          cabangId = parsedCabangId;
+          // Verify if the selected branch exists
+          const { data: branchData, error: branchError } = await supabase
+            .from("cabang")
+            .select("cabang_id")
+            .eq("cabang_id", cabangId)
+            .single();
 
-        if (branchError || !branchData) {
+          if (branchError || !branchData) {
+            console.error("Branch validation error:", branchError);
+            toast({
+              title: "Error",
+              description: "Cabang yang dipilih tidak valid",
+              variant: "destructive",
+            });
+            return;
+          }
+        } else {
+          console.error("Invalid cabang_id format:", data.cabang_id);
           toast({
             title: "Error",
-            description: "Cabang yang dipilih tidak valid",
+            description: "Format ID cabang tidak valid",
             variant: "destructive",
           });
           return;
@@ -138,19 +154,23 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
       }
 
       // Insert employee data
-      const { data: employeeData, error: employeeError } = await supabase
+      const employeeData = {
+        name: data.name,
+        email: data.email,
+        whatsapp_contact: data.whatsapp_contact || null,
+        role: data.role || data.business_role, // Use business_role as fallback if role is not provided
+        business_role: data.business_role,
+        cabang_id: cabangId,
+        pelaku_usaha_id: pelakuUsaha.pelaku_usaha_id,
+        auth_id: authData.user.id,
+        is_active: true
+      };
+
+      console.log("Inserting employee data:", employeeData);
+
+      const { data: insertedEmployee, error: employeeError } = await supabase
         .from("karyawan")
-        .insert({
-          name: data.name,
-          email: data.email,
-          whatsapp_contact: data.whatsapp_contact,
-          role: data.role || data.business_role, // Use business_role as fallback if role is not provided
-          business_role: data.business_role,
-          cabang_id: data.cabang_id === "0" ? null : parseInt(data.cabang_id),
-          pelaku_usaha_id: pelakuUsaha.pelaku_usaha_id,
-          auth_id: authData.user.id,
-          is_active: true
-        })
+        .insert(employeeData)
         .select()
         .single();
 
@@ -158,6 +178,8 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
         console.error("Employee insert error:", employeeError);
         throw new Error(employeeError.message);
       }
+
+      console.log("Employee successfully inserted:", insertedEmployee);
 
       toast({
         title: "Sukses",
