@@ -1,27 +1,29 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Input } from "@/components/ui/input";
+import { useAuth } from "@/hooks/auth";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ReturnReport from "@/components/reports/ReturnReport";
+import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
-import { RotateCcw } from "lucide-react";
+import { RotateCcw, Search } from "lucide-react";
 
 const Returns = () => {
+  const { pelakuUsaha } = useAuth();
   const [transactionId, setTransactionId] = useState("");
-  const [selectedProduct, setSelectedProduct] = useState<number | null>(null);
-  const [quantity, setQuantity] = useState<number>(1);
-  const [reason, setReason] = useState<string>("");
-  const { toast } = useToast();
+  const [searching, setSearching] = useState(false);
 
-  const { data: transaction, refetch } = useQuery({
+  const { data: transaction, refetch, isLoading: isLoadingTransaction } = useQuery({
     queryKey: ["transaction", transactionId],
     queryFn: async () => {
       if (!transactionId) return null;
@@ -37,33 +39,37 @@ const Returns = () => {
             product_name
           )
         `)
-        .eq("transaksi_id", parseInt(transactionId)) // Convert string to number
-        .single();
+        .eq("transaksi_id", parseInt(transactionId))
+        .maybeSingle();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!transactionId,
+    enabled: false,
   });
+
+  const handleSearch = () => {
+    if (!transactionId.trim()) {
+      toast.error("Masukkan ID Transaksi terlebih dahulu");
+      return;
+    }
+    
+    setSearching(true);
+    refetch().then(() => {
+      setSearching(false);
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!transaction || !selectedProduct) {
-      toast({
-        title: "Error",
-        description: "Silakan pilih produk yang akan diretur",
-        variant: "destructive",
-      });
+      toast.error("Silakan pilih produk yang akan diretur");
       return;
     }
 
     if (quantity > transaction.quantity) {
-      toast({
-        title: "Error",
-        description: "Jumlah retur tidak boleh melebihi jumlah pembelian",
-        variant: "destructive",
-      });
+      toast.error("Jumlah retur tidak boleh melebihi jumlah pembelian");
       return;
     }
 
@@ -77,10 +83,7 @@ const Returns = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Sukses",
-        description: "Retur berhasil dicatat",
-      });
+      toast.success("Retur berhasil dicatat");
 
       // Reset form
       setTransactionId("");
@@ -89,89 +92,129 @@ const Returns = () => {
       setReason("");
     } catch (error) {
       console.error("Error creating return:", error);
-      toast({
-        title: "Error",
-        description: "Gagal mencatat retur",
-        variant: "destructive",
-      });
+      toast.error("Gagal mencatat retur");
     }
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Retur Produk</h1>
+  const [selectedProduct, setSelectedProduct] = useState<number | null>(null);
+  const [quantity, setQuantity] = useState<number>(1);
+  const [reason, setReason] = useState<string>("");
+
+  if (!pelakuUsaha) {
+    return (
+      <div className="container mx-auto p-4">
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-center text-gray-500">
+              Silakan lengkapi profil usaha Anda terlebih dahulu
+            </p>
+          </CardContent>
+        </Card>
       </div>
+    );
+  }
 
-      <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
-        <div className="space-y-2">
-          <Label htmlFor="transactionId">ID Transaksi</Label>
-          <div className="flex gap-2">
-            <Input
-              id="transactionId"
-              value={transactionId}
-              onChange={(e) => setTransactionId(e.target.value)}
-              placeholder="Masukkan ID transaksi"
-            />
-            <Button 
-              type="button"
-              variant="outline"
-              onClick={() => refetch()}
-            >
-              <RotateCcw className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
+  return (
+    <div className="container mx-auto p-4">
+      <Tabs defaultValue="create">
+        <TabsList className="mb-4">
+          <TabsTrigger value="create">Buat Retur</TabsTrigger>
+          <TabsTrigger value="history">Riwayat Retur</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="create">
+          <Card>
+            <CardHeader>
+              <CardTitle>Buat Retur Produk</CardTitle>
+              <CardDescription>
+                Isi form di bawah ini untuk mencatat retur produk
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="transactionId">ID Transaksi</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="transactionId"
+                      value={transactionId}
+                      onChange={(e) => setTransactionId(e.target.value)}
+                      placeholder="Masukkan ID transaksi"
+                    />
+                    <Button 
+                      type="button"
+                      onClick={handleSearch}
+                      disabled={searching || !transactionId.trim()}
+                    >
+                      {searching ? <RotateCcw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </div>
 
-        {transaction && (
-          <>
-            <div className="space-y-2">
-              <Label htmlFor="product">Pilih Produk</Label>
-              <Select
-                value={selectedProduct?.toString() || ""}
-                onValueChange={(value) => setSelectedProduct(Number(value))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih produk" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem 
-                    value={transaction.produk.produk_id.toString()}
-                  >
-                    {transaction.produk.product_name} (Qty: {transaction.quantity})
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                {transaction ? (
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="product">Pilih Produk</Label>
+                      <select
+                        id="product"
+                        className="w-full p-2 border rounded-md"
+                        value={selectedProduct || ""}
+                        onChange={(e) => setSelectedProduct(Number(e.target.value))}
+                      >
+                        <option value="">Pilih produk</option>
+                        <option value={transaction.produk.produk_id}>
+                          {transaction.produk.product_name} (Qty: {transaction.quantity})
+                        </option>
+                      </select>
+                    </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="quantity">Jumlah Retur</Label>
-              <Input
-                id="quantity"
-                type="number"
-                min="1"
-                max={transaction.quantity}
-                value={quantity}
-                onChange={(e) => setQuantity(Number(e.target.value))}
-              />
-            </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="quantity">Jumlah Retur</Label>
+                      <Input
+                        id="quantity"
+                        type="number"
+                        min="1"
+                        max={transaction.quantity}
+                        value={quantity}
+                        onChange={(e) => setQuantity(Number(e.target.value))}
+                      />
+                    </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="reason">Alasan Retur</Label>
-              <Input
-                id="reason"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                placeholder="Masukkan alasan retur"
-              />
-            </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="reason">Alasan Retur</Label>
+                      <Input
+                        id="reason"
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder="Masukkan alasan retur"
+                      />
+                    </div>
 
-            <Button type="submit" className="w-full">
-              Simpan Retur
-            </Button>
-          </>
-        )}
-      </form>
+                    <Button type="submit" className="w-full">
+                      Simpan Retur
+                    </Button>
+                  </form>
+                ) : isLoadingTransaction ? (
+                  <div className="py-8 text-center">
+                    <RotateCcw className="w-6 h-6 animate-spin mx-auto mb-2" />
+                    <p className="text-gray-500">Mencari transaksi...</p>
+                  </div>
+                ) : (
+                  transactionId.trim() && searching === false && (
+                    <div className="py-8 text-center">
+                      <p className="text-gray-500">Silakan cari transaksi terlebih dahulu</p>
+                    </div>
+                  )
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="history">
+          <ReturnReport />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

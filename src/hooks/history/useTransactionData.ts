@@ -16,8 +16,8 @@ export function useTransactionData(pelakuUsahaId: number | undefined) {
         // Use explicit string for the select query to avoid TypeScript analyzing it deeply
         const { data, error } = await supabase
           .from('transaksi')
-          .select("transaksi_id, transaction_date, created_at, quantity, total_price, payment_status, payment_method, produk_id, cabang_id")
-          .eq('pelaku_usaha_id', pelakuUsahaId)
+          .select(`transaksi_id, transaction_date, created_at, quantity, total_price, payment_status, payment_method, produk_id, cabang_id`)
+          .eq('cabang_id', pelakuUsahaId)
           .order('created_at', { ascending: false });
 
         if (error) {
