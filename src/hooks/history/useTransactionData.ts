@@ -3,7 +3,12 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { TransactionForTable, RawTransaction } from '@/types/history';
 
-export function useTransactionData(pelakuUsahaId: number | undefined) {
+export function useTransactionData(
+  pelakuUsahaId: number | undefined, 
+  startDate?: Date, 
+  endDate?: Date, 
+  branchId?: number
+) {
   const [transactions, setTransactions] = useState<TransactionForTable[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -14,10 +19,12 @@ export function useTransactionData(pelakuUsahaId: number | undefined) {
       setIsLoading(true);
       try {
         // First get all branches for this business
-        const { data: branchData, error: branchError } = await supabase
+        let branchQuery = supabase
           .from('cabang')
           .select('cabang_id')
           .eq('pelaku_usaha_id', pelakuUsahaId);
+          
+        const { data: branchData, error: branchError } = await branchQuery;
           
         if (branchError) {
           console.error('Error fetching branches:', branchError);
@@ -35,11 +42,34 @@ export function useTransactionData(pelakuUsahaId: number | undefined) {
         console.log('Found branch IDs:', branchIds);
         
         // Get transactions for all branches of this business
-        const { data, error } = await supabase
+        let query = supabase
           .from('transaksi')
-          .select(`transaksi_id, transaction_date, created_at, quantity, total_price, payment_status, payment_method, produk_id, cabang_id`)
-          .in('cabang_id', branchIds)
-          .order('created_at', { ascending: false });
+          .select(`transaksi_id, transaction_date, created_at, quantity, total_price, payment_status, payment_method, produk_id, cabang_id`);
+        
+        // Apply branch filter if provided
+        if (branchId) {
+          query = query.eq('cabang_id', branchId);
+        } else {
+          query = query.in('cabang_id', branchIds);
+        }
+        
+        // Apply date filters if provided
+        if (startDate) {
+          const startDateStr = startDate.toISOString();
+          query = query.gte('transaction_date', startDateStr);
+        }
+        
+        if (endDate) {
+          // Set time to end of day for inclusive filtering
+          const endDateWithTime = new Date(endDate);
+          endDateWithTime.setHours(23, 59, 59, 999);
+          const endDateStr = endDateWithTime.toISOString();
+          query = query.lte('transaction_date', endDateStr);
+        }
+        
+        query = query.order('created_at', { ascending: false });
+        
+        const { data, error } = await query;
 
         if (error) {
           console.error('Error fetching transactions:', error);
@@ -111,7 +141,7 @@ export function useTransactionData(pelakuUsahaId: number | undefined) {
     };
 
     fetchTransactions();
-  }, [pelakuUsahaId]);
+  }, [pelakuUsahaId, startDate, endDate, branchId]);
 
   return { transactions, isLoading };
 }
