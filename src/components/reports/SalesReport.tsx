@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/auth";
 import StatCard from "./shared/StatCard";
-import ProductSalesTable from "./sales/ProductSalesTable";
+import ProductSalesTable, { ProductSale } from "./sales/ProductSalesTable";
 import CategorySalesTable from "./sales/CategorySalesTable";
 import DateRangeFilter from "./sales/DateRangeFilter";
 import { useState } from "react";
@@ -128,7 +128,7 @@ const SalesReport = () => {
   // Filter product sales by selected period
   const filteredProductSales = filterSalesByPeriod(salesData, productPeriod);
   
-  const productSales = filteredProductSales.reduce((acc, sale) => {
+  const productSalesMap = filteredProductSales.reduce((acc, sale) => {
     if (sale.produk && sale.produk.product_name) {
       const productName = sale.produk.product_name;
       const productId = sale.produk.produk_id;
@@ -150,7 +150,10 @@ const SalesReport = () => {
       acc[productId].profit = acc[productId].revenue - acc[productId].cost;
     }
     return acc;
-  }, {} as Record<string, { name: string, quantity: number, revenue: number, cost: number, profit: number }>) || {};
+  }, {} as Record<string, ProductSale>) || {};
+
+  // Convert the map to an array for the ProductSalesTable
+  const productSalesArray: ProductSale[] = Object.values(productSalesMap);
 
   // Filter category sales by selected period
   const filteredCategorySales = filterSalesByPeriod(salesData, categoryPeriod);
@@ -207,7 +210,7 @@ const SalesReport = () => {
       </div>
 
       <ProductSalesTable
-        productSales={Object.values(productSales)}
+        productSales={productSalesArray}
         title="Produk Terlaris"
         limit={10}
         showProfit={true}

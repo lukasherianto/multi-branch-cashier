@@ -11,7 +11,7 @@ import { Card } from "@/components/ui/card";
 import ProductFilterOptions from "./ProductFilterOptions";
 import { useState } from "react";
 
-interface ProductSale {
+export interface ProductSale {
   name: string;
   quantity: number;
   revenue: number;
