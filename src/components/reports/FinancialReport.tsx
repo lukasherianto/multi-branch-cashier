@@ -2,14 +2,22 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/auth";
+import { useState } from "react";
 import StatCard from "./shared/StatCard";
 import TransactionHistoryTable from "./financial/TransactionHistoryTable";
+import DateRangeFilter from "./sales/DateRangeFilter";
+import { filterSalesByPeriod } from "./sales/utils";
 
 const FinancialReport = () => {
   const { pelakuUsaha } = useAuth();
+  const [dateRange, setDateRange] = useState({
+    start: new Date(new Date().getFullYear(), new Date().getMonth(), 1), // First day of current month
+    end: new Date(),
+    period: 'monthly' as 'daily' | 'monthly' | 'yearly' | 'custom'
+  });
 
   const { data: transactions } = useQuery({
-    queryKey: ["financial-report", pelakuUsaha?.pelaku_usaha_id],
+    queryKey: ["financial-report", pelakuUsaha?.pelaku_usaha_id, dateRange.start, dateRange.end],
     queryFn: async () => {
       if (!pelakuUsaha) return null;
 
@@ -23,6 +31,13 @@ const FinancialReport = () => {
 
       const branchIds = branches.map(b => b.cabang_id);
 
+      // Format date range for query
+      const startDate = dateRange.start ? dateRange.start.toISOString() : undefined;
+      const endDate = dateRange.end 
+        ? new Date(dateRange.end.setHours(23, 59, 59, 999)).toISOString() 
+        : undefined;
+
+      // Fetch cash transactions with date filtering
       const { data: kasData, error: kasError } = await supabase
         .from("kas")
         .select(`
@@ -32,17 +47,22 @@ const FinancialReport = () => {
           transaction_date
         `)
         .in('cabang_id', branchIds)
+        .gte('transaction_date', startDate)
+        .lte('transaction_date', endDate)
         .order('transaction_date', { ascending: false });
 
       if (kasError) throw kasError;
 
+      // Fetch sales data with date filtering
       const { data: salesData, error: salesError } = await supabase
         .from("transaksi")
         .select(`
           total_price,
           transaction_date
         `)
-        .in('cabang_id', branchIds);
+        .in('cabang_id', branchIds)
+        .gte('transaction_date', startDate)
+        .lte('transaction_date', endDate);
 
       if (salesError) throw salesError;
 
@@ -53,6 +73,14 @@ const FinancialReport = () => {
     },
     enabled: !!pelakuUsaha
   });
+
+  const handleDateRangeChange = (range: { 
+    start: Date | undefined; 
+    end: Date | undefined; 
+    period: 'daily' | 'monthly' | 'yearly' | 'custom';
+  }) => {
+    setDateRange(range);
+  };
 
   const totalIncome = transactions?.kas
     .filter(t => t.transaction_type === 'masuk')
@@ -75,6 +103,8 @@ const FinancialReport = () => {
 
   return (
     <div className="space-y-6">
+      <DateRangeFilter onFilterChange={handleDateRangeChange} />
+      
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard
           title="Total Penjualan"
