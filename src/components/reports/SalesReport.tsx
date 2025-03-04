@@ -5,6 +5,7 @@ import ProductSalesTable, { ProductSale } from "./sales/ProductSalesTable";
 import CategorySalesTable from "./sales/CategorySalesTable";
 import DateRangeFilter from "./sales/DateRangeFilter";
 import ProductSalesChart from "./sales/ProductSalesChart";
+import SalesTimeSeriesChart from "./sales/SalesTimeSeriesChart";
 import { useState, useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
 import { useReportData } from "@/hooks/reports/useReportData";
@@ -26,6 +27,7 @@ const SalesReport = () => {
   const [productPeriod, setProductPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
   const [categoryPeriod, setCategoryPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
   const [chartPeriod, setChartPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
+  const [timeseriesPeriod, setTimeseriesPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
 
   const { salesData, isLoading, error } = useReportData(pelakuUsaha, dateRange);
 
@@ -59,6 +61,11 @@ const SalesReport = () => {
   const handleChartPeriodChange = (period: 'daily' | 'weekly' | 'monthly' | 'yearly') => {
     console.log("Chart period changed to:", period);
     setChartPeriod(period);
+  };
+
+  const handleTimeseriesPeriodChange = (period: 'daily' | 'weekly' | 'monthly' | 'yearly') => {
+    console.log("Timeseries period changed to:", period);
+    setTimeseriesPeriod(period);
   };
 
   // Calculate sales statistics
@@ -129,6 +136,14 @@ const SalesReport = () => {
         productSales={chartProductSales}
         onPeriodChange={handleChartPeriodChange}
         currentPeriod={chartPeriod}
+      />
+
+      <Separator className="my-6" />
+      
+      <SalesTimeSeriesChart 
+        salesData={salesData || []}
+        onPeriodChange={handleTimeseriesPeriodChange}
+        currentPeriod={timeseriesPeriod}
       />
 
       <Separator className="my-6" />
