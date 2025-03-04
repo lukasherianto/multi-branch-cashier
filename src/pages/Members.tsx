@@ -5,11 +5,14 @@ import { Plus } from "lucide-react";
 import MemberList from "@/components/members/MemberList";
 import MemberForm from "@/components/members/MemberForm";
 import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/hooks/auth";
 
 const Members = () => {
   const [showForm, setShowForm] = useState(false);
   const { toast } = useToast();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const { pelakuUsaha } = useAuth();
 
   const handleMemberAdded = () => {
     toast({
@@ -19,6 +22,20 @@ const Members = () => {
     setShowForm(false);
     setRefreshTrigger(prev => prev + 1);
   };
+
+  if (!pelakuUsaha) {
+    return (
+      <div className="container mx-auto p-4">
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-center text-gray-500">
+              Silakan lengkapi profil usaha Anda terlebih dahulu
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-6 space-y-6">
