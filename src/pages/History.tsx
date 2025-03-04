@@ -13,6 +13,21 @@ import { useAuth } from "@/hooks/auth";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Loader2 } from "lucide-react";
 
+interface Transaction {
+  transaksi_id: number;
+  quantity: number;
+  total_price: number;
+  transaction_date: string;
+  payment_status: number;
+  produk: {
+    produk_id: number;
+    product_name: string;
+  };
+  cabang: {
+    branch_name: string;
+  };
+}
+
 const History = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [activeTab, setActiveTab] = useState("daily");
@@ -20,7 +35,12 @@ const History = () => {
   const { pelakuUsaha } = useAuth();
 
   // Query untuk transaksi harian
-  const { data: dailyTransactions, refetch: refetchDaily, isLoading: isDailyLoading, isError: isDailyError } = useQuery({
+  const { 
+    data: dailyTransactions, 
+    refetch: refetchDaily, 
+    isLoading: isDailyLoading, 
+    isError: isDailyError 
+  } = useQuery<Transaction[]>({
     queryKey: ["transactions", selectedDate, pelakuUsaha?.pelaku_usaha_id],
     queryFn: async () => {
       if (!pelakuUsaha?.pelaku_usaha_id) {
@@ -70,7 +90,12 @@ const History = () => {
   });
 
   // Query untuk transaksi belum dibayar (piutang)
-  const { data: unpaidTransactions, refetch: refetchUnpaid, isLoading: isUnpaidLoading, isError: isUnpaidError } = useQuery({
+  const { 
+    data: unpaidTransactions, 
+    refetch: refetchUnpaid, 
+    isLoading: isUnpaidLoading, 
+    isError: isUnpaidError 
+  } = useQuery<Transaction[]>({
     queryKey: ["unpaid-transactions", pelakuUsaha?.pelaku_usaha_id],
     queryFn: async () => {
       if (!pelakuUsaha?.pelaku_usaha_id) {
