@@ -23,7 +23,8 @@ interface TransactionForTable {
   payment_method?: string;
 }
 
-type SupabaseTransaction = {
+// Define a simpler type for the raw data returned from Supabase
+interface RawTransaction {
   transaksi_id: number;
   transaction_date: string;
   created_at: string;
@@ -31,14 +32,12 @@ type SupabaseTransaction = {
   total_price: number;
   payment_status: number;
   payment_method?: string;
-  produk: {
-    produk_id: number;
-    product_name: string;
-  };
-  cabang: {
-    branch_name: string;
-  };
-};
+  produk_id: number;
+  cabang_id: number;
+  // Include fields from joined tables with explicit names
+  produk_product_name?: string;
+  cabang_branch_name?: string;
+}
 
 const History = () => {
   const [transactions, setTransactions] = useState<TransactionForTable[]>([]);
@@ -51,7 +50,7 @@ const History = () => {
       
       setIsLoading(true);
       try {
-        // Using a more type-safe approach to prevent deep nesting type errors
+        // Use a simpler query to avoid deeply nested types
         const { data, error } = await supabase
           .from('transaksi')
           .select(`
@@ -62,8 +61,8 @@ const History = () => {
             total_price,
             payment_status,
             payment_method,
-            produk:produk_id(produk_id, product_name),
-            cabang:cabang_id(branch_name)
+            produk_id,
+            cabang_id
           `)
           .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id)
           .order('created_at', { ascending: false });
@@ -73,19 +72,50 @@ const History = () => {
           return;
         }
 
+        // Fetch product and branch details separately to avoid deep nesting
+        const rawTransactions = data as RawTransaction[];
+        
+        // Get all unique product IDs
+        const productIds = [...new Set(rawTransactions.map(t => t.produk_id))];
+        const { data: productsData, error: productsError } = await supabase
+          .from('produk')
+          .select('produk_id, product_name')
+          .in('produk_id', productIds);
+          
+        if (productsError) {
+          console.error('Error fetching products:', productsError);
+          return;
+        }
+        
+        // Get all unique branch IDs
+        const branchIds = [...new Set(rawTransactions.map(t => t.cabang_id))];
+        const { data: branchesData, error: branchesError } = await supabase
+          .from('cabang')
+          .select('cabang_id, branch_name')
+          .in('cabang_id', branchIds);
+        
+        if (branchesError) {
+          console.error('Error fetching branches:', branchesError);
+          return;
+        }
+        
+        // Create a map for quick lookup
+        const productsMap = new Map(productsData.map(p => [p.produk_id, p.product_name]));
+        const branchesMap = new Map(branchesData.map(b => [b.cabang_id, b.branch_name]));
+        
         // Transform data to match TransactionForTable interface
-        const transformedData: TransactionForTable[] = (data || []).map((item: any) => ({
+        const transformedData: TransactionForTable[] = rawTransactions.map(item => ({
           transaksi_id: item.transaksi_id,
           transaction_date: item.transaction_date || item.created_at,
           produk: {
-            produk_id: item.produk?.produk_id || 0,
-            product_name: item.produk?.product_name || 'Unknown'
+            produk_id: item.produk_id,
+            product_name: productsMap.get(item.produk_id) || 'Unknown'
           },
           quantity: item.quantity || 0,
           total_price: item.total_price || 0,
           payment_status: item.payment_status || 0,
           cabang: {
-            branch_name: item.cabang?.branch_name || ''
+            branch_name: branchesMap.get(item.cabang_id) || ''
           },
           payment_method: item.payment_method
         }));
