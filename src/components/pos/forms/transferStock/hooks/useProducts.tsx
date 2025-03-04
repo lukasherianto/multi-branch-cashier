@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductWithSelection } from "@/types/pos";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/auth";
 
 export const useProducts = (sourceBranchId: string) => {
   const [filteredProducts, setFilteredProducts] = useState<ProductWithSelection[]>([]);
@@ -10,7 +9,6 @@ export const useProducts = (sourceBranchId: string) => {
   const [loading, setLoading] = useState(false);
   const { pelakuUsaha } = useAuth();
   
-  // Load products for the source branch when branchId changes
   useEffect(() => {
     const fetchProductsForBranch = async () => {
       if (!sourceBranchId || !pelakuUsaha) {
@@ -43,7 +41,7 @@ export const useProducts = (sourceBranchId: string) => {
           `)
           .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id)
           .eq('cabang_id', parseInt(sourceBranchId))
-          .gt('stock', 0); // Only fetch products with stock > 0
+          .gt('stock', 0);
           
         if (error) {
           console.error("Error fetching products:", error);
@@ -82,10 +80,8 @@ export const useProducts = (sourceBranchId: string) => {
     fetchProductsForBranch();
   }, [sourceBranchId, pelakuUsaha]);
   
-  // Search filter function
   const handleSearch = (query: string) => {
     if (!query.trim()) {
-      // If search is empty, reset to all products
       setFilteredProducts(allProducts);
       return;
     }

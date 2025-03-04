@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 import { StockManagement } from "./StockManagement";
@@ -12,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { CartItem } from "@/types/pos";
 import { useProductList } from "@/features/pos/hooks/useProductList";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/auth";
 
 interface ProductListProps {
   products: CartItem[];
@@ -40,7 +39,6 @@ export const ProductList = ({
   
   const { cabangList } = useAuth();
 
-  // Function to get branch name from cabang_id
   const getBranchName = (cabangId: number) => {
     const branch = cabangList.find(branch => branch.cabang_id === cabangId);
     return branch ? branch.branch_name : 'Unknown Branch';

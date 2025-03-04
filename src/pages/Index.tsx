@@ -1,7 +1,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/auth";
 import { Palette, Users, LineChart, ShoppingCart, Store, ArrowRight, FileText, Receipt, RotateCcw } from "lucide-react";
 
 export default function Index() {

@@ -1,239 +1,80 @@
-
-import { useState, useEffect } from "react";
-import { Plus } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { PlusCircle } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import { ProductForm } from "./forms/ProductForm";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { CategoryForm } from "./forms/CategoryForm";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { CategoryManagement } from "./CategoryManagement";
+import { useAuth } from "@/hooks/auth";
 
-interface ProductManagementProps {
-  onSuccess?: () => void;
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  stock: number;
+  category: string;
 }
 
-export const ProductManagement = ({ onSuccess }: ProductManagementProps) => {
+const ProductManagement = () => {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const { toast } = useToast();
-  const navigate = useNavigate();
-  const [isOpen, setIsOpen] = useState(false);
-  const [categories, setCategories] = useState<Array<{ kategori_id: number; kategori_name: string }>>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { cabang } = useAuth();
 
-  useEffect(() => {
-    const checkAuthAndFetchCategories = async () => {
-      try {
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        
-        if (authError || !user) {
-          console.error('Auth error or no user:', authError);
-          navigate('/auth');
-          return;
-        }
-
-        console.log('Authenticated user:', user.id);
-        await fetchCategories(user.id);
-      } catch (error) {
-        console.error('Error in checkAuthAndFetchCategories:', error);
-        toast({
-          title: "Error",
-          description: "Terjadi kesalahan saat memuat data",
-          variant: "destructive",
-        });
-        navigate('/auth');
-      }
-    };
-
-    checkAuthAndFetchCategories();
-  }, [navigate, toast]);
-
-  const fetchCategories = async (userId: string) => {
-    try {
-      console.log('Fetching pelaku usaha data for user:', userId);
-      
-      const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
-        .from('pelaku_usaha')
-        .select('pelaku_usaha_id')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (pelakuUsahaError) {
-        console.error('Error fetching pelaku usaha:', pelakuUsahaError);
-        throw pelakuUsahaError;
-      }
-
-      if (!pelakuUsahaData) {
-        console.log('No pelaku_usaha found, redirecting to settings');
-        toast({
-          title: "Profil Usaha Belum Dibuat",
-          description: "Silakan lengkapi profil usaha Anda terlebih dahulu",
-          variant: "destructive",
-        });
-        navigate('/settings');
-        return;
-      }
-
-      console.log('Fetching categories for pelaku usaha:', pelakuUsahaData.pelaku_usaha_id);
-      const { data: categoriesData, error: categoriesError } = await supabase
-        .from('kategori_produk')
-        .select('kategori_id, kategori_name')
-        .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id);
-
-      if (categoriesError) {
-        console.error('Error fetching categories:', categoriesError);
-        throw categoriesError;
-      }
-
-      console.log('Categories fetched:', categoriesData);
-      setCategories(categoriesData || []);
-    } catch (error) {
-      console.error('Error in fetchCategories:', error);
-      toast({
-        title: "Error",
-        description: "Gagal mengambil data kategori",
-        variant: "destructive",
-      });
-    }
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
   };
 
-  const handleSubmit = async (formData: {
-    productName: string;
-    selectedKategori: string;
-    costPrice: string;
-    retailPrice: string;
-    memberPrice1: string;
-    memberPrice2: string;
-    stock: string;
-    barcode: string;
-    unit: string;
-  }) => {
-    setIsSubmitting(true);
-    
-    try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
-      if (authError || !user) {
-        toast({
-          title: "Error",
-          description: "Anda belum login",
-          variant: "destructive",
-        });
-        navigate('/auth');
-        return;
-      }
-
-      const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
-        .from('pelaku_usaha')
-        .select('pelaku_usaha_id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (pelakuUsahaError) {
-        throw pelakuUsahaError;
-      }
-
-      if (!pelakuUsahaData) {
-        toast({
-          title: "Error",
-          description: "Data pelaku usaha tidak ditemukan",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!formData.selectedKategori) {
-        toast({
-          title: "Error",
-          description: "Silakan pilih kategori produk",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Get the main branch if cabang is not available
-      let branchId = cabang?.cabang_id;
-      if (!branchId) {
-        const { data: mainBranch } = await supabase
-          .from('cabang')
-          .select('cabang_id')
-          .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id)
-          .order('cabang_id', { ascending: true })
-          .limit(1)
-          .single();
-          
-        if (mainBranch) {
-          branchId = mainBranch.cabang_id;
-        } else {
-          throw new Error("Cabang tidak ditemukan");
-        }
-      }
-
-      const { error } = await supabase
-        .from('produk')
-        .insert({
-          pelaku_usaha_id: pelakuUsahaData.pelaku_usaha_id,
-          kategori_id: parseInt(formData.selectedKategori),
-          product_name: formData.productName,
-          cost_price: parseFloat(formData.costPrice),
-          retail_price: parseFloat(formData.retailPrice),
-          member_price_1: formData.memberPrice1 ? parseFloat(formData.memberPrice1) : null,
-          member_price_2: formData.memberPrice2 ? parseFloat(formData.memberPrice2) : null,
-          stock: parseInt(formData.stock),
-          barcode: formData.barcode || null,
-          unit: formData.unit,
-          cabang_id: branchId
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Sukses",
-        description: "Produk berhasil ditambahkan",
-      });
-
-      setIsOpen(false);
-      onSuccess?.();
-    } catch (error) {
-      console.error('Error adding product:', error);
-      toast({
-        title: "Error",
-        description: "Gagal menambahkan produk",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const filteredProducts = products.filter((product) =>
+    product.name.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <Plus className="h-4 w-4" />
-          Tambah Produk
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Tambah Produk Baru</DialogTitle>
-          <DialogDescription>
-            Isi informasi produk dengan lengkap
-          </DialogDescription>
-        </DialogHeader>
-        <ProductForm 
-          categories={categories}
-          onSubmit={handleSubmit}
-          isSubmitting={isSubmitting}
-        />
-      </DialogContent>
-    </Dialog>
+    <div>
+      <div className="flex items-center justify-between space-y-2">
+        <div className="md:w-1/3">
+          <Input
+            placeholder="Cari produk..."
+            value={search}
+            onChange={handleSearch}
+          />
+        </div>
+        <div className="flex items-center space-x-2">
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" className="flex items-center">
+                <PlusCircle className="w-4 h-4 mr-2" />
+                Tambah
+              </Button>
+            </SheetTrigger>
+            <SheetContent className="sm:max-w-lg p-0">
+              <SheetHeader className="text-left p-6">
+                <SheetTitle>Tambah Produk</SheetTitle>
+              </SheetHeader>
+              <Tabs defaultValue="products" className="m-4 space-y-4">
+                <TabsList>
+                  <TabsTrigger value="products">Produk</TabsTrigger>
+                  <TabsTrigger value="categories">Kategori</TabsTrigger>
+                </TabsList>
+                <TabsContent value="products" className="space-y-4">
+                  <ProductForm />
+                </TabsContent>
+                <TabsContent value="categories" className="space-y-4">
+                  <CategoryForm />
+                </TabsContent>
+              </Tabs>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </div>
+    </div>
   );
 };
+
+export default ProductManagement;

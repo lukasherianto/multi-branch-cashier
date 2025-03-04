@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/auth";
 import { useForm } from "react-hook-form";
 import { TransferStockFormValues } from "@/types/pos";
 

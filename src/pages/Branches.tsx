@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Building, Phone, MapPin, Loader2, Plus, Home } from "lucide-react";
@@ -6,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/auth";
 
 interface Branch {
   cabang_id: number;
@@ -34,7 +33,7 @@ const Branches = () => {
         .from("cabang")
         .select("*")
         .eq("pelaku_usaha_id", pelakuUsaha?.pelaku_usaha_id)
-        .order("cabang_id", { ascending: true }); // Order by ID to ensure headquarters is first
+        .order("cabang_id", { ascending: true });
 
       if (error) {
         console.error("Error loading branches:", error);
@@ -60,7 +59,6 @@ const Branches = () => {
     }
   };
 
-  // The headquarters is the first branch (with lowest ID)
   const headquartersId = branches.length > 0 ? branches[0].cabang_id : null;
 
   if (!pelakuUsaha) {
@@ -112,7 +110,6 @@ const Branches = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Kantor Pusat */}
         <Card className="p-6 hover:shadow-lg transition-shadow duration-200 bg-mint-50/50">
           <div className="flex items-center space-x-3 mb-4">
             <div className="bg-mint-100 p-2 rounded-lg">
@@ -136,7 +133,6 @@ const Branches = () => {
           </div>
         </Card>
 
-        {/* Daftar Cabang */}
         {branches.length === 0 ? (
           <Card className="p-8 text-center">
             <div className="flex flex-col items-center space-y-4">

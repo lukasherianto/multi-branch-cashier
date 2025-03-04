@@ -7,7 +7,7 @@ import { ProductList } from "@/components/pos/ProductList";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { ProductFormModal } from "@/components/pos/forms/ProductFormModal";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProducts } from "@/hooks/products";
 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/auth";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -20,7 +19,6 @@ const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Redirect if user is already logged in
   useEffect(() => {
     if (user) {
       console.log("User terdeteksi, mengarahkan ke halaman utama");
@@ -28,7 +26,6 @@ const Auth = () => {
     }
   }, [user, navigate]);
 
-  // Basic email validation
   const isValidEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -39,21 +36,18 @@ const Auth = () => {
     setIsLoading(true);
     setError(null);
 
-    // Validate email first
     if (!isValidEmail(email)) {
       setError("Format email tidak valid. Mohon periksa kembali.");
       setIsLoading(false);
       return;
     }
 
-    // Validate password
     if (password.length < 6) {
       setError("Kata sandi harus minimal 6 karakter.");
       setIsLoading(false);
       return;
     }
 
-    // Additional validation for sign up
     if (isSignUp) {
       if (!fullName) {
         setError("Nama lengkap harus diisi.");

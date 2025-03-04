@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Branch, Employee } from "./types";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/auth";
 
 export const useEmployeeData = () => {
   const { toast } = useToast();
@@ -62,7 +61,6 @@ export const useEmployeeData = () => {
         return;
       }
 
-      // Get current user's pelaku usaha
       const { data: currentPelakuUsaha, error: pelakuUsahaError } = await supabase
         .from("pelaku_usaha")
         .select("pelaku_usaha_id")
@@ -79,7 +77,6 @@ export const useEmployeeData = () => {
         return;
       }
 
-      // Get all employees
       const { data: employeesData, error: employeesError } = await supabase
         .from("karyawan")
         .select(`
@@ -105,7 +102,6 @@ export const useEmployeeData = () => {
         throw employeesError;
       }
 
-      // Filter and format employee data
       const formattedEmployees = employeesData?.map(emp => ({
         ...emp,
         isSameBusiness: emp.pelaku_usaha_id === currentPelakuUsaha.pelaku_usaha_id,

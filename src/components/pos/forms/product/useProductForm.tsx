@@ -1,11 +1,10 @@
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { productFormSchema, ProductFormValues } from "./schema";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/auth";
 
 export function useProductForm(onSuccess?: () => void, onOpenChange?: (open: boolean) => void) {
   const { toast } = useToast();

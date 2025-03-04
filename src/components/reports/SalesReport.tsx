@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/auth";
 import StatCard from "./shared/StatCard";
 import ProductSalesTable from "./sales/ProductSalesTable";
 import CategorySalesTable from "./sales/CategorySalesTable";

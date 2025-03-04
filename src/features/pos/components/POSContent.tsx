@@ -3,7 +3,7 @@ import { ProductSearch } from "@/components/pos/ProductSearch";
 import { ProductList } from "@/components/pos/ProductList";
 import { CustomerInfo } from "@/components/pos/CustomerInfo";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/auth";
 import { useProducts } from "@/hooks/useProducts";
 import { useCart } from "@/hooks/useCart";
 import { useCustomerManagement } from "../hooks/useCustomerManagement";

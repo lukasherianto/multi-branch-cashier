@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ReceiptDisplay } from "@/components/receipt/ReceiptDisplay";
@@ -5,7 +6,7 @@ import { ReceiptActions } from "@/components/receipt/ReceiptActions";
 import { useReceipt } from "@/hooks/useReceipt";
 import { TransactionItem } from "@/utils/receiptUtils";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/auth";
 import { Loader2 } from "lucide-react";
 
 interface BusinessDetails {
