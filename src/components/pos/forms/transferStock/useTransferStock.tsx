@@ -8,7 +8,7 @@ import { useProductManagement } from "./hooks/useProductManagement";
 import { useTransferSubmit } from "./hooks/useTransferSubmit";
 
 export const useTransferStock = () => {
-  // Initialize the form
+  // Initialize the form - this should always be called
   const form = useForm<TransferStockFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -19,11 +19,16 @@ export const useTransferStock = () => {
     }
   });
 
-  // Watch for source branch changes to load products
+  // Watch for source branch changes to load products - always call this
   const sourceBranchId = form.watch("cabang_id_from");
   console.log("Current source branch ID:", sourceBranchId);
   
-  // Get branch management functionality
+  // Custom hooks - always call these in the same order
+  const branchManagement = useBranchManagement(form);
+  const productManagement = useProductManagement(sourceBranchId);
+  const transferSubmit = useTransferSubmit(form, productManagement.filteredProducts, branchManagement.centralBranch, branchManagement.fromCentralToBranch);
+
+  // Destructure values from the hooks
   const {
     branchesLoading,
     cabangList,
@@ -32,9 +37,8 @@ export const useTransferStock = () => {
     destinationBranches,
     fromCentralToBranch,
     toggleDirection
-  } = useBranchManagement(form);
+  } = branchManagement;
 
-  // Get product management functionality
   const {
     selectedProducts,
     paginatedProducts,
@@ -48,14 +52,14 @@ export const useTransferStock = () => {
     handleProductSelection,
     handleQuantityChange,
     filteredProducts
-  } = useProductManagement(sourceBranchId);
+  } = productManagement;
 
-  // Get form submission functionality
   const {
     isSubmitting,
     onSubmit
-  } = useTransferSubmit(form, filteredProducts, centralBranch, fromCentralToBranch);
+  } = transferSubmit;
 
+  // Return all the values and functions
   return {
     form,
     onSubmit,
