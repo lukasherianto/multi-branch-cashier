@@ -31,7 +31,7 @@ export const TransactionActions = ({
 }: TransactionActionsProps) => {
   const { userRole } = useAuth();
   
-  // Only pelaku_usaha and admin can cancel transactions
+  // Only show cancel button to authorized roles: pelaku_usaha and admin
   const canCancelTransaction = userRole === 'pelaku_usaha' || userRole === 'admin';
 
   return (
@@ -75,7 +75,7 @@ export const TransactionActions = ({
         onSuccess={onReturSuccess}
       />
       
-      {/* Cancel button only for authorized users */}
+      {/* Cancel button only for authorized users and non-cancelled transactions */}
       {canCancelTransaction && transaction.payment_status !== 2 && (
         <Button
           variant="destructive"
