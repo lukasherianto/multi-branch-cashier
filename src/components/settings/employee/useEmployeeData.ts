@@ -125,12 +125,25 @@ export const useEmployeeData = () => {
 
       // Safely handle the data and ensure we're working with valid objects
       const formattedEmployees = employeesData ? employeesData.map(emp => {
-        // Make sure emp is a valid object before spreading it
+        // Ensure emp is not null and is an object type before proceeding
         if (emp && typeof emp === 'object') {
+          const pelakuUsahaId = emp.pelaku_usaha_id as number | undefined;
+          const businessName = emp.pelaku_usaha ? 
+            (emp.pelaku_usaha as { business_name?: string }).business_name || 'Tidak diketahui' : 
+            'Tidak diketahui';
+            
           return {
-            ...emp,
-            isSameBusiness: emp.pelaku_usaha_id === currentPelakuUsaha.pelaku_usaha_id,
-            businessName: emp.pelaku_usaha?.business_name || 'Tidak diketahui'
+            karyawan_id: emp.karyawan_id as number,
+            name: emp.name as string,
+            email: emp.email as string | undefined,
+            role: emp.role as string,
+            business_role: emp.business_role as string | undefined,
+            auth_id: emp.auth_id as string | undefined,
+            is_active: emp.is_active as boolean | undefined,
+            pelaku_usaha_id: pelakuUsahaId || 0,
+            cabang: emp.cabang as { branch_name: string } | undefined,
+            isSameBusiness: pelakuUsahaId === currentPelakuUsaha.pelaku_usaha_id,
+            businessName: businessName
           };
         }
         // Return a valid Employee object with default values if emp is not valid
