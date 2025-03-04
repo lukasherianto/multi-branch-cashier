@@ -7,6 +7,7 @@ import MemberForm from "@/components/members/MemberForm";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/auth";
+import TransferHistoryList from "@/components/transfer/TransferHistoryList";
 
 const Members = () => {
   const [showForm, setShowForm] = useState(false);
@@ -55,7 +56,12 @@ const Members = () => {
           />
         </div>
       ) : (
-        <MemberList refreshTrigger={refreshTrigger} />
+        <>
+          <MemberList refreshTrigger={refreshTrigger} />
+          <div className="mt-8">
+            <TransferHistoryList limit={5} />
+          </div>
+        </>
       )}
     </div>
   );
