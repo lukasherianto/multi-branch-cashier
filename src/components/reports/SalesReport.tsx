@@ -1,10 +1,11 @@
+
 import { useAuth } from "@/hooks/auth";
 import SalesSummary from "./sales/SalesSummary";
 import ProductSalesTable, { ProductSale } from "./sales/ProductSalesTable";
 import CategorySalesTable from "./sales/CategorySalesTable";
 import DateRangeFilter from "./sales/DateRangeFilter";
 import ProductSalesChart from "./sales/ProductSalesChart";
-import SalesTimeSeriesChart from "./sales/SalesTimeSeriesChart";
+import { SalesTimeSeriesChart } from "./sales/timeseries";
 import { useState, useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
 import { useReportData } from "@/hooks/reports/useReportData";
