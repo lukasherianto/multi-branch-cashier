@@ -30,8 +30,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Maksimal waktu untuk loading
+    const loadingTimeout = setTimeout(() => {
+      setIsLoading(false);
+    }, 5000); // 5 detik timeout
+
     // Check active session on mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         console.log("Active session found:", session.user.id);
         setUser(session.user);
@@ -41,8 +46,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (role) {
           setUserRole(role as UserRole);
         }
+
+        // Langsung ambil status_id dari profiles
+        try {
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('status_id, business_role')
+            .eq('id', session.user.id)
+            .maybeSingle();
+
+          if (!profileError && profileData) {
+            setUserStatusId(profileData.status_id);
+            console.log("User status_id loaded:", profileData.status_id);
+            
+            // Jika business_role tidak ada di metadata, gunakan dari profiles
+            if (!role && profileData.business_role) {
+              setUserRole(profileData.business_role as UserRole);
+              console.log("User role loaded from profiles:", profileData.business_role);
+            }
+          } else {
+            console.error("Error loading user profile:", profileError);
+          }
+        } catch (error) {
+          console.error("Error in profile fetch:", error);
+        }
       }
       setIsLoading(false);
+      clearTimeout(loadingTimeout);
     });
 
     // Set up real-time subscription to auth changes
@@ -64,18 +94,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (session?.user) {
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
-            .select('status_id')
+            .select('status_id, business_role')
             .eq('id', session.user.id)
-            .single();
+            .maybeSingle();
 
           if (!profileError && profileData) {
             setUserStatusId(profileData.status_id);
             console.log("User status_id loaded:", profileData.status_id);
+            
+            // Jika business_role tidak ada di metadata, gunakan dari profiles
+            if (!role && profileData.business_role) {
+              setUserRole(profileData.business_role as UserRole);
+              console.log("User role loaded from profiles:", profileData.business_role);
+            }
           } else {
             console.error("Error loading user status_id:", profileError);
             setUserStatusId(null);
           }
         }
+        setIsLoading(false);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         setUserRole(null);
@@ -84,10 +121,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setCabang(null);
         setCabangList([]);
         setSelectedCabangId(null);
+        setIsLoading(false);
       }
     });
 
     return () => {
+      clearTimeout(loadingTimeout);
       subscription.unsubscribe();
     };
   }, []);

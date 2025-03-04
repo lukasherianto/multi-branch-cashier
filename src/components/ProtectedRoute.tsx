@@ -20,10 +20,25 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
     userRole, 
     userStatusId,
     path: location.pathname,
-    isLoading
+    isLoading,
+    authLoading,
+    accessLoading,
+    user: !!user
   });
 
-  if (isLoading) {
+  // Jika loadingnya terlalu lama, kita tambahkan maksimal 3 detik
+  React.useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (isLoading) {
+        console.log('Loading timeout triggered, forcing continuation');
+      }
+    }, 3000); // 3 detik timeout
+    
+    return () => clearTimeout(timeoutId);
+  }, [isLoading]);
+
+  // Tunggu loading hanya jika user belum diketahui
+  if (isLoading && !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>

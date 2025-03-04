@@ -8,7 +8,7 @@ export const useMenuAccess = () => {
   const [userPermissions, setUserPermissions] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // For debugging
+  // Untuk debugging
   console.log('useMenuAccess hook initialized', { userRole, userStatusId });
 
   useEffect(() => {
@@ -33,13 +33,19 @@ export const useMenuAccess = () => {
             .from('user_status')
             .select('wewenang')
             .eq('status_id', userStatusId)
-            .single();
+            .maybeSingle();
 
           if (error) {
             console.error('Error fetching user status:', error);
+            setIsLoading(false);
           } else if (data) {
             setUserPermissions(data.wewenang);
             console.log('User permissions loaded:', data.wewenang);
+            setIsLoading(false);
+          } else {
+            // No data found but query was successful
+            console.log('No permissions found for status_id:', userStatusId);
+            setIsLoading(false);
           }
         } else {
           // Fallback to role-based lookup if statusId not available
@@ -64,7 +70,7 @@ export const useMenuAccess = () => {
               .from('user_status')
               .select('wewenang')
               .eq('status_id', status_id)
-              .single();
+              .maybeSingle();
 
             if (error) {
               console.error('Error fetching user status:', error);
@@ -73,10 +79,10 @@ export const useMenuAccess = () => {
               console.log('User permissions loaded (fallback):', data.wewenang);
             }
           }
+          setIsLoading(false);
         }
       } catch (error) {
         console.error('Error in fetchUserStatus:', error);
-      } finally {
         setIsLoading(false);
       }
     };
