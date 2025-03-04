@@ -127,25 +127,38 @@ export const useEmployeeData = () => {
       const formattedEmployees = employeesData ? employeesData.map(emp => {
         // Ensure emp is not null and is an object type before proceeding
         if (emp && typeof emp === 'object') {
+          // Safely extract values with type assertions
+          const karyawanId = emp.karyawan_id as number | undefined;
+          const name = emp.name as string | undefined;
+          const email = emp.email as string | undefined;
+          const role = emp.role as string | undefined;
+          const businessRole = emp.business_role as string | undefined;
+          const authId = emp.auth_id as string | undefined;
+          const isActive = emp.is_active as boolean | undefined;
           const pelakuUsahaId = emp.pelaku_usaha_id as number | undefined;
-          const businessName = emp.pelaku_usaha ? 
-            (emp.pelaku_usaha as { business_name?: string }).business_name || 'Tidak diketahui' : 
-            'Tidak diketahui';
-            
+          const cabangData = emp.cabang as { branch_name: string } | null | undefined;
+          const pelakuUsahaData = emp.pelaku_usaha as { business_name: string } | null | undefined;
+          
+          // Get branch name and business name with null checks
+          const branchName = cabangData && typeof cabangData === 'object' ? cabangData.branch_name : undefined;
+          const businessName = pelakuUsahaData && typeof pelakuUsahaData === 'object' ? 
+            pelakuUsahaData.business_name || 'Tidak diketahui' : 'Tidak diketahui';
+
           return {
-            karyawan_id: emp.karyawan_id as number,
-            name: emp.name as string,
-            email: emp.email as string | undefined,
-            role: emp.role as string,
-            business_role: emp.business_role as string | undefined,
-            auth_id: emp.auth_id as string | undefined,
-            is_active: emp.is_active as boolean | undefined,
+            karyawan_id: karyawanId || 0,
+            name: name || "Unknown",
+            email: email,
+            role: role || "",
+            business_role: businessRole,
+            auth_id: authId,
+            is_active: isActive,
             pelaku_usaha_id: pelakuUsahaId || 0,
-            cabang: emp.cabang as { branch_name: string } | undefined,
+            cabang: branchName ? { branch_name: branchName } : undefined,
             isSameBusiness: pelakuUsahaId === currentPelakuUsaha.pelaku_usaha_id,
             businessName: businessName
           };
         }
+        
         // Return a valid Employee object with default values if emp is not valid
         return {
           karyawan_id: 0,
