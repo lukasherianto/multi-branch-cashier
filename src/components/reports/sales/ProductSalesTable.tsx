@@ -9,16 +9,37 @@ import {
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
 
-interface ProductSalesTableProps {
-  productSales: Record<string, number>;
-  title: string;
-  limit?: number;
+interface ProductSale {
+  name: string;
+  quantity: number;
+  revenue: number;
+  cost: number;
+  profit: number;
 }
 
-const ProductSalesTable = ({ productSales, title, limit }: ProductSalesTableProps) => {
-  const sortedProducts = Object.entries(productSales)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, limit);
+interface ProductSalesTableProps {
+  productSales: ProductSale[] | Record<string, number>;
+  title: string;
+  limit?: number;
+  showProfit?: boolean;
+}
+
+const ProductSalesTable = ({ productSales, title, limit, showProfit = false }: ProductSalesTableProps) => {
+  // Handle both the new format (array of objects) and the old format (record of product name to quantity)
+  let sortedProducts: any[] = [];
+  
+  if (Array.isArray(productSales)) {
+    // New format
+    sortedProducts = [...productSales].sort((a, b) => b.quantity - a.quantity);
+    if (limit) {
+      sortedProducts = sortedProducts.slice(0, limit);
+    }
+  } else {
+    // Old format (for backward compatibility)
+    sortedProducts = Object.entries(productSales)
+      .sort(([, a], [, b]) => (b as number) - (a as number))
+      .slice(0, limit);
+  }
 
   return (
     <Card className="p-6">
@@ -28,15 +49,40 @@ const ProductSalesTable = ({ productSales, title, limit }: ProductSalesTableProp
           <TableRow>
             <TableHead>Produk</TableHead>
             <TableHead className="text-right">Jumlah Terjual</TableHead>
+            {showProfit && (
+              <>
+                <TableHead className="text-right">Pendapatan</TableHead>
+                <TableHead className="text-right">Modal</TableHead>
+                <TableHead className="text-right">Keuntungan</TableHead>
+              </>
+            )}
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sortedProducts.map(([product, quantity]) => (
-            <TableRow key={product}>
-              <TableCell>{product}</TableCell>
-              <TableCell className="text-right">{quantity}</TableCell>
-            </TableRow>
-          ))}
+          {Array.isArray(productSales) ? (
+            // New format
+            sortedProducts.map((product, index) => (
+              <TableRow key={index}>
+                <TableCell>{product.name}</TableCell>
+                <TableCell className="text-right">{product.quantity}</TableCell>
+                {showProfit && (
+                  <>
+                    <TableCell className="text-right">Rp {product.revenue.toLocaleString("id-ID")}</TableCell>
+                    <TableCell className="text-right">Rp {product.cost.toLocaleString("id-ID")}</TableCell>
+                    <TableCell className="text-right">Rp {product.profit.toLocaleString("id-ID")}</TableCell>
+                  </>
+                )}
+              </TableRow>
+            ))
+          ) : (
+            // Old format
+            sortedProducts.map(([product, quantity]) => (
+              <TableRow key={product}>
+                <TableCell>{product}</TableCell>
+                <TableCell className="text-right">{quantity}</TableCell>
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
     </Card>
