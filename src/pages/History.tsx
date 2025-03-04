@@ -34,9 +34,6 @@ interface RawTransaction {
   payment_method?: string;
   produk_id: number;
   cabang_id: number;
-  // Include fields from joined tables with explicit names
-  produk_product_name?: string;
-  cabang_branch_name?: string;
 }
 
 const History = () => {
@@ -50,20 +47,12 @@ const History = () => {
       
       setIsLoading(true);
       try {
-        // Use a simpler query to avoid deeply nested types
+        // Use string interpolation instead of template literals to avoid TypeScript parsing the query structure
+        const query = "transaksi_id, transaction_date, created_at, quantity, total_price, payment_status, payment_method, produk_id, cabang_id";
+        
         const { data, error } = await supabase
           .from('transaksi')
-          .select(`
-            transaksi_id,
-            transaction_date,
-            created_at,
-            quantity,
-            total_price,
-            payment_status,
-            payment_method,
-            produk_id,
-            cabang_id
-          `)
+          .select(query)
           .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id)
           .order('created_at', { ascending: false });
 
@@ -72,7 +61,7 @@ const History = () => {
           return;
         }
 
-        // Fetch product and branch details separately to avoid deep nesting
+        // Explicitly type the data to avoid deep nesting
         const rawTransactions = data as RawTransaction[];
         
         // Get all unique product IDs
