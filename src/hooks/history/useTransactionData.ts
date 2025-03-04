@@ -13,7 +13,7 @@ export function useTransactionData(pelakuUsahaId: number | undefined) {
       
       setIsLoading(true);
       try {
-        // Use hard-coded string for the select to avoid TypeScript analyzing it deeply
+        // Use explicit string for the select query to avoid TypeScript analyzing it deeply
         const { data, error } = await supabase
           .from('transaksi')
           .select("transaksi_id, transaction_date, created_at, quantity, total_price, payment_status, payment_method, produk_id, cabang_id")

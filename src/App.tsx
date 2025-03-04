@@ -19,6 +19,7 @@ import HomeIndex from "./pages/Index";
 import PrintPreview from "./pages/PrintPreview";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import ProductCategories from "./pages/ProductCategories";
+import StockTransfer from "./pages/StockTransfer";
 import "./App.css";
 
 const queryClient = new QueryClient();
@@ -52,6 +53,7 @@ function App() {
               <Route path="kas" element={<Kas />} />
               <Route path="attendance" element={<Attendance />} />
               <Route path="order-confirmation" element={<OrderConfirmation />} />
+              <Route path="stock-transfer" element={<StockTransfer />} />
             </Route>
           </Routes>
         </BrowserRouter>

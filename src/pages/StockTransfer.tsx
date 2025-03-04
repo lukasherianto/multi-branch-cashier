@@ -1,9 +1,7 @@
 
 import React, { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TransferStockForm } from "@/components/pos/forms/transferStock";
-import TransferHeader from "@/components/pos/forms/transferStock/components/TransferHeader";
-import TransferHistory from "@/components/pos/forms/transferStock/components/TransferHistory";
-import ErrorBoundary from "@/components/pos/forms/transferStock/components/ErrorBoundary";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
 
@@ -12,15 +10,35 @@ const StockTransfer = () => {
   
   // If we caught a render error, show it
   if (renderError) {
-    return <ErrorBoundary error={renderError} />;
+    return (
+      <div className="p-8">
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            An error occurred while rendering the page. Please try refreshing.
+            {renderError instanceof Error && (
+              <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto">
+                {renderError.message}
+              </pre>
+            )}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
   }
 
   try {
     return (
-      <div className="space-y-8">
-        <TransferHeader />
-        <TransferStockForm />
-        <TransferHistory />
+      <div className="container mx-auto p-4 space-y-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Transfer Stok Antar Cabang</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TransferStockForm />
+          </CardContent>
+        </Card>
       </div>
     );
   } catch (error) {
@@ -38,7 +56,6 @@ const StockTransfer = () => {
             {error instanceof Error && (
               <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto">
                 {error.message}
-                {error.stack}
               </pre>
             )}
           </AlertDescription>
