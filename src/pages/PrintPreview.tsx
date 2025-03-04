@@ -111,7 +111,7 @@ const PrintPreview = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
+    <div className="bg-gray-100 p-8">
       <div className="max-w-3xl mx-auto space-y-8">
         <ReceiptActions
           onPrint={handlePrint}
