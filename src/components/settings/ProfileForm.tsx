@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,27 +26,35 @@ export const ProfileForm = ({ userId, initialName, initialEmail }: ProfileFormPr
     setIsSaving(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not authenticated");
-
-      const numericUserId = parseInt(user.id);
-
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({
-          name,
-          email,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('user_id', numericUserId);
+      // Update user metadata first
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: {
+          name
+        },
+        // Only update email if it changed
+        email: email !== initialEmail ? email : undefined
+      });
 
       if (updateError) throw updateError;
 
+      // Update password if provided
       if (password) {
         const { error: passwordError } = await supabase.auth.updateUser({
           password: password
         });
         if (passwordError) throw passwordError;
+      }
+
+      // Update the profile table if it exists
+      try {
+        await supabase
+          .from('profiles')
+          .update({
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', userId);
+      } catch (profileError) {
+        console.log("Note: profiles table update skipped or failed", profileError);
       }
 
       toast({

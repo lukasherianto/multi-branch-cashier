@@ -1,19 +1,23 @@
+
 import { Card } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserRound, Store, GitBranch, Users, Loader2 } from "lucide-react";
+import { UserRound, Store, GitBranch, Users, Loader2, AlertCircle } from "lucide-react";
 import { ProfileForm } from "@/components/settings/ProfileForm";
 import { BusinessForm } from "@/components/settings/BusinessForm";
 import { BranchForm } from "@/components/settings/BranchForm";
 import { EmployeeForm } from "@/components/settings/EmployeeForm";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 const Settings = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [userId, setUserId] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -25,16 +29,23 @@ const Settings = () => {
   const loadUserProfile = async () => {
     try {
       setIsLoading(true);
+      setHasError(false);
+      
+      console.log("Loading user profile...");
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       
       if (authError) {
         console.error("Auth error:", authError);
+        setHasError(true);
+        setErrorMessage("Gagal mengambil data pengguna: " + authError.message);
         navigate('/auth');
         return;
       }
 
       if (!user) {
         console.log("No authenticated user found");
+        setHasError(true);
+        setErrorMessage("Tidak ada pengguna yang terautentikasi");
         navigate('/auth');
         return;
       }
@@ -42,11 +53,13 @@ const Settings = () => {
       console.log("Authenticated user:", user);
       
       setUserId(user.id);
-      setName(user.user_metadata.name || user.email?.split('@')[0] || '');
+      setName(user.user_metadata?.name || user.email?.split('@')[0] || '');
       setEmail(user.email || '');
       
     } catch (error) {
       console.error("Error in loadUserProfile:", error);
+      setHasError(true);
+      setErrorMessage("Terjadi kesalahan saat memuat profil");
       toast({
         title: "Error",
         description: "Terjadi kesalahan saat memuat profil",
@@ -61,6 +74,27 @@ const Settings = () => {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <Loader2 className="h-8 w-8 animate-spin text-mint-600" />
+      </div>
+    );
+  }
+
+  if (hasError) {
+    return (
+      <div className="space-y-6">
+        <h2 className="text-3xl font-bold text-gray-800">Pengaturan</h2>
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            {errorMessage || "Terjadi kesalahan saat memuat halaman pengaturan"}
+          </AlertDescription>
+        </Alert>
+        <button
+          onClick={loadUserProfile}
+          className="px-4 py-2 bg-mint-600 text-white rounded-md hover:bg-mint-700"
+        >
+          Coba Lagi
+        </button>
       </div>
     );
   }
