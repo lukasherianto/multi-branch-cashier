@@ -13,11 +13,32 @@ export function useTransactionData(pelakuUsahaId: number | undefined) {
       
       setIsLoading(true);
       try {
-        // Use explicit string for the select query to avoid TypeScript analyzing it deeply
+        // First get all branches for this business
+        const { data: branchData, error: branchError } = await supabase
+          .from('cabang')
+          .select('cabang_id')
+          .eq('pelaku_usaha_id', pelakuUsahaId);
+          
+        if (branchError) {
+          console.error('Error fetching branches:', branchError);
+          return;
+        }
+        
+        if (!branchData || branchData.length === 0) {
+          console.log('No branches found for this business');
+          setTransactions([]);
+          setIsLoading(false);
+          return;
+        }
+        
+        const branchIds = branchData.map(branch => branch.cabang_id);
+        console.log('Found branch IDs:', branchIds);
+        
+        // Get transactions for all branches of this business
         const { data, error } = await supabase
           .from('transaksi')
           .select(`transaksi_id, transaction_date, created_at, quantity, total_price, payment_status, payment_method, produk_id, cabang_id`)
-          .eq('cabang_id', pelakuUsahaId)
+          .in('cabang_id', branchIds)
           .order('created_at', { ascending: false });
 
         if (error) {
@@ -27,6 +48,13 @@ export function useTransactionData(pelakuUsahaId: number | undefined) {
 
         // Explicitly type the data to avoid deep nesting
         const rawTransactions = data as RawTransaction[];
+        console.log('Fetched transactions:', rawTransactions.length);
+        
+        if (rawTransactions.length === 0) {
+          setTransactions([]);
+          setIsLoading(false);
+          return;
+        }
         
         // Get all unique product IDs
         const productIds = [...new Set(rawTransactions.map(t => t.produk_id))];
@@ -40,12 +68,12 @@ export function useTransactionData(pelakuUsahaId: number | undefined) {
           return;
         }
         
-        // Get all unique branch IDs
-        const branchIds = [...new Set(rawTransactions.map(t => t.cabang_id))];
+        // Get all unique branch IDs from transactions
+        const transactionBranchIds = [...new Set(rawTransactions.map(t => t.cabang_id))];
         const { data: branchesData, error: branchesError } = await supabase
           .from('cabang')
           .select('cabang_id, branch_name')
-          .in('cabang_id', branchIds);
+          .in('cabang_id', transactionBranchIds);
         
         if (branchesError) {
           console.error('Error fetching branches:', branchesError);
@@ -73,6 +101,7 @@ export function useTransactionData(pelakuUsahaId: number | undefined) {
           payment_method: item.payment_method
         }));
 
+        console.log('Transformed data:', transformedData.length);
         setTransactions(transformedData);
       } catch (error) {
         console.error('Error:', error);

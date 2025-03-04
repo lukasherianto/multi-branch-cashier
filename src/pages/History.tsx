@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '@/hooks/auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { HistoryTabs } from '@/components/history/HistoryTabs';
 import { useTransactionData } from '@/hooks/history/useTransactionData';
 import { useTransactionActions } from '@/hooks/history/useTransactionActions';
+import { toast } from 'sonner';
 
 const History = () => {
   const { pelakuUsaha } = useAuth();
@@ -16,6 +17,14 @@ const History = () => {
     handleWhatsApp,
     handleReturSuccess
   } = useTransactionActions();
+
+  useEffect(() => {
+    if (!pelakuUsaha) {
+      console.log("No pelakuUsaha data available");
+    } else {
+      console.log("pelakuUsaha ID:", pelakuUsaha.pelaku_usaha_id);
+    }
+  }, [pelakuUsaha]);
 
   return (
     <div className="container mx-auto p-4">

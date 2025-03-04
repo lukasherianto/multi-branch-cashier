@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { TransactionStatus } from "./TransactionStatus";
 import { TransactionActions } from "./TransactionActions";
+import { FileX } from "lucide-react";
 
 interface Transaction {
   transaksi_id: number;
@@ -36,6 +37,18 @@ export const TransactionTable = ({
   onWhatsApp,
   onReturSuccess,
 }: TransactionTableProps) => {
+  if (!transactions || transactions.length === 0) {
+    return (
+      <div className="bg-white rounded-lg shadow p-8">
+        <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+          <FileX className="h-16 w-16 mb-4 text-gray-400" />
+          <p className="text-lg font-medium">No transactions found</p>
+          <p className="text-sm mt-2">When you make sales transactions, they will appear here.</p>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="bg-white rounded-lg shadow">
       <div className="overflow-x-auto">
@@ -66,7 +79,7 @@ export const TransactionTable = ({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {transactions?.map((transaction) => (
+            {transactions.map((transaction) => (
               <tr key={transaction.transaksi_id}>
                 <td className="px-3 py-2 whitespace-nowrap text-xs">
                   {format(new Date(transaction.transaction_date), 'dd MMM yyyy HH:mm', { locale: id })}
