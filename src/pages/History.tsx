@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth';
 import { TransactionTable } from '@/components/history/TransactionTable';
-import { Transaction } from '@/types/transaction';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2 } from 'lucide-react';
@@ -21,6 +20,7 @@ interface TransactionForTable {
   cabang: {
     branch_name: string;
   };
+  payment_method?: string;
 }
 
 const History = () => {
@@ -34,9 +34,10 @@ const History = () => {
       
       setIsLoading(true);
       try {
+        // Using explicit type parameters for the query to prevent deep nesting
         const { data, error } = await supabase
           .from('transaksi')
-          .select('*, produk(*), cabang(*)')
+          .select('*, produk:produk_id(*), cabang:cabang_id(*)')
           .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id)
           .order('created_at', { ascending: false });
 
