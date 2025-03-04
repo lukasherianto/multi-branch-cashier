@@ -23,6 +23,23 @@ interface TransactionForTable {
   payment_method?: string;
 }
 
+type SupabaseTransaction = {
+  transaksi_id: number;
+  transaction_date: string;
+  created_at: string;
+  quantity: number;
+  total_price: number;
+  payment_status: number;
+  payment_method?: string;
+  produk: {
+    produk_id: number;
+    product_name: string;
+  };
+  cabang: {
+    branch_name: string;
+  };
+};
+
 const History = () => {
   const [transactions, setTransactions] = useState<TransactionForTable[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -34,10 +51,20 @@ const History = () => {
       
       setIsLoading(true);
       try {
-        // Using explicit type parameters for the query to prevent deep nesting
+        // Using a more type-safe approach to prevent deep nesting type errors
         const { data, error } = await supabase
           .from('transaksi')
-          .select('*, produk:produk_id(*), cabang:cabang_id(*)')
+          .select(`
+            transaksi_id,
+            transaction_date,
+            created_at,
+            quantity,
+            total_price,
+            payment_status,
+            payment_method,
+            produk:produk_id(produk_id, product_name),
+            cabang:cabang_id(branch_name)
+          `)
           .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id)
           .order('created_at', { ascending: false });
 
