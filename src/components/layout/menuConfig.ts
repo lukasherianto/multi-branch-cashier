@@ -15,7 +15,7 @@ import {
 
 const menuConfig = [
   {
-    title: 'Dashboard',
+    title: 'Dasbor',
     items: [
       {
         title: 'Ringkasan',

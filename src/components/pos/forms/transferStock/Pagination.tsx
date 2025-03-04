@@ -38,7 +38,7 @@ export const Pagination = ({
           disabled={currentPage === 1}
         >
           <ChevronLeft className="h-4 w-4" />
-          <span className="sr-only">Previous</span>
+          <span className="sr-only">Sebelumnya</span>
         </Button>
         
         <div className="text-sm">
@@ -52,7 +52,7 @@ export const Pagination = ({
           disabled={currentPage === totalPages}
         >
           <ChevronRight className="h-4 w-4" />
-          <span className="sr-only">Next</span>
+          <span className="sr-only">Selanjutnya</span>
         </Button>
       </div>
     </div>

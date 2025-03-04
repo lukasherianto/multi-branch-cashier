@@ -25,10 +25,10 @@ export const MenuContent = ({
   const { hasAccess } = useMenuAccess();
   const { userRole } = useAuth();
   
-  // Check if the user is a business owner (pelaku_usaha)
+  // Memeriksa apakah pengguna adalah pemilik bisnis (pelaku_usaha)
   const isPelakuUsaha = userRole === 'pelaku_usaha';
 
-  // For debugging
+  // Untuk debugging
   console.log('MenuContent rendering:', { userRole, isPelakuUsaha, menuConfig });
 
   return (
@@ -36,13 +36,13 @@ export const MenuContent = ({
       <ScrollArea className="flex-grow">
         <div className="space-y-0.5 py-2 pr-2">
           {menuConfig.map((section) => {
-            // For business owners, show all items without filtering
-            // For other roles, filter items based on access permissions
+            // Untuk pemilik bisnis, tampilkan semua item tanpa filter
+            // Untuk peran lain, filter item berdasarkan izin akses
             const items = isPelakuUsaha
               ? section.items
               : section.items.filter(item => hasAccess(item.path));
             
-            // Skip sections with no accessible items
+            // Lewati bagian tanpa item yang dapat diakses
             if (items.length === 0) return null;
             
             return (
