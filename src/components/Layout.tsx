@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AppHeader } from "./layout/AppHeader";
 import { MenuContent } from "./layout/MenuContent";
 import menuConfig from "./layout/menuConfig";
+import { toast } from "sonner";
 
 const Layout = () => {
   const location = useLocation();
@@ -19,7 +20,7 @@ const Layout = () => {
   const [open, setOpen] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
   const { user } = useAuth();
-  const { toast } = useToast();
+  const { toast: legacyToast } = useToast();
 
   const handleNavigate = (path: string) => {
     navigate(path);
@@ -36,34 +37,33 @@ const Layout = () => {
 
   const handleLogout = async () => {
     try {
-      console.log("Attempting to sign out...");
+      console.log("Logout button handler triggered");
+      
+      // Menggunakan toast dari sonner yang lebih sederhana dan reliable
+      toast.loading("Sedang keluar...");
+      
       const { error } = await supabase.auth.signOut();
       
       if (error) {
         console.error("Error during logout:", error);
-        toast({
-          title: "Gagal keluar",
-          description: "Terjadi kesalahan saat mencoba keluar: " + error.message,
-          variant: "destructive",
-        });
+        toast.error("Gagal keluar: " + error.message);
         return;
       }
       
-      console.log("Sign out successful");
-      toast({
-        title: "Berhasil keluar",
-        description: "Anda telah keluar dari sistem",
-      });
+      console.log("Sign out successful, redirecting to auth page");
+      toast.success("Berhasil keluar");
       
-      // Force navigation to auth page
-      navigate("/auth", { replace: true });
+      // Membersihkan state
+      setOpen(false);
+      
+      // Menunda navigasi untuk memastikan state sudah terupdate
+      setTimeout(() => {
+        // Force navigation to auth page
+        window.location.href = "/auth";
+      }, 500);
     } catch (error) {
       console.error("Exception during logout:", error);
-      toast({
-        title: "Gagal keluar",
-        description: "Terjadi kesalahan saat mencoba keluar",
-        variant: "destructive",
-      });
+      toast.error("Gagal keluar, terjadi kesalahan");
     }
   };
 

@@ -64,7 +64,11 @@ export const MenuContent = ({
         <Button
           variant="ghost"
           className="w-full justify-start gap-2 text-red-500 hover:text-red-600 hover:bg-red-50"
-          onClick={onLogout}
+          type="button"
+          onClick={() => {
+            console.log("Logout button clicked");
+            if (onLogout) onLogout();
+          }}
         >
           <LogOut className="h-4 w-4" />
           Keluar
