@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TransferStockForm } from "@/components/pos/forms/transferStock";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
+import TransferHistoryList from "@/components/transfer/TransferHistoryList";
 
 const StockTransfer = () => {
   const [renderError, setRenderError] = useState<Error | null>(null);
@@ -39,6 +40,8 @@ const StockTransfer = () => {
             <TransferStockForm />
           </CardContent>
         </Card>
+        
+        <TransferHistoryList limit={10} />
       </div>
     );
   } catch (error) {
