@@ -20,8 +20,8 @@ const History = () => {
       setIsLoading(true);
       try {
         const { data, error } = await supabase
-          .from('transactions')
-          .select('*')
+          .from('transaksi')
+          .select('*, produk(*), cabang(*)')
           .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id)
           .order('created_at', { ascending: false });
 
@@ -30,7 +30,20 @@ const History = () => {
           return;
         }
 
-        setTransactions(data || []);
+        // Transform data to match Transaction interface
+        const transformedData: Transaction[] = (data || []).map((item: any) => ({
+          id: item.transaksi_id,
+          transaksi_id: item.transaksi_id,
+          transaction_date: item.transaction_date,
+          produk: item.produk,
+          quantity: item.quantity,
+          total_price: item.total_price,
+          payment_status: item.payment_status,
+          cabang: item.cabang,
+          payment_method: item.payment_method
+        }));
+
+        setTransactions(transformedData);
       } catch (error) {
         console.error('Error:', error);
       } finally {
@@ -40,6 +53,22 @@ const History = () => {
 
     fetchTransactions();
   }, [pelakuUsaha?.pelaku_usaha_id]);
+
+  // Helper function to convert transaction data to the expected format
+  const formatTransactionsForTable = (data: Transaction[]): any[] => {
+    return data.map(transaction => ({
+      transaksi_id: transaction.transaksi_id,
+      transaction_date: transaction.transaction_date || transaction.created_at || '',
+      produk: transaction.produk || { 
+        produk_id: transaction.produk_id || 0, 
+        product_name: transaction.customer_name || 'Unknown' 
+      },
+      quantity: transaction.quantity || 0,
+      total_price: transaction.total_price || transaction.total_amount || 0,
+      payment_status: transaction.payment_status || (transaction.status === 'completed' ? 1 : 0),
+      cabang: transaction.cabang || { branch_name: '' }
+    }));
+  };
 
   return (
     <div className="container mx-auto p-4">
@@ -62,7 +91,14 @@ const History = () => {
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               ) : (
-                <TransactionTable transactions={transactions} />
+                <TransactionTable 
+                  transactions={formatTransactionsForTable(transactions)} 
+                  onUpdatePaymentStatus={() => {}}
+                  onPayDebt={() => {}}
+                  onPrint={() => {}}
+                  onWhatsApp={() => {}}
+                  onReturSuccess={() => {}}
+                />
               )}
             </TabsContent>
             
@@ -73,7 +109,14 @@ const History = () => {
                 </div>
               ) : (
                 <TransactionTable 
-                  transactions={transactions.filter(t => t.status === 'completed')} 
+                  transactions={formatTransactionsForTable(transactions.filter(t => 
+                    t.payment_status === 1 || t.status === 'completed'
+                  ))}
+                  onUpdatePaymentStatus={() => {}}
+                  onPayDebt={() => {}}
+                  onPrint={() => {}}
+                  onWhatsApp={() => {}}
+                  onReturSuccess={() => {}}
                 />
               )}
             </TabsContent>
@@ -85,7 +128,14 @@ const History = () => {
                 </div>
               ) : (
                 <TransactionTable 
-                  transactions={transactions.filter(t => t.status === 'pending')} 
+                  transactions={formatTransactionsForTable(transactions.filter(t => 
+                    t.payment_status === 0 || t.status === 'pending'
+                  ))}
+                  onUpdatePaymentStatus={() => {}}
+                  onPayDebt={() => {}}
+                  onPrint={() => {}}
+                  onWhatsApp={() => {}}
+                  onReturSuccess={() => {}}
                 />
               )}
             </TabsContent>
@@ -97,7 +147,14 @@ const History = () => {
                 </div>
               ) : (
                 <TransactionTable 
-                  transactions={transactions.filter(t => t.status === 'cancelled')} 
+                  transactions={formatTransactionsForTable(transactions.filter(t => 
+                    t.payment_status === 2 || t.status === 'cancelled'
+                  ))}
+                  onUpdatePaymentStatus={() => {}}
+                  onPayDebt={() => {}}
+                  onPrint={() => {}}
+                  onWhatsApp={() => {}}
+                  onReturSuccess={() => {}}
                 />
               )}
             </TabsContent>
