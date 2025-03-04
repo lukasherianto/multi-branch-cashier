@@ -4,7 +4,6 @@ import { LogOut } from "lucide-react";
 import { MenuItem } from "./MenuItem";
 import menuConfig from "./menuConfig";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useMenuAccess } from "@/hooks/useMenuAccess";
 import { useAuth } from "@/hooks/useAuth";
 
 interface MenuContentProps {
@@ -22,28 +21,18 @@ export const MenuContent = ({
   onToggleSubmenu,
   onLogout 
 }: MenuContentProps) => {
-  const { hasAccess } = useMenuAccess();
   const { userRole } = useAuth();
   
-  // Memeriksa apakah pengguna adalah pemilik bisnis (pelaku_usaha)
-  const isPelakuUsaha = userRole === 'pelaku_usaha';
-
   // Untuk debugging
-  console.log('MenuContent rendering:', { userRole, isPelakuUsaha, menuConfig });
+  console.log('MenuContent rendering:', { userRole, menuConfig });
 
   return (
     <div className="flex flex-col h-full">
       <ScrollArea className="flex-grow">
         <div className="space-y-0.5 py-2 pr-2">
           {menuConfig.map((section) => {
-            // Untuk pemilik bisnis, tampilkan semua item tanpa filter
-            // Untuk peran lain, filter item berdasarkan izin akses
-            const items = isPelakuUsaha
-              ? section.items
-              : section.items.filter(item => hasAccess(item.path));
-            
-            // Lewati bagian tanpa item yang dapat diakses
-            if (items.length === 0) return null;
+            // Tampilkan semua item tanpa filter
+            const items = section.items;
             
             return (
               <div key={section.title} className="mb-3">

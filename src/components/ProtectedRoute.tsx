@@ -2,27 +2,22 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { useMenuAccess } from "../hooks/useMenuAccess";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: string[]; // We'll keep this prop for compatibility, but we'll use our enhanced access control
+  allowedRoles?: string[]; // Prop ini masih disimpan untuk kompatibilitas
 }
 
 function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { user, userRole, userStatusId, isLoading: authLoading } = useAuth();
-  const { hasAccess, isLoading: accessLoading } = useMenuAccess();
+  const { user, isLoading: authLoading } = useAuth();
   const location = useLocation();
-  const isLoading = authLoading || accessLoading;
+  const isLoading = authLoading;
 
   // Add debugging
   console.log('ProtectedRoute checking access:', { 
-    userRole, 
-    userStatusId,
     path: location.pathname,
     isLoading,
     authLoading,
-    accessLoading,
     user: !!user
   });
 
@@ -52,21 +47,8 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // Business owners (pelaku_usaha) always have access to all routes
-  if (userRole === 'pelaku_usaha' || userStatusId === 1) {
-    console.log('Business owner, granting access');
-    return <>{children}</>;
-  }
-
-  // For other roles, check if the user has access to the current path
-  if (!hasAccess(location.pathname)) {
-    console.log('User does not have access to this path, redirecting to dashboard');
-    // Redirect to the dashboard if they don't have access
-    return <Navigate to="/" replace />;
-  }
-
-  // User is authenticated and has access to this route
-  console.log('User has access to this route');
+  // User is authenticated, grant access to all routes
+  console.log('User is authenticated, allowing access to all routes');
   return <>{children}</>;
 }
 
