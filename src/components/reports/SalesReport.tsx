@@ -4,6 +4,7 @@ import SalesSummary from "./sales/SalesSummary";
 import ProductSalesTable, { ProductSale } from "./sales/ProductSalesTable";
 import CategorySalesTable from "./sales/CategorySalesTable";
 import DateRangeFilter from "./sales/DateRangeFilter";
+import ProductSalesChart from "./sales/ProductSalesChart";
 import { useState, useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
 import { useReportData } from "@/hooks/reports/useReportData";
@@ -24,6 +25,7 @@ const SalesReport = () => {
   
   const [productPeriod, setProductPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
   const [categoryPeriod, setCategoryPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
+  const [chartPeriod, setChartPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
 
   const { salesData, isLoading, error } = useReportData(pelakuUsaha, dateRange);
 
@@ -54,6 +56,11 @@ const SalesReport = () => {
     setCategoryPeriod(period);
   };
 
+  const handleChartPeriodChange = (period: 'daily' | 'weekly' | 'monthly' | 'yearly') => {
+    console.log("Chart period changed to:", period);
+    setChartPeriod(period);
+  };
+
   // Calculate sales statistics
   const { 
     totalTransactions, 
@@ -61,6 +68,13 @@ const SalesReport = () => {
     totalProfit, 
     profitMarginPercentage 
   } = calculateSalesStats(salesData);
+
+  // Filter and process chart data
+  const filteredChartSales = filterSalesByPeriod(salesData, chartPeriod);
+  console.log("Filtered chart sales:", filteredChartSales);
+  
+  const chartProductSales: ProductSale[] = processProductSales(filteredChartSales);
+  console.log("Processed chart product sales:", chartProductSales);
 
   // Filter and process product sales data
   const filteredProductSales = filterSalesByPeriod(salesData, productPeriod);
@@ -110,6 +124,14 @@ const SalesReport = () => {
         totalProfit={totalProfit}
         profitMarginPercentage={profitMarginPercentage}
       />
+
+      <ProductSalesChart 
+        productSales={chartProductSales}
+        onPeriodChange={handleChartPeriodChange}
+        currentPeriod={chartPeriod}
+      />
+
+      <Separator className="my-6" />
 
       <ProductSalesTable
         productSales={productSalesArray}
