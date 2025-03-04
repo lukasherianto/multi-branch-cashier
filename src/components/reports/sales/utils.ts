@@ -1,3 +1,4 @@
+
 // Get start date for period filtering
 export const getStartDateForPeriod = (period: 'daily' | 'weekly' | 'monthly' | 'yearly') => {
   const today = new Date();
@@ -18,19 +19,31 @@ export const getStartDateForPeriod = (period: 'daily' | 'weekly' | 'monthly' | '
 
 // Filter sales data by period
 export const filterSalesByPeriod = (data: any[] | null, period: 'daily' | 'weekly' | 'monthly' | 'yearly') => {
-  if (!data) return [];
+  if (!data || data.length === 0) {
+    console.log(`No data to filter for period: ${period}`);
+    return [];
+  }
   
   const startDate = getStartDateForPeriod(period);
+  console.log(`Filtering data for period: ${period}, start date: ${startDate}`);
   
-  return data.filter(sale => {
+  const filteredData = data.filter(sale => {
+    if (!sale.transaction_date) {
+      console.log("Sale missing transaction_date:", sale);
+      return false;
+    }
     const saleDate = new Date(sale.transaction_date);
     return saleDate >= startDate;
   });
+  
+  console.log(`Filtered ${data.length} records to ${filteredData.length} for period: ${period}`);
+  return filteredData;
 };
 
 // Calculate sales statistics
 export const calculateSalesStats = (salesData: any[] | null) => {
-  if (!salesData) {
+  if (!salesData || salesData.length === 0) {
+    console.log("No sales data for statistics calculation");
     return {
       totalTransactions: 0,
       totalRevenue: 0,
@@ -40,13 +53,15 @@ export const calculateSalesStats = (salesData: any[] | null) => {
     };
   }
 
+  console.log(`Calculating stats for ${salesData.length} transactions`);
+  
   const totalTransactions = salesData.length || 0;
-  const totalRevenue = salesData.reduce((sum, sale) => sum + Number(sale.total_price), 0) || 0;
+  const totalRevenue = salesData.reduce((sum, sale) => sum + Number(sale.total_price || 0), 0) || 0;
   
   // Calculate total cost
   const totalCost = salesData.reduce((sum, sale) => {
     const costPrice = sale.produk?.cost_price || 0;
-    return sum + (costPrice * sale.quantity);
+    return sum + (costPrice * (sale.quantity || 0));
   }, 0) || 0;
   
   const totalProfit = totalRevenue - totalCost;
@@ -55,6 +70,14 @@ export const calculateSalesStats = (salesData: any[] | null) => {
   const profitMarginPercentage = totalRevenue > 0 
     ? ((totalProfit / totalRevenue) * 100).toFixed(2) 
     : "0";
+
+  console.log("Sales statistics:", {
+    totalTransactions,
+    totalRevenue,
+    totalCost,
+    totalProfit,
+    profitMarginPercentage
+  });
 
   return {
     totalTransactions,
@@ -67,11 +90,25 @@ export const calculateSalesStats = (salesData: any[] | null) => {
 
 // Process product sales data
 export const processProductSales = (filteredSales: any[]): ProductSale[] => {
+  if (!filteredSales || filteredSales.length === 0) {
+    console.log("No filtered sales data to process for products");
+    return [];
+  }
+
+  console.log(`Processing ${filteredSales.length} sales records for product sales`);
+  
   const productSalesMap = filteredSales.reduce((acc: Record<string, ProductSale>, sale) => {
+    if (!sale.produk) {
+      console.log("Sale missing produk data:", sale);
+      return acc;
+    }
+    
     if (sale.produk && sale.produk.product_name) {
       const productName = sale.produk.product_name;
       const productId = sale.produk.produk_id;
       const costPrice = sale.produk.cost_price || 0;
+      const quantity = sale.quantity || 0;
+      const totalPrice = Number(sale.total_price || 0);
       
       if (!acc[productId]) {
         acc[productId] = {
@@ -83,23 +120,39 @@ export const processProductSales = (filteredSales: any[]): ProductSale[] => {
         };
       }
       
-      acc[productId].quantity += sale.quantity;
-      acc[productId].revenue += Number(sale.total_price);
-      acc[productId].cost += (costPrice * sale.quantity);
+      acc[productId].quantity += quantity;
+      acc[productId].revenue += totalPrice;
+      acc[productId].cost += (costPrice * quantity);
       acc[productId].profit = acc[productId].revenue - acc[productId].cost;
     }
     return acc;
   }, {});
 
-  return Object.values(productSalesMap);
+  const result = Object.values(productSalesMap);
+  console.log(`Processed ${result.length} unique products from sales data`);
+  return result;
 };
 
 // Process category sales data
 export const processCategorySales = (filteredSales: any[]) => {
-  return filteredSales.reduce((acc, sale) => {
+  if (!filteredSales || filteredSales.length === 0) {
+    console.log("No filtered sales data to process for categories");
+    return {};
+  }
+
+  console.log(`Processing ${filteredSales.length} sales records for category sales`);
+  
+  const categorySales = filteredSales.reduce((acc: Record<string, any>, sale) => {
+    if (!sale.produk || !sale.produk.kategori_produk) {
+      console.log("Sale missing category data:", sale);
+      return acc;
+    }
+    
     if (sale.produk?.kategori_produk?.kategori_name) {
       const category = sale.produk.kategori_produk.kategori_name;
       const costPrice = sale.produk.cost_price || 0;
+      const quantity = sale.quantity || 0;
+      const totalPrice = Number(sale.total_price || 0);
       
       if (!acc[category]) {
         acc[category] = {
@@ -109,12 +162,15 @@ export const processCategorySales = (filteredSales: any[]) => {
         };
       }
       
-      acc[category].revenue += Number(sale.total_price);
-      acc[category].cost += (costPrice * sale.quantity);
+      acc[category].revenue += totalPrice;
+      acc[category].cost += (costPrice * quantity);
       acc[category].profit = acc[category].revenue - acc[category].cost;
     }
     return acc;
   }, {});
+
+  console.log(`Processed ${Object.keys(categorySales).length} categories from sales data`);
+  return categorySales;
 };
 
 export interface ProductSale {

@@ -4,7 +4,7 @@ import SalesSummary from "./sales/SalesSummary";
 import ProductSalesTable, { ProductSale } from "./sales/ProductSalesTable";
 import CategorySalesTable from "./sales/CategorySalesTable";
 import DateRangeFilter from "./sales/DateRangeFilter";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
 import { useReportData } from "@/hooks/reports/useReportData";
 import { 
@@ -25,21 +25,32 @@ const SalesReport = () => {
   const [productPeriod, setProductPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
   const [categoryPeriod, setCategoryPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
 
-  const { salesData } = useReportData(pelakuUsaha, dateRange);
+  const { salesData, isLoading, error } = useReportData(pelakuUsaha, dateRange);
+
+  useEffect(() => {
+    console.log("Auth state:", { pelakuUsaha });
+    console.log("Date range:", dateRange);
+    console.log("Raw sales data:", salesData);
+    console.log("Loading state:", isLoading);
+    console.log("Error state:", error);
+  }, [pelakuUsaha, salesData, dateRange, isLoading, error]);
 
   const handleFilterChange = (range: { 
     start: Date | undefined; 
     end: Date | undefined; 
     period: 'daily' | 'monthly' | 'yearly' | 'custom' 
   }) => {
+    console.log("Filter changed to:", range);
     setDateRange(range);
   };
 
   const handleProductPeriodChange = (period: 'daily' | 'weekly' | 'monthly' | 'yearly') => {
+    console.log("Product period changed to:", period);
     setProductPeriod(period);
   };
 
   const handleCategoryPeriodChange = (period: 'daily' | 'weekly' | 'monthly' | 'yearly') => {
+    console.log("Category period changed to:", period);
     setCategoryPeriod(period);
   };
 
@@ -53,16 +64,38 @@ const SalesReport = () => {
 
   // Filter and process product sales data
   const filteredProductSales = filterSalesByPeriod(salesData, productPeriod);
+  console.log("Filtered product sales:", filteredProductSales);
+  
   const productSalesArray: ProductSale[] = processProductSales(filteredProductSales);
+  console.log("Processed product sales array:", productSalesArray);
 
   // Filter and process category sales data
   const filteredCategorySales = filterSalesByPeriod(salesData, categoryPeriod);
+  console.log("Filtered category sales:", filteredCategorySales);
+  
   const categorySales = processCategorySales(filteredCategorySales);
+  console.log("Processed category sales:", categorySales);
 
   if (!pelakuUsaha) {
     return (
       <div className="text-center py-8">
         <p className="text-gray-500">Silakan lengkapi profil usaha Anda terlebih dahulu</p>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500">Memuat data...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8 text-red-500">
+        <p>Error: {error.message || "Terjadi kesalahan saat memuat data"}</p>
       </div>
     );
   }

@@ -21,7 +21,8 @@ const CategorySalesTable = ({
     currentFilter,
     hasDetailedData,
     sortedCategories,
-    handleFilterChange
+    handleFilterChange,
+    isEmpty
   } = useCategorySales(categorySales, onCategoryPeriodChange);
 
   return (
@@ -34,6 +35,7 @@ const CategorySalesTable = ({
         sortedCategories={sortedCategories}
         showProfit={showProfit}
         hasDetailedData={hasDetailedData}
+        isEmpty={isEmpty}
       />
     </Card>
   );

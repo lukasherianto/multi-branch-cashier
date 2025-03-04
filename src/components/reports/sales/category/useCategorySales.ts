@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CategorySalesRecord, CategorySalesData } from './types';
 
 export const useCategorySales = (
@@ -8,18 +8,27 @@ export const useCategorySales = (
 ) => {
   const [currentFilter, setCurrentFilter] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
   
-  const hasDetailedData = Object.values(categorySales).some(value => typeof value === 'object');
+  useEffect(() => {
+    console.log("Category sales data:", categorySales);
+  }, [categorySales]);
+
+  // Check if data is empty
+  const isEmpty = !categorySales || Object.keys(categorySales).length === 0;
   
-  let sortedCategories: [string, CategorySalesData | number][];
+  const hasDetailedData = !isEmpty && Object.values(categorySales).some(value => typeof value === 'object');
   
-  if (hasDetailedData) {
-    // New format with profit data
-    sortedCategories = Object.entries(categorySales)
-      .sort(([, a], [, b]) => (b as CategorySalesData).revenue - (a as CategorySalesData).revenue);
-  } else {
-    // Old format with just revenue
-    sortedCategories = Object.entries(categorySales)
-      .sort(([, a], [, b]) => (b as number) - (a as number));
+  let sortedCategories: [string, CategorySalesData | number][] = [];
+  
+  if (!isEmpty) {
+    if (hasDetailedData) {
+      // New format with profit data
+      sortedCategories = Object.entries(categorySales)
+        .sort(([, a], [, b]) => (b as CategorySalesData).revenue - (a as CategorySalesData).revenue);
+    } else {
+      // Old format with just revenue
+      sortedCategories = Object.entries(categorySales)
+        .sort(([, a], [, b]) => (b as number) - (a as number));
+    }
   }
 
   const handleFilterChange = (period: 'daily' | 'weekly' | 'monthly' | 'yearly') => {
@@ -33,6 +42,7 @@ export const useCategorySales = (
     currentFilter,
     hasDetailedData,
     sortedCategories,
-    handleFilterChange
+    handleFilterChange,
+    isEmpty
   };
 };
