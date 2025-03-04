@@ -1,6 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/auth";
+
+interface MenuAccess {
+  menu_code: string;
+}
 
 export const useMenuAccess = () => {
   const { user, userRole } = useAuth();
@@ -12,11 +17,11 @@ export const useMenuAccess = () => {
       setIsLoading(true);
       try {
         if (user && userRole) {
-          // Fetch menu access based on user role
           const { data, error } = await supabase
             .from('menu_access')
             .select('menu_code')
-            .eq('role', userRole);
+            .eq('role', userRole)
+            .returns<MenuAccess[]>();
 
           if (error) {
             console.error("Error fetching menu access:", error);
@@ -26,7 +31,6 @@ export const useMenuAccess = () => {
           const menuCodes = data.map(item => item.menu_code);
           setAllowedMenu(menuCodes);
         } else {
-          // If user or role is not yet available, set to empty array
           setAllowedMenu([]);
         }
       } finally {
@@ -39,4 +43,3 @@ export const useMenuAccess = () => {
 
   return { allowedMenu, isLoading };
 };
-

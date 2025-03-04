@@ -6,34 +6,73 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { ProductForm } from "./forms/ProductForm";
 import { CategoryForm } from "./forms/CategoryForm";
-import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { CategoryManagement } from "./CategoryManagement";
 import { useAuth } from "@/hooks/auth";
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  stock: number;
-  category: string;
-}
+import { supabase } from "@/integrations/supabase/client";
 
 const ProductManagement = () => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
   const { toast } = useToast();
+  const { pelakuUsaha } = useAuth();
+
+  const { data: categories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      if (!pelakuUsaha) return [];
+      const { data } = await supabase
+        .from('kategori_produk')
+        .select('*')
+        .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id);
+      return data || [];
+    },
+    enabled: !!pelakuUsaha
+  });
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
   };
 
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const handleProductSubmit = async (values: any) => {
+    // Product submission logic
+  };
+
+  const handleCategorySubmit = async (formData: { categoryName: string; description: string }) => {
+    try {
+      if (!pelakuUsaha) {
+        toast({
+          title: "Error",
+          description: "Data pelaku usaha tidak ditemukan",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('kategori_produk')
+        .insert({
+          pelaku_usaha_id: pelakuUsaha.pelaku_usaha_id,
+          kategori_name: formData.categoryName,
+          description: formData.description
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Sukses",
+        description: "Kategori berhasil ditambahkan",
+      });
+      setOpen(false);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Gagal menambahkan kategori",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div>
@@ -63,10 +102,14 @@ const ProductManagement = () => {
                   <TabsTrigger value="categories">Kategori</TabsTrigger>
                 </TabsList>
                 <TabsContent value="products" className="space-y-4">
-                  <ProductForm />
+                  <ProductForm 
+                    categories={categories || []}
+                    onSubmit={handleProductSubmit}
+                    isSubmitting={false}
+                  />
                 </TabsContent>
                 <TabsContent value="categories" className="space-y-4">
-                  <CategoryForm />
+                  <CategoryForm onSubmit={handleCategorySubmit} />
                 </TabsContent>
               </Tabs>
             </SheetContent>
