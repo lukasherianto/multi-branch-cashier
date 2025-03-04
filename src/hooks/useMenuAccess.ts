@@ -8,10 +8,20 @@ export const useMenuAccess = () => {
   const [userPermissions, setUserPermissions] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // For debugging
+  console.log('useMenuAccess hook initialized', { userRole });
+
   useEffect(() => {
     const fetchUserStatus = async () => {
       if (!userRole) {
         setUserPermissions(null);
+        setIsLoading(false);
+        return;
+      }
+
+      // If user is a business owner, we don't need to fetch permissions
+      if (userRole === 'pelaku_usaha') {
+        setUserPermissions('Akses penuh');
         setIsLoading(false);
         return;
       }
@@ -21,9 +31,6 @@ export const useMenuAccess = () => {
         let status_id: number | null = null;
         
         switch (userRole) {
-          case 'pelaku_usaha':
-            status_id = 1;
-            break;
           case 'admin':
             status_id = 2;
             break;
@@ -142,13 +149,17 @@ export const useMenuAccess = () => {
   const hasAccess = (path: string) => {
     // Business owners (pelaku_usaha) can access everything
     if (userRole === 'pelaku_usaha') {
+      console.log('Business owner has access to:', path);
       return true;
     }
 
     // For other roles, check if the path is in the allowed paths
-    return allowedMenuPaths.includes(path) || 
+    const hasPathAccess = allowedMenuPaths.includes(path) || 
            allowedMenuPaths.some(allowedPath => 
              path.startsWith(allowedPath + '/'));
+    
+    console.log(`User with role ${userRole} access to ${path}:`, hasPathAccess);
+    return hasPathAccess;
   };
 
   return {

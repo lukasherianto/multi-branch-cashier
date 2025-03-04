@@ -15,6 +15,13 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
   const location = useLocation();
   const isLoading = authLoading || accessLoading;
 
+  // Add debugging
+  console.log('ProtectedRoute checking access:', { 
+    userRole, 
+    path: location.pathname,
+    isLoading
+  });
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -24,22 +31,26 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!user) {
+    console.log('No user found, redirecting to auth');
     // Redirect to the login page with a return path
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
   // Business owners (pelaku_usaha) always have access to all routes
   if (userRole === 'pelaku_usaha') {
+    console.log('Business owner, granting access');
     return <>{children}</>;
   }
 
   // For other roles, check if the user has access to the current path
   if (!hasAccess(location.pathname)) {
+    console.log('User does not have access to this path, redirecting to dashboard');
     // Redirect to the dashboard if they don't have access
     return <Navigate to="/" replace />;
   }
 
   // User is authenticated and has access to this route
+  console.log('User has access to this route');
   return <>{children}</>;
 }
 

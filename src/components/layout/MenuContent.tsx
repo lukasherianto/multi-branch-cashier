@@ -25,15 +25,18 @@ export const MenuContent = ({
   const { hasAccess } = useMenuAccess();
   const { userRole } = useAuth();
   
-  // Business owners (pelaku_usaha) should see all menu items
+  // Check if the user is a business owner (pelaku_usaha)
   const isPelakuUsaha = userRole === 'pelaku_usaha';
+
+  // For debugging
+  console.log('MenuContent rendering:', { userRole, isPelakuUsaha, menuConfig });
 
   return (
     <div className="flex flex-col h-full">
       <ScrollArea className="flex-grow">
         <div className="space-y-0.5 py-2 pr-2">
           {menuConfig.map((section) => {
-            // For business owners, show all items
+            // For business owners, show all items without filtering
             // For other roles, filter items based on access permissions
             const items = isPelakuUsaha
               ? section.items
