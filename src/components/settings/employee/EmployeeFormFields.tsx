@@ -18,7 +18,7 @@ export const EmployeeFormFields = ({ form, branches }: EmployeeFormFieldsProps) 
         name="name"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Nama</FormLabel>
+            <FormLabel>Nama <span className="text-red-500">*</span></FormLabel>
             <FormControl>
               <Input placeholder="Nama karyawan" {...field} />
             </FormControl>
@@ -32,7 +32,7 @@ export const EmployeeFormFields = ({ form, branches }: EmployeeFormFieldsProps) 
         name="email"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Email</FormLabel>
+            <FormLabel>Email <span className="text-red-500">*</span></FormLabel>
             <FormControl>
               <Input type="email" placeholder="Email karyawan" {...field} />
             </FormControl>
@@ -46,7 +46,7 @@ export const EmployeeFormFields = ({ form, branches }: EmployeeFormFieldsProps) 
         name="password"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Password</FormLabel>
+            <FormLabel>Password <span className="text-red-500">*</span></FormLabel>
             <FormControl>
               <Input 
                 type="password" 
@@ -78,7 +78,7 @@ export const EmployeeFormFields = ({ form, branches }: EmployeeFormFieldsProps) 
         name="business_role"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Jabatan</FormLabel>
+            <FormLabel>Jabatan <span className="text-red-500">*</span></FormLabel>
             <Select onValueChange={field.onChange} value={field.value}>
               <FormControl>
                 <SelectTrigger>
@@ -116,7 +116,7 @@ export const EmployeeFormFields = ({ form, branches }: EmployeeFormFieldsProps) 
         name="cabang_id"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Cabang</FormLabel>
+            <FormLabel>Cabang <span className="text-red-500">*</span></FormLabel>
             <Select onValueChange={field.onChange} value={field.value}>
               <FormControl>
                 <SelectTrigger>

@@ -4,12 +4,26 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { EmployeeFormData } from "./types";
+import * as z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+// Create a schema for employee data validation
+const employeeSchema = z.object({
+  name: z.string().min(1, "Nama wajib diisi"),
+  email: z.string().email("Format email tidak valid").min(1, "Email wajib diisi"),
+  whatsapp_contact: z.string().optional(),
+  role: z.string().optional(),
+  business_role: z.string().min(1, "Jabatan wajib diisi"),
+  cabang_id: z.string().min(1, "Cabang wajib diisi"),
+  password: z.string().min(6, "Password minimal 6 karakter"),
+});
 
 export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<EmployeeFormData>({
+    resolver: zodResolver(employeeSchema),
     defaultValues: {
       name: "",
       email: "",
@@ -88,7 +102,7 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
 
       if (authError) {
         console.error("Auth error:", authError);
-        throw authError;
+        throw new Error(authError.message);
       }
 
       if (!authData.user) {
@@ -130,7 +144,7 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
           name: data.name,
           email: data.email,
           whatsapp_contact: data.whatsapp_contact,
-          role: data.role,
+          role: data.role || data.business_role, // Use business_role as fallback if role is not provided
           business_role: data.business_role,
           cabang_id: data.cabang_id === "0" ? null : parseInt(data.cabang_id),
           pelaku_usaha_id: pelakuUsaha.pelaku_usaha_id,
@@ -142,7 +156,7 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
 
       if (employeeError) {
         console.error("Employee insert error:", employeeError);
-        throw employeeError;
+        throw new Error(employeeError.message);
       }
 
       toast({
@@ -151,7 +165,7 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
       });
 
       form.reset();
-      loadEmployees();
+      await loadEmployees();
     } catch (error: any) {
       console.error("Error adding employee:", error);
       toast({

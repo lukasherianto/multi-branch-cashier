@@ -1,17 +1,46 @@
 
-import { Users } from "lucide-react";
+import { Users, UserPlus } from "lucide-react";
 import { EmployeeList } from "./employee/EmployeeList";
 import { useEmployeeData } from "./employee/useEmployeeData";
 import { useEmployeeForm } from "./employee/useEmployeeForm";
 import { useEmployeeDelete } from "./employee/useEmployeeDelete";
 import { EmployeeFormSection } from "./employee/EmployeeFormSection";
+import { useEmployeePasswordReset } from "./employee/useEmployeePasswordReset";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useEffect } from "react";
 
 export function EmployeeForm() {
-  const { isLoading: dataLoading, employees, branches, loadEmployees } = useEmployeeData();
+  const { isLoading: dataLoading, employees, branches, loadEmployees, error: dataError } = useEmployeeData();
   const { form, isLoading: formLoading, onSubmit } = useEmployeeForm(loadEmployees);
   const { deleteEmployee, isDeleting } = useEmployeeDelete(loadEmployees);
+  const { resetPassword, isResetting } = useEmployeePasswordReset();
 
-  const isLoading = dataLoading || formLoading || isDeleting;
+  const isLoading = dataLoading || formLoading || isDeleting || isResetting;
+
+  // Reset form when data is loaded
+  useEffect(() => {
+    if (!dataLoading && form) {
+      form.reset({
+        name: "",
+        email: "",
+        whatsapp_contact: "",
+        role: "",
+        business_role: "",
+        cabang_id: "",
+        password: "",
+      });
+    }
+  }, [dataLoading, form]);
+
+  if (dataError) {
+    return (
+      <Alert variant="destructive" className="mb-6">
+        <AlertDescription>
+          {dataError}
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -30,6 +59,7 @@ export function EmployeeForm() {
         <EmployeeList 
           employees={employees}
           onDelete={deleteEmployee}
+          onResetPassword={resetPassword}
           isLoading={isLoading}
         />
       </div>
