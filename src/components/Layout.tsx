@@ -6,7 +6,7 @@ import { MenuIcon } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { AppHeader } from "./layout/AppHeader";
 import { MenuContent } from "./layout/MenuContent";

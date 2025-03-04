@@ -1,10 +1,9 @@
-
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { MenuItem } from "./MenuItem";
 import menuConfig from "./menuConfig";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/auth";
 
 interface MenuContentProps {
   expandedMenus: string[];

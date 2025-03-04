@@ -1,10 +1,9 @@
-
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { AuthProvider } from "./hooks/useAuth";
+import { AuthProvider } from "./hooks/auth";
 
 // Pages
 import Auth from "./pages/Auth";
