@@ -14,6 +14,7 @@ import History from "./pages/History";
 import Branches from "./pages/Branches";
 import Reports from "./pages/Reports";
 import Kas from "./pages/Kas";
+import KasPurchases from "./pages/KasPurchases";
 import Attendance from "./pages/Attendance";
 import HomeIndex from "./pages/Index";
 import PrintPreview from "./pages/PrintPreview";
@@ -52,6 +53,7 @@ function App() {
               <Route path="settings" element={<Settings />} />
               <Route path="branches" element={<Branches />} />
               <Route path="kas" element={<Kas />} />
+              <Route path="kas/purchases" element={<KasPurchases />} />
               <Route path="attendance" element={<Attendance />} />
               <Route path="order-confirmation" element={<OrderConfirmation />} />
               <Route path="stock-transfer" element={<StockTransfer />} />
