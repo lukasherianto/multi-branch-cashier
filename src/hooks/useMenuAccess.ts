@@ -3,12 +3,12 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/auth";
 
-interface MenuAccess {
+interface MenuAccessData {
   menu_code: string;
 }
 
 export const useMenuAccess = () => {
-  const { user, userRole } = useAuth();
+  const { userRole } = useAuth();
   const [allowedMenu, setAllowedMenu] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -16,30 +16,36 @@ export const useMenuAccess = () => {
     const fetchMenuAccess = async () => {
       setIsLoading(true);
       try {
-        if (user && userRole) {
+        if (userRole) {
+          // The correct way to query the menu_access table with proper typing
           const { data, error } = await supabase
             .from('menu_access')
             .select('menu_code')
-            .eq('role', userRole)
-            .returns<MenuAccess[]>();
+            .eq('role', userRole);
 
           if (error) {
             console.error("Error fetching menu access:", error);
+            setAllowedMenu([]);
             return;
           }
-
-          const menuCodes = data.map(item => item.menu_code);
+          
+          // Correctly type the data and extract menu_code values
+          const menuCodes = (data as MenuAccessData[]).map(item => item.menu_code);
           setAllowedMenu(menuCodes);
         } else {
+          // Default empty array if no user role
           setAllowedMenu([]);
         }
+      } catch (err) {
+        console.error("Unexpected error in menu access:", err);
+        setAllowedMenu([]);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchMenuAccess();
-  }, [user, userRole]);
+  }, [userRole]);
 
   return { allowedMenu, isLoading };
 };

@@ -289,6 +289,30 @@ export type Database = {
           },
         ]
       }
+      menu_access: {
+        Row: {
+          created_at: string
+          id: number
+          menu_code: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          menu_code: string
+          role: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          menu_code?: string
+          role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pelaku_usaha: {
         Row: {
           business_name: string

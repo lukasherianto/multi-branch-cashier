@@ -4,7 +4,8 @@ import { useAuthState } from "./useAuthState";
 import { useBusinessData } from "./useBusinessData";
 import { useBranchSelection } from "./useBranchSelection";
 import AuthContext from "./AuthContext";
-import { AuthContextType } from "./types";
+import { initializeMenuAccess } from "./initializeAppData";
+import { useEffect } from "react";
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Auth state
@@ -15,6 +16,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [cabangList, setCabangList] = useState<any[]>([]);
   const [cabang, setCabang] = useState<any>(null);
   const [selectedCabangId, setSelectedCabangId] = useState<number | null>(null);
+
+  // Initialize app data when user is authenticated
+  useEffect(() => {
+    if (user && userRole) {
+      // Initialize menu access data
+      initializeMenuAccess().catch(error => {
+        console.error("Failed to initialize app data:", error);
+      });
+    }
+  }, [user, userRole]);
 
   // Fetch business data when user or selectedCabangId changes
   useBusinessData(
