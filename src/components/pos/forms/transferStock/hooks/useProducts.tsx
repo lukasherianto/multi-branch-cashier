@@ -1,13 +1,17 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductWithSelection } from "@/types/pos";
 import { useAuth } from "@/hooks/auth";
+import { useToast } from "@/hooks/use-toast";
 
 export const useProducts = (sourceBranchId: string) => {
   const [filteredProducts, setFilteredProducts] = useState<ProductWithSelection[]>([]);
   const [allProducts, setAllProducts] = useState<ProductWithSelection[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
   const { pelakuUsaha } = useAuth();
+  const { toast } = useToast();
   
   useEffect(() => {
     const fetchProductsForBranch = async () => {
@@ -20,6 +24,7 @@ export const useProducts = (sourceBranchId: string) => {
       
       console.log(`Fetching products for branch ID: ${sourceBranchId}`);
       setLoading(true);
+      setError(null);
       
       try {
         const { data: productsData, error } = await supabase
@@ -45,7 +50,13 @@ export const useProducts = (sourceBranchId: string) => {
           
         if (error) {
           console.error("Error fetching products:", error);
-          throw error;
+          setError(error);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Gagal memuat data produk",
+          });
+          return;
         }
         
         console.log(`Found ${productsData ? productsData.length : 0} products for branch ${sourceBranchId}`);
@@ -71,14 +82,21 @@ export const useProducts = (sourceBranchId: string) => {
         setFilteredProducts(mappedProducts);
         setAllProducts(mappedProducts);
       } catch (error) {
-        console.error("Error fetching products for branch:", error);
+        const err = error instanceof Error ? error : new Error("Unknown error");
+        console.error("Error fetching products for branch:", err);
+        setError(err);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Gagal memuat data produk",
+        });
       } finally {
         setLoading(false);
       }
     };
     
     fetchProductsForBranch();
-  }, [sourceBranchId, pelakuUsaha]);
+  }, [sourceBranchId, pelakuUsaha, toast]);
   
   const handleSearch = (query: string) => {
     if (!query.trim()) {
@@ -106,6 +124,7 @@ export const useProducts = (sourceBranchId: string) => {
     setFilteredProducts,
     allProducts,
     loading,
+    error,
     handleSearch
   };
 };

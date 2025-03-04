@@ -8,12 +8,28 @@ import { DirectionToggle } from "./components/DirectionToggle";
 import { BranchSelector } from "./components/BranchSelector";
 import { TransferSubmitButton } from "./components/TransferSubmitButton";
 import ErrorBoundary from "./components/ErrorBoundary";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ProductSearch } from "@/components/pos/ProductSearch";
-import { Info } from "lucide-react";
+import { Info, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/auth";
 
 export function TransferStockForm() {
   const [renderError, setRenderError] = useState<Error | null>(null);
+  const { pelakuUsaha } = useAuth();
+
+  // If there's no business profile, show a message
+  if (!pelakuUsaha) {
+    return (
+      <Alert className="my-4">
+        <Info className="h-4 w-4" />
+        <AlertTitle>Informasi</AlertTitle>
+        <AlertDescription>
+          Silakan lengkapi profil usaha Anda terlebih dahulu di halaman Pengaturan.
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   try {
     const {
@@ -76,7 +92,7 @@ export function TransferStockForm() {
       );
     }
 
-    const selectedProductsCount = selectedProducts.filter(p => p.selected).length;
+    const selectedProductsCount = selectedProducts?.filter(p => p.selected)?.length || 0;
 
     return (
       <Form {...form}>
@@ -103,14 +119,16 @@ export function TransferStockForm() {
             loading={productsLoading}
           />
 
-          <Pagination 
-            currentPage={currentPage}
-            totalPages={totalPages}
-            itemsPerPage={ITEMS_PER_PAGE}
-            totalItems={selectedProducts.length}
-            onPreviousPage={handlePreviousPage}
-            onNextPage={handleNextPage}
-          />
+          {selectedProducts && selectedProducts.length > 0 && (
+            <Pagination 
+              currentPage={currentPage}
+              totalPages={totalPages}
+              itemsPerPage={ITEMS_PER_PAGE}
+              totalItems={selectedProducts.length}
+              onPreviousPage={handlePreviousPage}
+              onNextPage={handleNextPage}
+            />
+          )}
 
           <TransferSubmitButton 
             isSubmitting={isSubmitting} 
