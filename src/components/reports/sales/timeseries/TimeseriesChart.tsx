@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useChartFormatters } from './useChartFormatters';
 
 interface TimeseriesChartProps {
@@ -17,7 +17,7 @@ export const TimeseriesChart = ({ chartData, metric }: TimeseriesChartProps) => 
   return (
     <div className="h-[400px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart
+        <BarChart
           data={limitedChartData}
           margin={{ top: 20, right: 30, left: 40, bottom: 80 }}
         >
@@ -44,16 +44,13 @@ export const TimeseriesChart = ({ chartData, metric }: TimeseriesChartProps) => 
             labelFormatter={(label) => `Periode: ${label}`}
           />
           <Legend />
-          <Line 
-            type="monotone" 
+          <Bar 
             dataKey={metric} 
-            stroke={getChartColor()} 
-            strokeWidth={2}
-            dot={{ r: 4 }}
-            activeDot={{ r: 6 }}
+            fill={getChartColor()} 
             name={getYAxisLabel()}
+            radius={[4, 4, 0, 0]}
           />
-        </LineChart>
+        </BarChart>
       </ResponsiveContainer>
     </div>
   );
