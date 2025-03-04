@@ -1,10 +1,11 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { CategoryForm } from './forms/CategoryForm';
-import ProductForm from './forms/ProductForm';
+import { ProductForm } from './forms/ProductForm';
 import {
   Dialog,
   DialogContent,
@@ -16,8 +17,69 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/auth';
 import { useToast } from '@/hooks/use-toast';
-import { DataTable } from '@/components/ui/data-table';
-import { ProductColumn } from './columns';
+
+// Let's create a simple data table component since '@/components/ui/data-table' is missing
+const DataTable = ({ columns, data, isLoading }: { columns: any[]; data: any[]; isLoading: boolean }) => {
+  if (isLoading) {
+    return <div className="py-4">Loading...</div>;
+  }
+  
+  return (
+    <div className="border rounded-md">
+      <table className="w-full">
+        <thead>
+          <tr className="bg-slate-50">
+            {columns.map((column, index) => (
+              <th key={index} className="text-left p-2 font-medium">
+                {column.header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {data.length === 0 ? (
+            <tr>
+              <td colSpan={columns.length} className="text-center p-4">
+                No data available
+              </td>
+            </tr>
+          ) : (
+            data.map((row, rowIndex) => (
+              <tr key={rowIndex} className="border-t">
+                {columns.map((column, colIndex) => (
+                  <td key={colIndex} className="p-2">
+                    {column.cell ? column.cell(row) : row[column.accessorKey]}
+                  </td>
+                ))}
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+// Create the ProductColumn definition since './columns' is missing
+const ProductColumn = [
+  {
+    header: "Product Name",
+    accessorKey: "product_name",
+  },
+  {
+    header: "Price",
+    accessorKey: "retail_price",
+    cell: (row: any) => `Rp ${parseFloat(row.retail_price).toLocaleString('id-ID')}`,
+  },
+  {
+    header: "Stock",
+    accessorKey: "stock",
+  },
+  {
+    header: "Category",
+    accessorKey: "kategori_id",
+  },
+];
 
 const ProductManagement = () => {
   const { pelakuUsaha, cabang } = useAuth();
