@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/auth';
@@ -47,12 +46,10 @@ const History = () => {
       
       setIsLoading(true);
       try {
-        // Use string interpolation instead of template literals to avoid TypeScript parsing the query structure
-        const query = "transaksi_id, transaction_date, created_at, quantity, total_price, payment_status, payment_method, produk_id, cabang_id";
-        
+        // Use hard-coded string instead of template literal to avoid TypeScript analyzing it deeply
         const { data, error } = await supabase
           .from('transaksi')
-          .select(query)
+          .select('transaksi_id, transaction_date, created_at, quantity, total_price, payment_status, payment_method, produk_id, cabang_id')
           .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id)
           .order('created_at', { ascending: false });
 

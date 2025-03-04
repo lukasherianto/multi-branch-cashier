@@ -18,6 +18,7 @@ import Attendance from "./pages/Attendance";
 import HomeIndex from "./pages/Index";
 import PrintPreview from "./pages/PrintPreview";
 import OrderConfirmation from "./pages/OrderConfirmation";
+import ProductCategories from "./pages/ProductCategories";
 import "./App.css";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ function App() {
               <Route index element={<HomeIndex />} />
               <Route path="pos" element={<POS />} />
               <Route path="products" element={<Products />} />
+              <Route path="products/categories" element={<ProductCategories />} />
               <Route path="history" element={<History />} />
               <Route path="reports" element={<Reports />} />
               <Route path="settings" element={<Settings />} />
