@@ -26,15 +26,18 @@ export const ProfileForm = ({ userId, initialName, initialEmail }: ProfileFormPr
     setIsSaving(true);
 
     try {
-      // Update user metadata first
-      const { error: updateError } = await supabase.auth.updateUser({
-        data: {
-          name
-        },
-        // Only update email if it changed
-        email: email !== initialEmail ? email : undefined
-      });
-
+      // Update user metadata (name) and email if changed
+      const updateData: any = {
+        data: { name }
+      };
+      
+      // Only update email if it changed
+      if (email !== initialEmail) {
+        updateData.email = email;
+      }
+      
+      // Update user metadata
+      const { error: updateError } = await supabase.auth.updateUser(updateData);
       if (updateError) throw updateError;
 
       // Update password if provided
@@ -45,16 +48,18 @@ export const ProfileForm = ({ userId, initialName, initialEmail }: ProfileFormPr
         if (passwordError) throw passwordError;
       }
 
-      // Update the profile table if it exists
-      try {
-        await supabase
-          .from('profiles')
-          .update({
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', userId);
-      } catch (profileError) {
-        console.log("Note: profiles table update skipped or failed", profileError);
+      // Update the profiles table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          full_name: name,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', userId);
+
+      if (profileError) {
+        console.error("Error updating profile:", profileError);
+        // Continue even if profile table update fails
       }
 
       toast({
