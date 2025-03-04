@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/auth";
 
 import {
   Form,
@@ -16,6 +17,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useEffect } from "react";
 
 const formSchema = z.object({
   amount: z.string().min(1, "Jumlah harus diisi"),
@@ -25,6 +27,7 @@ const formSchema = z.object({
 
 const Kas = () => {
   const { toast } = useToast();
+  const { selectedBranchId } = useAuth();
 
   const cashInForm = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,57 +47,103 @@ const Kas = () => {
     },
   });
 
+  useEffect(() => {
+    if (!selectedBranchId) {
+      toast({
+        title: "Perhatian",
+        description: "Silakan pilih cabang terlebih dahulu",
+        variant: "destructive",
+      });
+    }
+  }, [selectedBranchId, toast]);
+
   const onCashInSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!selectedBranchId) {
+      toast({
+        title: "Error",
+        description: "Silakan pilih cabang terlebih dahulu",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
+      console.log("Submitting cash in:", values);
+      
       const { error } = await supabase.from("kas").insert({
         amount: parseFloat(values.amount),
         transaction_type: "masuk",
         description: values.description || null,
         transaction_date: new Date(values.transaction_date).toISOString(),
-        cabang_id: 1, // You should replace this with the actual branch ID
+        cabang_id: selectedBranchId,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error recording cash in:", error);
+        throw error;
+      }
 
       toast({
         title: "Sukses",
         description: "Uang masuk berhasil dicatat",
       });
 
-      cashInForm.reset();
+      cashInForm.reset({
+        amount: "",
+        description: "",
+        transaction_date: new Date().toISOString().split('T')[0],
+      });
     } catch (error) {
       console.error("Error recording cash in:", error);
       toast({
         title: "Error",
-        description: "Gagal mencatat uang masuk",
+        description: "Gagal mencatat uang masuk: " + (error.message || "Unknown error"),
         variant: "destructive",
       });
     }
   };
 
   const onCashOutSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!selectedBranchId) {
+      toast({
+        title: "Error",
+        description: "Silakan pilih cabang terlebih dahulu",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
+      console.log("Submitting cash out:", values);
+      
       const { error } = await supabase.from("kas").insert({
         amount: parseFloat(values.amount),
         transaction_type: "keluar",
         description: values.description || null,
         transaction_date: new Date(values.transaction_date).toISOString(),
-        cabang_id: 1, // You should replace this with the actual branch ID
+        cabang_id: selectedBranchId,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error recording cash out:", error);
+        throw error;
+      }
 
       toast({
         title: "Sukses",
         description: "Uang keluar berhasil dicatat",
       });
 
-      cashOutForm.reset();
+      cashOutForm.reset({
+        amount: "",
+        description: "",
+        transaction_date: new Date().toISOString().split('T')[0],
+      });
     } catch (error) {
       console.error("Error recording cash out:", error);
       toast({
         title: "Error",
-        description: "Gagal mencatat uang keluar",
+        description: "Gagal mencatat uang keluar: " + (error.message || "Unknown error"),
         variant: "destructive",
       });
     }
