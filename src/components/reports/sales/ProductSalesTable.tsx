@@ -8,6 +8,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
+import ProductFilterOptions from "./ProductFilterOptions";
+import { useState } from "react";
 
 interface ProductSale {
   name: string;
@@ -22,9 +24,18 @@ interface ProductSalesTableProps {
   title: string;
   limit?: number;
   showProfit?: boolean;
+  onProductPeriodChange?: (period: 'daily' | 'weekly' | 'monthly' | 'yearly') => void;
 }
 
-const ProductSalesTable = ({ productSales, title, limit, showProfit = false }: ProductSalesTableProps) => {
+const ProductSalesTable = ({ 
+  productSales, 
+  title, 
+  limit, 
+  showProfit = false,
+  onProductPeriodChange
+}: ProductSalesTableProps) => {
+  const [currentFilter, setCurrentFilter] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
+  
   // Handle both the new format (array of objects) and the old format (record of product name to quantity)
   let sortedProducts: any[] = [];
   
@@ -41,9 +52,24 @@ const ProductSalesTable = ({ productSales, title, limit, showProfit = false }: P
       .slice(0, limit);
   }
 
+  const handleFilterChange = (period: 'daily' | 'weekly' | 'monthly' | 'yearly') => {
+    setCurrentFilter(period);
+    if (onProductPeriodChange) {
+      onProductPeriodChange(period);
+    }
+  };
+
   return (
     <Card className="p-6">
-      <h3 className="text-xl font-semibold mb-4">{title}</h3>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+        <h3 className="text-xl font-semibold">{title}</h3>
+        {onProductPeriodChange && (
+          <ProductFilterOptions 
+            onFilterChange={handleFilterChange}
+            currentFilter={currentFilter}
+          />
+        )}
+      </div>
       <Table>
         <TableHeader>
           <TableRow>

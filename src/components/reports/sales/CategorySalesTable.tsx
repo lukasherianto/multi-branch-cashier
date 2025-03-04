@@ -8,13 +8,22 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
+import ProductFilterOptions from "./ProductFilterOptions";
+import { useState } from "react";
 
 interface CategorySalesTableProps {
   categorySales: Record<string, { revenue: number, cost: number, profit: number }> | Record<string, number>;
   showProfit?: boolean;
+  onCategoryPeriodChange?: (period: 'daily' | 'weekly' | 'monthly' | 'yearly') => void;
 }
 
-const CategorySalesTable = ({ categorySales, showProfit = false }: CategorySalesTableProps) => {
+const CategorySalesTable = ({ 
+  categorySales, 
+  showProfit = false,
+  onCategoryPeriodChange
+}: CategorySalesTableProps) => {
+  const [currentFilter, setCurrentFilter] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
+  
   const hasDetailedData = Object.values(categorySales).some(value => typeof value === 'object');
   
   let sortedCategories: any[];
@@ -29,9 +38,24 @@ const CategorySalesTable = ({ categorySales, showProfit = false }: CategorySales
       .sort(([, a], [, b]) => (b as number) - (a as number));
   }
 
+  const handleFilterChange = (period: 'daily' | 'weekly' | 'monthly' | 'yearly') => {
+    setCurrentFilter(period);
+    if (onCategoryPeriodChange) {
+      onCategoryPeriodChange(period);
+    }
+  };
+
   return (
     <Card className="p-6">
-      <h3 className="text-xl font-semibold mb-4">Penjualan per Kategori</h3>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+        <h3 className="text-xl font-semibold">Penjualan per Kategori</h3>
+        {onCategoryPeriodChange && (
+          <ProductFilterOptions 
+            onFilterChange={handleFilterChange}
+            currentFilter={currentFilter}
+          />
+        )}
+      </div>
       <Table>
         <TableHeader>
           <TableRow>

@@ -16,6 +16,9 @@ const SalesReport = () => {
     end: new Date(),
     period: 'monthly' as 'daily' | 'monthly' | 'yearly' | 'custom'
   });
+  
+  const [productPeriod, setProductPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
+  const [categoryPeriod, setCategoryPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
 
   const { data: salesData, isLoading } = useQuery({
     queryKey: ["sales-report", pelakuUsaha?.pelaku_usaha_id, dateRange.start, dateRange.end],
@@ -68,6 +71,14 @@ const SalesReport = () => {
     setDateRange(range);
   };
 
+  const handleProductPeriodChange = (period: 'daily' | 'weekly' | 'monthly' | 'yearly') => {
+    setProductPeriod(period);
+  };
+
+  const handleCategoryPeriodChange = (period: 'daily' | 'weekly' | 'monthly' | 'yearly') => {
+    setCategoryPeriod(period);
+  };
+
   const totalTransactions = salesData?.length || 0;
   const totalRevenue = salesData?.reduce((sum, sale) => sum + Number(sale.total_price), 0) || 0;
   
@@ -84,7 +95,40 @@ const SalesReport = () => {
     ? ((totalProfit / totalRevenue) * 100).toFixed(2) 
     : "0";
 
-  const productSales = salesData?.reduce((acc, sale) => {
+  // Get start date for period filtering
+  const getStartDateForPeriod = (period: 'daily' | 'weekly' | 'monthly' | 'yearly') => {
+    const today = new Date();
+    switch (period) {
+      case 'daily':
+        return new Date(today.setHours(0, 0, 0, 0));
+      case 'weekly':
+        const day = today.getDay();
+        return new Date(today.setDate(today.getDate() - day));
+      case 'monthly':
+        return new Date(today.getFullYear(), today.getMonth(), 1);
+      case 'yearly':
+        return new Date(today.getFullYear(), 0, 1);
+      default:
+        return new Date(today.getFullYear(), today.getMonth(), 1);
+    }
+  };
+
+  // Filter sales data by period
+  const filterSalesByPeriod = (data: any[] | null, period: 'daily' | 'weekly' | 'monthly' | 'yearly') => {
+    if (!data) return [];
+    
+    const startDate = getStartDateForPeriod(period);
+    
+    return data.filter(sale => {
+      const saleDate = new Date(sale.transaction_date);
+      return saleDate >= startDate;
+    });
+  };
+
+  // Filter product sales by selected period
+  const filteredProductSales = filterSalesByPeriod(salesData, productPeriod);
+  
+  const productSales = filteredProductSales.reduce((acc, sale) => {
     if (sale.produk && sale.produk.product_name) {
       const productName = sale.produk.product_name;
       const productId = sale.produk.produk_id;
@@ -108,7 +152,10 @@ const SalesReport = () => {
     return acc;
   }, {} as Record<string, { name: string, quantity: number, revenue: number, cost: number, profit: number }>) || {};
 
-  const categorySales = salesData?.reduce((acc, sale) => {
+  // Filter category sales by selected period
+  const filteredCategorySales = filterSalesByPeriod(salesData, categoryPeriod);
+  
+  const categorySales = filteredCategorySales.reduce((acc, sale) => {
     if (sale.produk?.kategori_produk?.kategori_name) {
       const category = sale.produk.kategori_produk.kategori_name;
       const costPrice = sale.produk.cost_price || 0;
@@ -164,6 +211,7 @@ const SalesReport = () => {
         title="Produk Terlaris"
         limit={10}
         showProfit={true}
+        onProductPeriodChange={handleProductPeriodChange}
       />
 
       <Separator className="my-6" />
@@ -171,6 +219,7 @@ const SalesReport = () => {
       <CategorySalesTable 
         categorySales={categorySales} 
         showProfit={true}
+        onCategoryPeriodChange={handleCategoryPeriodChange}
       />
     </div>
   );
