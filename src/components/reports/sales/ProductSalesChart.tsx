@@ -20,7 +20,7 @@ const ProductSalesChart = ({
 }: ProductSalesChartProps) => {
   const [metric, setMetric] = useState<MetricType>('revenue');
 
-  // Sort and limit data to top 10 based on selected metric
+  // Sort and limit data to top 20 based on selected metric
   const getChartData = () => {
     if (!productSales || productSales.length === 0) {
       return [];
@@ -39,8 +39,8 @@ const ProductSalesChart = ({
       sortedData = sortedData.sort((a: any, b: any) => b[metric] - a[metric]);
     }
 
-    // Take top 10 and format for chart
-    return sortedData.slice(0, 10).map(product => ({
+    // Take top 20 and format for chart
+    return sortedData.slice(0, 20).map(product => ({
       name: product.name,
       value: metric === 'margin' 
         ? product.revenue > 0 ? (product.profit / product.revenue) * 100 : 0
@@ -90,7 +90,9 @@ const ProductSalesChart = ({
 
   const COLORS = [
     '#3b82f6', '#10b981', '#6366f1', '#f59e0b', '#ef4444',
-    '#8b5cf6', '#ec4899', '#2dd4bf', '#fb7185', '#a855f7'
+    '#8b5cf6', '#ec4899', '#2dd4bf', '#fb7185', '#a855f7',
+    '#0ea5e9', '#22c55e', '#818cf8', '#fbbf24', '#f87171',
+    '#a78bfa', '#f472b6', '#34d399', '#f43f5e', '#d946ef'
   ];
 
   const isEmpty = !chartData || chartData.length === 0;
@@ -98,7 +100,7 @@ const ProductSalesChart = ({
   return (
     <Card className="p-6">
       <div className="flex flex-col sm:flex-row justify-between mb-6">
-        <h3 className="text-lg font-medium mb-4 sm:mb-0">Top 10 Produk</h3>
+        <h3 className="text-lg font-medium mb-4 sm:mb-0">Top 20 Produk</h3>
         <div className="flex flex-col sm:flex-row gap-2">
           <Select value={currentPeriod} onValueChange={(value: any) => onPeriodChange?.(value)}>
             <SelectTrigger className="w-[150px]">
@@ -131,7 +133,7 @@ const ProductSalesChart = ({
           <p>Tidak ada data untuk ditampilkan</p>
         </div>
       ) : (
-        <div className="h-[400px] w-full">
+        <div className="h-[450px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={chartData}

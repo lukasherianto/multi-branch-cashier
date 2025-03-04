@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/hooks/auth";
 import SalesSummary from "./sales/SalesSummary";
 import ProductSalesTable, { ProductSale } from "./sales/ProductSalesTable";
@@ -120,7 +119,7 @@ const SalesReport = () => {
       </div>
     );
   }
-
+  
   return (
     <div className="space-y-6">
       <DateRangeFilter onFilterChange={handleFilterChange} />
