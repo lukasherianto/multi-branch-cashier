@@ -16,20 +16,20 @@ export const useProductData = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log(`Fetching products for branch ID: ${branchId || 'all'}`);
-      console.log(`Current pelakuUsaha:`, pelakuUsaha);
+      console.log(`Mengambil data produk untuk cabang ID: ${branchId || 'semua'}`);
+      console.log(`Data pelakuUsaha saat ini:`, pelakuUsaha);
       
       if (!pelakuUsaha || !pelakuUsaha.pelaku_usaha_id) {
-        console.error('No pelaku usaha data available');
+        console.error('Data pelaku usaha tidak tersedia');
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Data profil usaha tidak tersedia. Silakan lengkapi profil usaha Anda.",
+          description: "Data profil usaha tidak tersedia. Silakan lengkapi profil usaha Anda terlebih dahulu.",
         });
         return [];
       }
 
-      // Start building the query
+      // Mulai membangun query
       let query = supabase
         .from('produk')
         .select(`
@@ -49,17 +49,17 @@ export const useProductData = () => {
         `)
         .eq('pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id);
 
-      // If a branch ID is specified, filter products by that branch
+      // Jika ID cabang ditentukan, filter produk berdasarkan cabang tersebut
       if (branchId) {
-        console.log(`Filtering by branch ID: ${branchId}`);
+        console.log(`Memfilter berdasarkan cabang ID: ${branchId}`);
         query = query.eq('cabang_id', branchId);
       }
 
-      console.log(`Executing Supabase query...`);
+      console.log(`Menjalankan query Supabase...`);
       const { data: productsData, error } = await query;
 
       if (error) {
-        console.error('Error fetching products:', error);
+        console.error('Error saat mengambil data produk:', error);
         toast({
           variant: "destructive",
           title: "Error",
@@ -68,7 +68,7 @@ export const useProductData = () => {
         throw error;
       }
 
-      console.log(`Fetched ${productsData?.length || 0} products:`, productsData);
+      console.log(`Berhasil mengambil ${productsData?.length || 0} produk:`, productsData);
 
       if (productsData) {
         const mappedProducts = productsData.map(product => ({
@@ -86,18 +86,18 @@ export const useProductData = () => {
           cabang_id: product.cabang_id
         }));
         
-        console.log(`Mapped ${mappedProducts.length} products`);
+        console.log(`Berhasil memetakan ${mappedProducts.length} produk`);
         return mappedProducts;
       }
       
       return [];
     } catch (error) {
-      console.error('Error fetching products:', error);
-      setError(error instanceof Error ? error : new Error('Unknown error fetching products'));
+      console.error('Error saat mengambil data produk:', error);
+      setError(error instanceof Error ? error : new Error('Error tidak diketahui saat mengambil data produk'));
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Gagal mengambil data produk",
+        description: "Gagal mengambil data produk. Silakan coba lagi.",
       });
       return [];
     } finally {

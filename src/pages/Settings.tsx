@@ -52,7 +52,9 @@ const Settings = () => {
 
       console.log("Authenticated user:", user);
       
+      // Set user ID, name, and email from auth data
       setUserId(user.id);
+      // Try to get name from metadata or fallback to email username part
       setName(user.user_metadata?.name || user.email?.split('@')[0] || '');
       setEmail(user.email || '');
       
