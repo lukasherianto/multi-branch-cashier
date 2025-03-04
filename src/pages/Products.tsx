@@ -4,11 +4,12 @@ import { useToast } from "@/hooks/use-toast";
 import { ProductSearch } from "@/components/pos/ProductSearch";
 import { ProductList } from "@/components/pos/ProductList";
 import { Button } from "@/components/ui/button";
-import { Plus, RefreshCw } from "lucide-react";
+import { Plus, RefreshCw, AlertCircle } from "lucide-react";
 import { ProductFormModal } from "@/components/pos/forms/ProductFormModal";
 import { useAuth } from "@/hooks/auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useProducts } from "@/hooks/products";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Products = () => {
   const { toast } = useToast();
@@ -19,10 +20,18 @@ const Products = () => {
     handleSearch, 
     fetchProducts,
     loading,
-    error
+    error,
+    initialLoadComplete
   } = useProducts();
 
-  // Refresh data products when the page loads or selectedCabangId changes
+  useEffect(() => {
+    // Load products on component mount
+    if (pelakuUsaha && !initialLoadComplete) {
+      refreshProducts();
+    }
+  }, [pelakuUsaha]);
+
+  // Refresh data products
   const refreshProducts = () => {
     console.log("Refreshing products for branch:", selectedCabangId);
     fetchProducts(selectedCabangId).then(products => {
@@ -30,6 +39,13 @@ const Products = () => {
       toast({
         title: "Data diperbarui",
         description: `${products.length} produk berhasil dimuat`,
+      });
+    }).catch(err => {
+      console.error("Error refreshing products:", err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Gagal memperbarui data produk",
       });
     });
   };
@@ -43,7 +59,13 @@ const Products = () => {
     return (
       <div className="text-center py-8 space-y-4">
         <h2 className="text-2xl font-bold text-gray-800">Produk</h2>
-        <p className="text-gray-500">Silakan lengkapi profil usaha Anda terlebih dahulu</p>
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Perhatian</AlertTitle>
+          <AlertDescription>
+            Silakan lengkapi profil usaha Anda terlebih dahulu di halaman Pengaturan sebelum dapat mengelola produk.
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
@@ -97,20 +119,24 @@ const Products = () => {
       )}
 
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-md text-red-700 mb-4">
-          <p className="font-semibold">Error saat memuat data: {error.message}</p>
-          <p className="mt-2">Silakan coba refresh halaman atau periksa koneksi internet Anda.</p>
-        </div>
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            <p>Error saat memuat data: {error.message}</p>
+            <p className="mt-2">Silakan coba refresh halaman atau periksa koneksi internet Anda.</p>
+          </AlertDescription>
+        </Alert>
       )}
 
-      {!loading && !error && filteredProducts.length === 0 && (
+      {!loading && !error && filteredProducts && filteredProducts.length === 0 && (
         <div className="p-8 text-center bg-gray-50 rounded-md border border-gray-200">
           <p className="text-gray-500">Tidak ada produk yang ditemukan.</p>
           <p className="text-gray-500 mt-2">Tambahkan produk baru dengan mengklik tombol "Tambah Produk"</p>
         </div>
       )}
 
-      {!loading && !error && filteredProducts.length > 0 && (
+      {!loading && !error && filteredProducts && filteredProducts.length > 0 && (
         <ProductList
           products={filteredProducts}
           onAddToCart={() => {}}

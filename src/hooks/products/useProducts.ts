@@ -10,18 +10,21 @@ export const useProducts = () => {
   const { filteredProducts, setFilteredProducts, handleSearch } = useProductSearch(products);
   const [currentBranchId, setCurrentBranchId] = useState<number | null>(null);
   const { selectedCabangId, pelakuUsaha } = useAuth();
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
   const loadProducts = async (branchId?: number | null) => {
     console.log("loadProducts called with branchId:", branchId);
     setCurrentBranchId(branchId || null);
     const fetchedProducts = await fetchProducts(branchId);
+    console.log("Fetched products:", fetchedProducts);
     setProducts(fetchedProducts);
     setFilteredProducts(fetchedProducts);
     console.log("Loaded products:", fetchedProducts.length);
+    setInitialLoadComplete(true);
     return fetchedProducts;
   };
 
-  // Memuat produk ketika komponen dimount atau selectedCabangId berubah
+  // Load products when component mounts or selectedCabangId changes
   useEffect(() => {
     if (pelakuUsaha) {
       console.log("Loading products based on selectedCabangId:", selectedCabangId);
@@ -29,9 +32,12 @@ export const useProducts = () => {
     }
   }, [selectedCabangId, pelakuUsaha]);
 
-  // Sync filteredProducts dengan products ketika products berubah
+  // Sync filteredProducts with products when products change
   useEffect(() => {
-    setFilteredProducts(products);
+    if (products.length > 0) {
+      console.log("Updating filtered products with:", products.length, "products");
+      setFilteredProducts(products);
+    }
   }, [products, setFilteredProducts]);
 
   return { 
@@ -42,6 +48,7 @@ export const useProducts = () => {
     loading,
     error,
     currentBranchId,
-    setFilteredProducts
+    setFilteredProducts,
+    initialLoadComplete
   };
 };

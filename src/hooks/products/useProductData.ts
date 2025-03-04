@@ -21,6 +21,11 @@ export const useProductData = () => {
       
       if (!pelakuUsaha || !pelakuUsaha.pelaku_usaha_id) {
         console.error('No pelaku usaha data available');
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Data profil usaha tidak tersedia. Silakan lengkapi profil usaha Anda.",
+        });
         return [];
       }
 
@@ -46,13 +51,20 @@ export const useProductData = () => {
 
       // If a branch ID is specified, filter products by that branch
       if (branchId) {
+        console.log(`Filtering by branch ID: ${branchId}`);
         query = query.eq('cabang_id', branchId);
       }
 
+      console.log(`Executing Supabase query...`);
       const { data: productsData, error } = await query;
 
       if (error) {
         console.error('Error fetching products:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: `Gagal mengambil data produk: ${error.message}`,
+        });
         throw error;
       }
 
