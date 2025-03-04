@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 }
 
 function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, userRole, isLoading: authLoading } = useAuth();
   const { hasAccess, isLoading: accessLoading } = useMenuAccess();
   const location = useLocation();
   const isLoading = authLoading || accessLoading;
@@ -28,7 +28,12 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // Check if the user has access to the current path
+  // Business owners (pelaku_usaha) always have access to all routes
+  if (userRole === 'pelaku_usaha') {
+    return <>{children}</>;
+  }
+
+  // For other roles, check if the user has access to the current path
   if (!hasAccess(location.pathname)) {
     // Redirect to the dashboard if they don't have access
     return <Navigate to="/" replace />;

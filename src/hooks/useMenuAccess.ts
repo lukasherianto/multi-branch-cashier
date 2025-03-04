@@ -60,7 +60,30 @@ export const useMenuAccess = () => {
     fetchUserStatus();
   }, [userRole]);
 
+  // List of all available menu paths in the application
+  const allMenuPaths = [
+    '/',                    // Dashboard
+    '/products',            // Product List
+    '/products/categories', // Product Categories
+    '/stock-transfer',      // Stock Transfer
+    '/pos',                 // POS
+    '/history',             // Transaction History
+    '/returns',             // Returns
+    '/kas',                 // Cash
+    '/kas/purchases',       // Purchases
+    '/reports',             // Reports
+    '/branches',            // Branches
+    '/attendance',          // Attendance
+    '/members',             // Members
+    '/settings',            // Settings
+  ];
+
   const allowedMenuPaths = useMemo(() => {
+    // For business owners (pelaku_usaha), grant access to all menus
+    if (userRole === 'pelaku_usaha') {
+      return allMenuPaths;
+    }
+
     // Default paths for any authenticated user
     const defaultPaths = ['/'];
 
@@ -71,22 +94,7 @@ export const useMenuAccess = () => {
 
     // For users with full access
     if (userPermissions.includes('Akses penuh') || userPermissions.includes('Full access')) {
-      return [
-        '/',                    // Dashboard
-        '/products',            // Product List
-        '/products/categories', // Product Categories
-        '/stock-transfer',      // Stock Transfer
-        '/pos',                 // POS
-        '/history',             // Transaction History
-        '/returns',             // Returns
-        '/kas',                 // Cash
-        '/kas/purchases',       // Purchases
-        '/reports',             // Reports
-        '/branches',            // Branches
-        '/attendance',          // Attendance
-        '/members',             // Members
-        '/settings',            // Settings
-      ];
+      return allMenuPaths;
     }
 
     // For admin (access to all except POS)
@@ -129,11 +137,11 @@ export const useMenuAccess = () => {
 
     // If no specific permissions match, return just the dashboard
     return defaultPaths;
-  }, [isLoading, userPermissions]);
+  }, [isLoading, userPermissions, userRole, allMenuPaths]);
 
   const hasAccess = (path: string) => {
-    // Admin and business owners can access everything
-    if (userRole === 'pelaku_usaha' || userRole === 'admin') {
+    // Business owners (pelaku_usaha) can access everything
+    if (userRole === 'pelaku_usaha') {
       return true;
     }
 
