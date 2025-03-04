@@ -8,8 +8,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2 } from 'lucide-react';
 
+interface TransactionForTable {
+  transaksi_id: number;
+  transaction_date: string;
+  produk: {
+    produk_id: number;
+    product_name: string;
+  };
+  quantity: number;
+  total_price: number;
+  payment_status: number;
+  cabang: {
+    branch_name: string;
+  };
+}
+
 const History = () => {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<TransactionForTable[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { pelakuUsaha } = useAuth();
 
@@ -30,16 +45,20 @@ const History = () => {
           return;
         }
 
-        // Transform data to match Transaction interface
-        const transformedData: Transaction[] = (data || []).map((item: any) => ({
-          id: item.transaksi_id,
+        // Transform data to match TransactionForTable interface
+        const transformedData: TransactionForTable[] = (data || []).map((item: any) => ({
           transaksi_id: item.transaksi_id,
-          transaction_date: item.transaction_date,
-          produk: item.produk,
-          quantity: item.quantity,
-          total_price: item.total_price,
-          payment_status: item.payment_status,
-          cabang: item.cabang,
+          transaction_date: item.transaction_date || item.created_at,
+          produk: {
+            produk_id: item.produk?.produk_id || 0,
+            product_name: item.produk?.product_name || 'Unknown'
+          },
+          quantity: item.quantity || 0,
+          total_price: item.total_price || 0,
+          payment_status: item.payment_status || 0,
+          cabang: {
+            branch_name: item.cabang?.branch_name || ''
+          },
           payment_method: item.payment_method
         }));
 
@@ -53,22 +72,6 @@ const History = () => {
 
     fetchTransactions();
   }, [pelakuUsaha?.pelaku_usaha_id]);
-
-  // Helper function to convert transaction data to the expected format
-  const formatTransactionsForTable = (data: Transaction[]): any[] => {
-    return data.map(transaction => ({
-      transaksi_id: transaction.transaksi_id,
-      transaction_date: transaction.transaction_date || transaction.created_at || '',
-      produk: transaction.produk || { 
-        produk_id: transaction.produk_id || 0, 
-        product_name: transaction.customer_name || 'Unknown' 
-      },
-      quantity: transaction.quantity || 0,
-      total_price: transaction.total_price || transaction.total_amount || 0,
-      payment_status: transaction.payment_status || (transaction.status === 'completed' ? 1 : 0),
-      cabang: transaction.cabang || { branch_name: '' }
-    }));
-  };
 
   return (
     <div className="container mx-auto p-4">
@@ -92,7 +95,7 @@ const History = () => {
                 </div>
               ) : (
                 <TransactionTable 
-                  transactions={formatTransactionsForTable(transactions)} 
+                  transactions={transactions} 
                   onUpdatePaymentStatus={() => {}}
                   onPayDebt={() => {}}
                   onPrint={() => {}}
@@ -109,9 +112,7 @@ const History = () => {
                 </div>
               ) : (
                 <TransactionTable 
-                  transactions={formatTransactionsForTable(transactions.filter(t => 
-                    t.payment_status === 1 || t.status === 'completed'
-                  ))}
+                  transactions={transactions.filter(t => t.payment_status === 1)} 
                   onUpdatePaymentStatus={() => {}}
                   onPayDebt={() => {}}
                   onPrint={() => {}}
@@ -128,9 +129,7 @@ const History = () => {
                 </div>
               ) : (
                 <TransactionTable 
-                  transactions={formatTransactionsForTable(transactions.filter(t => 
-                    t.payment_status === 0 || t.status === 'pending'
-                  ))}
+                  transactions={transactions.filter(t => t.payment_status === 0)} 
                   onUpdatePaymentStatus={() => {}}
                   onPayDebt={() => {}}
                   onPrint={() => {}}
@@ -147,9 +146,7 @@ const History = () => {
                 </div>
               ) : (
                 <TransactionTable 
-                  transactions={formatTransactionsForTable(transactions.filter(t => 
-                    t.payment_status === 2 || t.status === 'cancelled'
-                  ))}
+                  transactions={transactions.filter(t => t.payment_status === 2)} 
                   onUpdatePaymentStatus={() => {}}
                   onPayDebt={() => {}}
                   onPrint={() => {}}
