@@ -19,7 +19,7 @@ export const TimeseriesControls = ({
 }: TimeseriesControlsProps) => {
   return (
     <div className="flex flex-col sm:flex-row justify-between mb-6">
-      <h3 className="text-lg font-medium mb-4 sm:mb-0">Penjualan {periodLabel}</h3>
+      <h3 className="text-lg font-medium mb-4 sm:mb-0">Penjualan {periodLabel} (10 Periode Terakhir)</h3>
       <div className="flex flex-col sm:flex-row gap-2">
         <Select value={currentPeriod} onValueChange={(value: any) => onPeriodChange?.(value)}>
           <SelectTrigger className="w-[150px]">

@@ -10,12 +10,15 @@ interface TimeseriesChartProps {
 
 export const TimeseriesChart = ({ chartData, metric }: TimeseriesChartProps) => {
   const { getYAxisLabel, formatTooltipValue, formatYAxis, getChartColor } = useChartFormatters(metric);
+  
+  // Limit chart data to the last 10 periods
+  const limitedChartData = chartData.slice(-10);
 
   return (
     <div className="h-[400px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
-          data={chartData}
+          data={limitedChartData}
           margin={{ top: 20, right: 30, left: 40, bottom: 80 }}
         >
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
