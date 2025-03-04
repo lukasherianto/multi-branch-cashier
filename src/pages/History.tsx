@@ -73,6 +73,7 @@ const History = () => {
             selectedBranchId={selectedBranchId}
             onBranchChange={setSelectedBranchId}
             branches={branches}
+            transactions={transactions}
           />
           <HistoryTabs
             transactions={transactions}
