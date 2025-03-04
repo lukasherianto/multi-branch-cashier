@@ -60,8 +60,13 @@ export const useReportData = (pelakuUsaha: PelakuUsaha | null, dateRange: DateRa
           query = query.lte('transaction_date', endDate);
         }
 
+        // Convert pelaku_usaha_id to number to fix type error
+        const pelakuUsahaId = typeof pelakuUsaha.pelaku_usaha_id === 'string' 
+          ? parseInt(pelakuUsaha.pelaku_usaha_id, 10)
+          : pelakuUsaha.pelaku_usaha_id;
+          
         // Filter by pelaku_usaha_id by joining with the cabang table
-        query = query.eq('cabang.pelaku_usaha_id', pelakuUsaha.pelaku_usaha_id);
+        query = query.eq('cabang.pelaku_usaha_id', pelakuUsahaId);
 
         const { data, error } = await query.order('transaction_date', { ascending: false });
 

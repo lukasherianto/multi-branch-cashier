@@ -1,4 +1,3 @@
-
 // Get start date for period filtering
 export const getStartDateForPeriod = (period: 'daily' | 'weekly' | 'monthly' | 'yearly') => {
   const today = new Date();
@@ -88,7 +87,7 @@ export const calculateSalesStats = (salesData: any[] | null) => {
   };
 };
 
-// Process product sales data
+// Process product sales data with proper type assertions
 export const processProductSales = (filteredSales: any[]): ProductSale[] => {
   if (!filteredSales || filteredSales.length === 0) {
     console.log("No filtered sales data to process for products");
@@ -128,9 +127,8 @@ export const processProductSales = (filteredSales: any[]): ProductSale[] => {
     return acc;
   }, {});
 
-  const result = Object.values(productSalesMap);
-  console.log(`Processed ${result.length} unique products from sales data`);
-  return result;
+  // Explicitly type and return as ProductSale[]
+  return Object.values(productSalesMap) as ProductSale[];
 };
 
 // Process category sales data
