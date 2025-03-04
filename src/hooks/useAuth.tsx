@@ -8,6 +8,7 @@ import { toast } from "sonner";
 interface AuthContextType {
   user: User | null;
   userRole: UserRole | null;
+  userStatusId: number | null;
   pelakuUsaha: any;
   cabang: any;
   cabangList: any[];
@@ -21,6 +22,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [userStatusId, setUserStatusId] = useState<number | null>(null);
   const [pelakuUsaha, setPelakuUsaha] = useState<any>(null);
   const [cabangList, setCabangList] = useState<any[]>([]);
   const [cabang, setCabang] = useState<any>(null);
@@ -57,9 +59,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (role) {
           setUserRole(role as UserRole);
         }
+
+        // Get user status_id from profiles table
+        if (session?.user) {
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('status_id')
+            .eq('id', session.user.id)
+            .single();
+
+          if (!profileError && profileData) {
+            setUserStatusId(profileData.status_id);
+            console.log("User status_id loaded:", profileData.status_id);
+          } else {
+            console.error("Error loading user status_id:", profileError);
+            setUserStatusId(null);
+          }
+        }
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         setUserRole(null);
+        setUserStatusId(null);
         setPelakuUsaha(null);
         setCabang(null);
         setCabangList([]);
@@ -151,6 +171,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     <AuthContext.Provider value={{ 
       user, 
       userRole,
+      userStatusId,
       pelakuUsaha, 
       cabang,
       cabangList,

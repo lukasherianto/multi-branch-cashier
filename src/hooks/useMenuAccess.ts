@@ -4,57 +4,74 @@ import { useAuth } from "./useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useMenuAccess = () => {
-  const { user, userRole } = useAuth();
+  const { user, userRole, userStatusId } = useAuth();
   const [userPermissions, setUserPermissions] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // For debugging
-  console.log('useMenuAccess hook initialized', { userRole });
+  console.log('useMenuAccess hook initialized', { userRole, userStatusId });
 
   useEffect(() => {
     const fetchUserStatus = async () => {
-      if (!userRole) {
+      if (!user) {
         setUserPermissions(null);
         setIsLoading(false);
         return;
       }
 
       // If user is a business owner, we don't need to fetch permissions
-      if (userRole === 'pelaku_usaha') {
+      if (userRole === 'pelaku_usaha' || userStatusId === 1) {
         setUserPermissions('Akses penuh');
         setIsLoading(false);
         return;
       }
 
       try {
-        // Convert userRole to status_id based on known values
-        let status_id: number | null = null;
-        
-        switch (userRole) {
-          case 'admin':
-            status_id = 2;
-            break;
-          case 'kasir':
-            status_id = 3;
-            break;
-          case 'pelayan':
-            status_id = 4;
-            break;
-          default:
-            status_id = null;
-        }
-
-        if (status_id) {
+        // Use userStatusId directly if available
+        if (userStatusId) {
           const { data, error } = await supabase
             .from('user_status')
             .select('wewenang')
-            .eq('status_id', status_id)
+            .eq('status_id', userStatusId)
             .single();
 
           if (error) {
             console.error('Error fetching user status:', error);
           } else if (data) {
             setUserPermissions(data.wewenang);
+            console.log('User permissions loaded:', data.wewenang);
+          }
+        } else {
+          // Fallback to role-based lookup if statusId not available
+          let status_id: number | null = null;
+          
+          switch (userRole) {
+            case 'admin':
+              status_id = 2;
+              break;
+            case 'kasir':
+              status_id = 3;
+              break;
+            case 'pelayan':
+              status_id = 4;
+              break;
+            default:
+              status_id = null;
+          }
+
+          if (status_id) {
+            const { data, error } = await supabase
+              .from('user_status')
+              .select('wewenang')
+              .eq('status_id', status_id)
+              .single();
+
+            if (error) {
+              console.error('Error fetching user status:', error);
+            } else if (data) {
+              setUserPermissions(data.wewenang);
+              console.log('User permissions loaded (fallback):', data.wewenang);
+            }
           }
         }
       } catch (error) {
@@ -65,7 +82,7 @@ export const useMenuAccess = () => {
     };
 
     fetchUserStatus();
-  }, [userRole]);
+  }, [user, userRole, userStatusId]);
 
   // List of all available menu paths in the application
   const allMenuPaths = [
@@ -87,7 +104,7 @@ export const useMenuAccess = () => {
 
   const allowedMenuPaths = useMemo(() => {
     // For business owners (pelaku_usaha), grant access to all menus
-    if (userRole === 'pelaku_usaha') {
+    if (userRole === 'pelaku_usaha' || userStatusId === 1) {
       return allMenuPaths;
     }
 
@@ -144,11 +161,11 @@ export const useMenuAccess = () => {
 
     // If no specific permissions match, return just the dashboard
     return defaultPaths;
-  }, [isLoading, userPermissions, userRole, allMenuPaths]);
+  }, [isLoading, userPermissions, userRole, userStatusId, allMenuPaths]);
 
   const hasAccess = (path: string) => {
     // Business owners (pelaku_usaha) can access everything
-    if (userRole === 'pelaku_usaha') {
+    if (userRole === 'pelaku_usaha' || userStatusId === 1) {
       console.log('Business owner has access to:', path);
       return true;
     }
@@ -158,7 +175,7 @@ export const useMenuAccess = () => {
            allowedMenuPaths.some(allowedPath => 
              path.startsWith(allowedPath + '/'));
     
-    console.log(`User with role ${userRole} access to ${path}:`, hasPathAccess);
+    console.log(`User with role ${userRole} (status_id: ${userStatusId}) access to ${path}:`, hasPathAccess);
     return hasPathAccess;
   };
 

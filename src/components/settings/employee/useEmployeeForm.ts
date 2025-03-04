@@ -51,26 +51,24 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
         return;
       }
 
-      // Map business_role to the appropriate value based on user_status
-      let mappedBusinessRole = data.business_role;
+      // Map business_role to the appropriate user_status ID
+      let statusId: number;
       
-      // This ensures compatibility with the user_status table
       switch (data.business_role) {
         case 'pelaku_usaha':
-          // Status ID 1 in user_status table
+          statusId = 1;
           break;
         case 'admin':
-          // Status ID 2 in user_status table
+          statusId = 2;
           break;
         case 'kasir':
-          // Status ID 3 in user_status table
+          statusId = 3;
           break;
         case 'pelayan':
-          // Status ID 4 in user_status table
+          statusId = 4;
           break;
         default:
-          // Default to 'kasir' if unknown role
-          mappedBusinessRole = 'kasir';
+          statusId = 3; // Default to 'kasir' if unknown role
       }
 
       // Create Supabase auth account for employee
@@ -82,7 +80,8 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
             full_name: data.name,
             whatsapp_number: data.whatsapp_contact,
             is_employee: true,
-            business_role: mappedBusinessRole
+            business_role: data.business_role,
+            status_id: statusId
           }
         }
       });
@@ -94,6 +93,16 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
 
       if (!authData.user) {
         throw new Error("Failed to create employee account");
+      }
+
+      // Update the status_id in profiles table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ status_id: statusId })
+        .eq('id', authData.user.id);
+
+      if (profileError) {
+        console.error("Error updating profile status_id:", profileError);
       }
 
       // Verify if the selected branch exists (if one was selected)
@@ -122,7 +131,7 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
           email: data.email,
           whatsapp_contact: data.whatsapp_contact,
           role: data.role,
-          business_role: mappedBusinessRole,
+          business_role: data.business_role,
           cabang_id: data.cabang_id === "0" ? null : parseInt(data.cabang_id),
           pelaku_usaha_id: pelakuUsaha.pelaku_usaha_id,
           auth_id: authData.user.id,

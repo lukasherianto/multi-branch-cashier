@@ -550,6 +550,7 @@ export type Database = {
           full_name: string
           id: string
           is_employee: boolean | null
+          status_id: number | null
           updated_at: string
           whatsapp_number: string | null
         }
@@ -559,6 +560,7 @@ export type Database = {
           full_name: string
           id: string
           is_employee?: boolean | null
+          status_id?: number | null
           updated_at?: string
           whatsapp_number?: string | null
         }
@@ -568,10 +570,19 @@ export type Database = {
           full_name?: string
           id?: string
           is_employee?: boolean | null
+          status_id?: number | null
           updated_at?: string
           whatsapp_number?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_status_id_fkey"
+            columns: ["status_id"]
+            isOneToOne: false
+            referencedRelation: "user_status"
+            referencedColumns: ["status_id"]
+          },
+        ]
       }
       retur: {
         Row: {

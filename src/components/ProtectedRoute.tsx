@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 }
 
 function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { user, userRole, isLoading: authLoading } = useAuth();
+  const { user, userRole, userStatusId, isLoading: authLoading } = useAuth();
   const { hasAccess, isLoading: accessLoading } = useMenuAccess();
   const location = useLocation();
   const isLoading = authLoading || accessLoading;
@@ -18,6 +18,7 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
   // Add debugging
   console.log('ProtectedRoute checking access:', { 
     userRole, 
+    userStatusId,
     path: location.pathname,
     isLoading
   });
@@ -37,7 +38,7 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   // Business owners (pelaku_usaha) always have access to all routes
-  if (userRole === 'pelaku_usaha') {
+  if (userRole === 'pelaku_usaha' || userStatusId === 1) {
     console.log('Business owner, granting access');
     return <>{children}</>;
   }
