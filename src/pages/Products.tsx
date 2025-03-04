@@ -1,11 +1,10 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { ProductSearch } from "@/components/pos/ProductSearch";
 import { ProductList } from "@/components/pos/ProductList";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 import { ProductFormModal } from "@/components/pos/forms/ProductFormModal";
 import { useAuth } from "@/hooks/auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,27 +13,50 @@ import { useProducts } from "@/hooks/products";
 const Products = () => {
   const { toast } = useToast();
   const [showAddProduct, setShowAddProduct] = useState(false);
-  const { cabangList, selectedCabangId, setSelectedCabangId } = useAuth();
+  const { cabangList, selectedCabangId, setSelectedCabangId, pelakuUsaha } = useAuth();
   const { 
     filteredProducts, 
     handleSearch, 
-    fetchProducts 
+    fetchProducts,
+    loading,
+    error
   } = useProducts();
 
-  useEffect(() => {
-    fetchProducts(selectedCabangId);
-  }, [selectedCabangId]);
+  // Refresh data products when the page loads or selectedCabangId changes
+  const refreshProducts = () => {
+    console.log("Refreshing products for branch:", selectedCabangId);
+    fetchProducts(selectedCabangId).then(products => {
+      console.log(`Refreshed ${products.length} products`);
+      toast({
+        title: "Data diperbarui",
+        description: `${products.length} produk berhasil dimuat`,
+      });
+    });
+  };
 
   // Sort branches so the headquarters (lowest ID) appears first
   const sortedBranches = [...cabangList].sort((a, b) => a.cabang_id - b.cabang_id);
   // The first branch (after sorting) is considered the headquarters
   const headquartersId = sortedBranches.length > 0 ? sortedBranches[0].cabang_id : null;
 
+  if (!pelakuUsaha) {
+    return (
+      <div className="text-center py-8 space-y-4">
+        <h2 className="text-2xl font-bold text-gray-800">Produk</h2>
+        <p className="text-gray-500">Silakan lengkapi profil usaha Anda terlebih dahulu</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800">Produk</h2>
         <div className="flex gap-4">
+          <Button variant="outline" onClick={refreshProducts}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
           {cabangList.length > 1 && (
             <Select
               value={selectedCabangId ? selectedCabangId.toString() : "0"}
@@ -67,14 +89,37 @@ const Products = () => {
 
       <ProductSearch onSearch={handleSearch} />
 
-      <ProductList
-        products={filteredProducts}
-        onAddToCart={() => {}}
-        isRegisteredCustomer={false}
-        memberType="none"
-        showStockAction={true}
-        onRefresh={() => fetchProducts(selectedCabangId)}
-      />
+      {loading && (
+        <div className="p-8 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Memuat data produk...</p>
+        </div>
+      )}
+
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-md text-red-700 mb-4">
+          <p className="font-semibold">Error saat memuat data: {error.message}</p>
+          <p className="mt-2">Silakan coba refresh halaman atau periksa koneksi internet Anda.</p>
+        </div>
+      )}
+
+      {!loading && !error && filteredProducts.length === 0 && (
+        <div className="p-8 text-center bg-gray-50 rounded-md border border-gray-200">
+          <p className="text-gray-500">Tidak ada produk yang ditemukan.</p>
+          <p className="text-gray-500 mt-2">Tambahkan produk baru dengan mengklik tombol "Tambah Produk"</p>
+        </div>
+      )}
+
+      {!loading && !error && filteredProducts.length > 0 && (
+        <ProductList
+          products={filteredProducts}
+          onAddToCart={() => {}}
+          isRegisteredCustomer={false}
+          memberType="none"
+          showStockAction={true}
+          onRefresh={() => fetchProducts(selectedCabangId)}
+        />
+      )}
 
       <ProductFormModal 
         open={showAddProduct} 
