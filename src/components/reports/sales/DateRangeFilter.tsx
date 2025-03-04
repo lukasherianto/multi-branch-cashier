@@ -12,16 +12,16 @@ interface DateRangeFilterProps {
   onFilterChange: (range: { 
     start: Date | undefined; 
     end: Date | undefined; 
-    period: 'daily' | 'monthly' | 'yearly' | 'custom';
+    period: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom';
   }) => void;
 }
 
 const DateRangeFilter: React.FC<DateRangeFilterProps> = ({ onFilterChange }) => {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
-  const [period, setPeriod] = useState<'daily' | 'monthly' | 'yearly' | 'custom'>('monthly');
+  const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom'>('monthly');
 
-  const handlePeriodChange = (value: 'daily' | 'monthly' | 'yearly' | 'custom') => {
+  const handlePeriodChange = (value: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom') => {
     setPeriod(value);
     
     const today = new Date();
@@ -33,6 +33,11 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({ onFilterChange }) => 
         // For daily, set both start and end to today
         start = new Date(today.setHours(0, 0, 0, 0));
         end = new Date(new Date().setHours(23, 59, 59, 999));
+        break;
+      case 'weekly':
+        // Get the first day of the current week (Sunday)
+        const day = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+        start = new Date(new Date().setDate(today.getDate() - day));
         break;
       case 'monthly':
         start = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -78,6 +83,7 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({ onFilterChange }) => 
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="daily">Harian</SelectItem>
+            <SelectItem value="weekly">Mingguan</SelectItem>
             <SelectItem value="monthly">Bulanan</SelectItem>
             <SelectItem value="yearly">Tahunan</SelectItem>
             <SelectItem value="custom">Kustom</SelectItem>

@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/auth";
@@ -13,7 +12,7 @@ const FinancialReport = () => {
   const [dateRange, setDateRange] = useState({
     start: new Date(new Date().getFullYear(), new Date().getMonth(), 1), // First day of current month
     end: new Date(),
-    period: 'monthly' as 'daily' | 'monthly' | 'yearly' | 'custom'
+    period: 'monthly' as 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom'
   });
 
   const { data: transactions } = useQuery({
@@ -39,6 +38,16 @@ const FinancialReport = () => {
         const today = new Date();
         startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0).toISOString();
         endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999).toISOString();
+      } else if (dateRange.period === 'weekly') {
+        // For weekly period, get data for the current week (Sunday to Saturday)
+        const today = new Date();
+        const day = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+        const firstDayOfWeek = new Date(today);
+        firstDayOfWeek.setDate(today.getDate() - day);
+        firstDayOfWeek.setHours(0, 0, 0, 0);
+        
+        startDate = firstDayOfWeek.toISOString();
+        endDate = new Date(new Date().setHours(23, 59, 59, 999)).toISOString();
       } else {
         startDate = dateRange.start ? dateRange.start.toISOString() : undefined;
         endDate = dateRange.end 
@@ -88,7 +97,7 @@ const FinancialReport = () => {
   const handleDateRangeChange = (range: { 
     start: Date | undefined; 
     end: Date | undefined; 
-    period: 'daily' | 'monthly' | 'yearly' | 'custom';
+    period: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom';
   }) => {
     setDateRange(range);
   };

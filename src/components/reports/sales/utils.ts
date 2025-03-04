@@ -7,6 +7,7 @@ export const getStartDateForPeriod = (period: 'daily' | 'weekly' | 'monthly' | '
       // For daily period, set to the start of today (midnight)
       return new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
     case 'weekly':
+      // For weekly period, get the first day of the current week (Sunday)
       const day = today.getDay();
       return new Date(today.setDate(today.getDate() - day));
     case 'monthly':
