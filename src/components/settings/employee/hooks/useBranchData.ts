@@ -1,8 +1,8 @@
 
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { fetchBranches } from "../api/branchApi";
 import { Branch } from "../types";
+import { fetchBranches } from "../api/branchApi";
 
 export const useBranchData = () => {
   const { toast } = useToast();
@@ -13,7 +13,9 @@ export const useBranchData = () => {
     try {
       console.log("Loading branches...");
       const branchesData = await fetchBranches(pelakuUsahaId);
-      setBranches(branchesData || []);
+      
+      console.log("Branches loaded:", branchesData);
+      setBranches(branchesData);
       return branchesData;
     } catch (err: any) {
       console.error("Error loading branches:", err);

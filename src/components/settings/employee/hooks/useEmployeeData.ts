@@ -1,11 +1,10 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Branch, Employee } from "./types";
 import { useAuth } from "@/hooks/auth";
-import { useBranchData } from "./hooks/useBranchData";
-import { useEmployeeList } from "./hooks/useEmployeeList";
-import { useBusinessProfile } from "./hooks/useBusinessProfile";
+import { useBranchData } from "./useBranchData";
+import { useEmployeeList } from "./useEmployeeList";
+import { useBusinessProfile } from "./useBusinessProfile";
 
 export const useEmployeeData = () => {
   const { toast } = useToast();
