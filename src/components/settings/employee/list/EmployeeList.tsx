@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 
 interface EmployeeListProps {
   employees: Employee[];
-  onDelete: (id: number) => Promise<void>;
+  onDelete: (id: string) => Promise<void>; // Updated to use string instead of number
   onResetPassword: (auth_id: string, newPassword: string) => Promise<boolean>;
   isLoading: boolean;
 }

@@ -21,10 +21,9 @@ const EmployeeReport = () => {
         .select(`
           id,
           full_name,
-          email,
           whatsapp_number,
-          role,
           business_role,
+          is_employee,
           cabang:cabang_id (
             branch_name
           )
@@ -32,18 +31,6 @@ const EmployeeReport = () => {
         .eq("is_employee", true);
 
       if (employeeError) throw employeeError;
-
-      const { data: attendance, error: attendanceError } = await supabase
-        .from("absensi")
-        .select(`
-          karyawan_id,
-          tanggal,
-          jam_masuk,
-          jam_keluar,
-          status
-        `);
-
-      if (attendanceError) throw attendanceError;
 
       // Get role descriptions from user_status
       const { data: userStatus, error: statusError } = await supabase
@@ -63,32 +50,24 @@ const EmployeeReport = () => {
 
       // Enrich employee data with role information
       const enrichedEmployees = employees?.map(employee => {
-        const role = employee.role ? 
-          roleMap.get(employee.role) || "Karyawan" : 
-          "Karyawan";
+        // Get role from business_role or default to "Karyawan"
+        const roleName = employee.business_role || "Karyawan";
+        const roleDescription = roleMap.get(roleName) || roleName;
         
         return {
           ...employee,
           name: employee.full_name,
           whatsapp_contact: employee.whatsapp_number,
-          role
+          role: roleDescription
         };
-      });
+      }) || [];
 
       return {
-        employees: enrichedEmployees || [],
-        attendance,
+        employees: enrichedEmployees,
+        attendance: []  // We'll address attendance in a separate update
       };
     },
   });
-
-  // This function now needs to match attendance based on profile id instead of karyawan_id
-  const getEmployeeAttendance = (employeeId: string) => {
-    // Since attendance still uses karyawan_id and we don't have that linkage anymore,
-    // we cannot properly match employees to attendance records
-    // This would require updating the absensi table structure
-    return [];
-  };
 
   return (
     <div className="space-y-6">
@@ -107,7 +86,6 @@ const EmployeeReport = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Nama</TableHead>
-              <TableHead>Email</TableHead>
               <TableHead>WhatsApp</TableHead>
               <TableHead>Jabatan</TableHead>
               <TableHead>Cabang</TableHead>
@@ -115,20 +93,15 @@ const EmployeeReport = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {employeeData?.employees.map((employee) => {
-              const presentDays = 0; // Cannot get attendance properly without karyawan_id linkage
-
-              return (
-                <TableRow key={employee.id}>
-                  <TableCell>{employee.name}</TableCell>
-                  <TableCell>{employee.email || '-'}</TableCell>
-                  <TableCell>{employee.whatsapp_contact || '-'}</TableCell>
-                  <TableCell>{employee.role}</TableCell>
-                  <TableCell>{employee.cabang?.branch_name || '-'}</TableCell>
-                  <TableCell className="text-right">Data tidak tersedia</TableCell>
-                </TableRow>
-              );
-            })}
+            {employeeData?.employees.map((employee) => (
+              <TableRow key={employee.id}>
+                <TableCell>{employee.name}</TableCell>
+                <TableCell>{employee.whatsapp_contact || '-'}</TableCell>
+                <TableCell>{employee.role}</TableCell>
+                <TableCell>{employee.cabang?.branch_name || '-'}</TableCell>
+                <TableCell className="text-right">Data tidak tersedia</TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </Card>
