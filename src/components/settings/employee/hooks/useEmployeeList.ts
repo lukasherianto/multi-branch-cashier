@@ -8,9 +8,11 @@ export const useEmployeeList = () => {
   const { toast } = useToast();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const loadEmployees = async (pelakuUsahaId: number) => {
     try {
+      setIsLoading(true);
       console.log("Loading employees for pelakuUsahaId:", pelakuUsahaId);
       const employeesData = await fetchEmployees(pelakuUsahaId);
       
@@ -36,6 +38,8 @@ export const useEmployeeList = () => {
         variant: "destructive",
       });
       return [];
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -43,6 +47,7 @@ export const useEmployeeList = () => {
     employees,
     setEmployees,
     loadEmployees,
+    isLoading,
     error
   };
 };

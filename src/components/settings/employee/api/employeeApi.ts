@@ -5,6 +5,11 @@ import { Employee } from "../types";
 export async function fetchEmployees(pelakuUsahaId: number) {
   console.log("Fetching employees for pelaku usaha ID:", pelakuUsahaId);
   
+  if (!pelakuUsahaId) {
+    console.error("Invalid pelakuUsahaId:", pelakuUsahaId);
+    throw new Error("ID pelaku usaha tidak valid");
+  }
+  
   const { data, error } = await supabase
     .from("karyawan")
     .select(`
@@ -36,6 +41,11 @@ export async function fetchEmployees(pelakuUsahaId: number) {
 }
 
 export async function fetchUserPelakuUsaha(userId: string) {
+  if (!userId) {
+    console.error("Invalid userId:", userId);
+    throw new Error("ID pengguna tidak valid");
+  }
+  
   const { data, error } = await supabase
     .from("pelaku_usaha")
     .select("pelaku_usaha_id")
@@ -69,6 +79,7 @@ export function mapEmployeeData(employeesData: any[] | null, currentPelakuUsahaI
 
     // If emp is null or not an object, return the default employee
     if (!emp || typeof emp !== 'object') {
+      console.warn("Invalid employee data:", emp);
       return defaultEmployee;
     }
     

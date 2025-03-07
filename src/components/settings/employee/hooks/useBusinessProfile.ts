@@ -7,9 +7,11 @@ export const useBusinessProfile = () => {
   const { toast } = useToast();
   const [pelakuUsahaId, setPelakuUsahaId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const loadBusinessProfile = async (userId: string): Promise<number | null> => {
     try {
+      setIsLoading(true);
       console.log("Loading business profile for user:", userId);
       const businessData = await fetchUserPelakuUsaha(userId);
       
@@ -36,12 +38,15 @@ export const useBusinessProfile = () => {
         variant: "destructive",
       });
       return null;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return {
     pelakuUsahaId,
     loadBusinessProfile,
+    isLoading,
     error
   };
 };

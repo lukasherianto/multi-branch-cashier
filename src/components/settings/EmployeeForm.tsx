@@ -17,6 +17,9 @@ export function EmployeeForm() {
 
   const isLoading = dataLoading || formLoading || isDeleting || isResetting;
 
+  console.log("Employees in EmployeeForm:", employees);
+  console.log("IsLoading state:", isLoading);
+
   // Reset form when data is loaded
   useEffect(() => {
     if (!dataLoading && form) {

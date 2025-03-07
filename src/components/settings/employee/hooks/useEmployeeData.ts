@@ -13,7 +13,7 @@ export const useEmployeeData = () => {
   const [error, setError] = useState<string | null>(null);
   
   const { branches, loadBranches } = useBranchData();
-  const { employees, loadEmployees } = useEmployeeList();
+  const { employees, loadEmployees, isLoading: employeesLoading } = useEmployeeList();
   const { pelakuUsahaId, loadBusinessProfile } = useBusinessProfile();
 
   const loadAllData = async () => {
@@ -60,7 +60,7 @@ export const useEmployeeData = () => {
   }, [user]);
 
   return {
-    isLoading,
+    isLoading: isLoading || employeesLoading,
     setIsLoading,
     employees,
     branches,
