@@ -40,7 +40,7 @@ export const useAuthState = () => {
             id,
             full_name,
             whatsapp_number,
-            status_id,
+            role,
             pelaku_usaha_id,
             cabang_id,
             cabang (
@@ -55,19 +55,19 @@ export const useAuthState = () => {
         if (profileError) {
           console.error("Error fetching profile:", profileError);
         } else if (profileData) {
-          // Set status ID from profile
-          setUserStatusId(profileData.status_id);
-          
-          // Get user role from status_id using user_status table
-          if (profileData.status_id) {
+          // Set role directly from profile
+          if (profileData.role) {
+            setUserRole(profileData.role);
+            
+            // Get status_id from user_status table using role
             const { data: statusData } = await supabase
               .from('user_status')
-              .select('wewenang')
-              .eq('status_id', profileData.status_id)
+              .select('status_id')
+              .eq('wewenang', profileData.role)
               .maybeSingle();
               
             if (statusData) {
-              setUserRole(statusData.wewenang);
+              setUserStatusId(statusData.status_id);
             }
           }
           

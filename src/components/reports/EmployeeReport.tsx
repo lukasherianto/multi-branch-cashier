@@ -21,6 +21,7 @@ const EmployeeReport = () => {
           karyawan_id,
           name,
           email,
+          auth_id,
           cabang:cabang_id (
             branch_name
           )
@@ -74,13 +75,13 @@ const EmployeeReport = () => {
       // Enrich employee data with role information
       const enrichedEmployees = employees?.map(employee => {
         // Try to find matching profile by auth_id
-        const profile = profiles?.find(p => 
-          employee.auth_id && p.id === employee.auth_id
-        );
+        const profile = employee.auth_id ? 
+          profiles?.find(p => p.id === employee.auth_id) : 
+          null;
         
-        const role = profile?.role 
-          ? roleMap.get(profile.role) || "Karyawan" 
-          : "Karyawan";
+        const role = profile?.role ? 
+          roleMap.get(profile.role) || "Karyawan" : 
+          "Karyawan";
         
         return {
           ...employee,
