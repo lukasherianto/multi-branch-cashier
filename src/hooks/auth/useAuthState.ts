@@ -1,112 +1,154 @@
 
 import { useState, useEffect } from "react";
-import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { UserRole } from "./types";
+import { User } from "@supabase/supabase-js";
 
 export const useAuthState = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [userStatusId, setUserStatusId] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [pelakuUsaha, setPelakuUsaha] = useState<any>(null);
+  const [cabang, setCabang] = useState<any>(null);
+  const [cabangList, setCabangList] = useState<any[]>([]);
+  const [selectedCabangId, setSelectedCabangId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Maksimal waktu untuk loading
-    const loadingTimeout = setTimeout(() => {
-      setIsLoading(false);
-    }, 5000); // 5 detik timeout
-
-    // Check active session on mount
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        console.log("Active session found:", session.user.id);
-        setUser(session.user);
+    const fetchData = async () => {
+      try {
+        // Get current session
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         
-        // Get user role from user metadata
-        const role = session.user.user_metadata?.business_role;
-        if (role) {
-          setUserRole(role as UserRole);
+        if (sessionError) {
+          throw sessionError;
         }
 
-        // Langsung ambil status_id dari profiles
-        try {
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('status_id, business_role')
-            .eq('id', session.user.id)
-            .maybeSingle();
+        if (!sessionData.session) {
+          // No active session
+          setUser(null);
+          setLoading(false);
+          return;
+        }
 
-          if (!profileError && profileData) {
-            setUserStatusId(profileData.status_id);
-            console.log("User status_id loaded:", profileData.status_id);
-            
-            // Jika business_role tidak ada di metadata, gunakan dari profiles
-            if (!role && profileData.business_role) {
-              setUserRole(profileData.business_role as UserRole);
-              console.log("User role loaded from profiles:", profileData.business_role);
+        // Set user from session
+        setUser(sessionData.session.user);
+
+        // Get user profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select(`
+            id,
+            full_name,
+            whatsapp_number,
+            status_id,
+            pelaku_usaha_id,
+            cabang_id,
+            cabang (
+              branch_name,
+              address,
+              contact_whatsapp
+            )
+          `)
+          .eq('id', sessionData.session.user.id)
+          .maybeSingle();
+
+        if (profileError) {
+          console.error("Error fetching profile:", profileError);
+        } else if (profileData) {
+          // Set status ID from profile
+          setUserStatusId(profileData.status_id);
+          
+          // Get user role from status_id using user_status table
+          if (profileData.status_id) {
+            const { data: statusData } = await supabase
+              .from('user_status')
+              .select('wewenang')
+              .eq('status_id', profileData.status_id)
+              .maybeSingle();
+              
+            if (statusData) {
+              setUserRole(statusData.wewenang);
             }
-          } else {
-            console.error("Error loading user profile:", profileError);
           }
-        } catch (error) {
-          console.error("Error in profile fetch:", error);
-        }
-      }
-      setIsLoading(false);
-      clearTimeout(loadingTimeout);
-    });
-
-    // Set up real-time subscription to auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event, session?.user?.id);
-      
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        setUser(session?.user ?? null);
-        
-        // Get user role from user metadata
-        const role = session?.user?.user_metadata?.business_role;
-        if (role) {
-          setUserRole(role as UserRole);
-        }
-
-        // Get user status_id from profiles table
-        if (session?.user) {
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('status_id, business_role')
-            .eq('id', session.user.id)
-            .maybeSingle();
-
-          if (!profileError && profileData) {
-            setUserStatusId(profileData.status_id);
-            console.log("User status_id loaded:", profileData.status_id);
-            
-            // Jika business_role tidak ada di metadata, gunakan dari profiles
-            if (!role && profileData.business_role) {
-              setUserRole(profileData.business_role as UserRole);
-              console.log("User role loaded from profiles:", profileData.business_role);
-            }
-          } else {
-            console.error("Error loading user status_id:", profileError);
-            setUserStatusId(null);
+          
+          // Set cabang data if exists
+          if (profileData.cabang_id && profileData.cabang) {
+            setCabang(profileData.cabang);
+            setSelectedCabangId(profileData.cabang_id);
           }
         }
-        setIsLoading(false);
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null);
-        setUserRole(null);
-        setUserStatusId(null);
-        setIsLoading(false);
-      }
-    });
 
+        // Get pelaku usaha data
+        const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
+          .from('pelaku_usaha')
+          .select('*')
+          .eq('user_id', sessionData.session.user.id)
+          .maybeSingle();
+
+        if (pelakuUsahaError) {
+          console.error("Error fetching pelaku usaha:", pelakuUsahaError);
+        } else if (pelakuUsahaData) {
+          setPelakuUsaha(pelakuUsahaData);
+
+          // Get branch data for this pelaku_usaha
+          const { data: branchData, error: branchError } = await supabase
+            .from('cabang')
+            .select('*')
+            .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id);
+
+          if (branchError) {
+            console.error("Error fetching branches:", branchError);
+          } else if (branchData && branchData.length > 0) {
+            setCabangList(branchData);
+            
+            // If cabang wasn't set from profile, use the first branch as default
+            if (!selectedCabangId) {
+              setCabang(branchData[0]);
+              setSelectedCabangId(branchData[0].cabang_id);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error in useAuthState:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+
+    // Set up auth state change listener
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          fetchData();
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setUserRole(null);
+          setUserStatusId(null);
+          setPelakuUsaha(null);
+          setCabang(null);
+          setCabangList([]);
+          setSelectedCabangId(null);
+        }
+      }
+    );
+
+    // Cleanup
     return () => {
-      clearTimeout(loadingTimeout);
-      subscription.unsubscribe();
+      authListener.subscription.unsubscribe();
     };
   }, []);
 
-  return { user, userRole, userStatusId, isLoading, setUser, setUserRole, setUserStatusId };
+  return {
+    user,
+    userRole,
+    userStatusId,
+    pelakuUsaha,
+    cabang,
+    cabangList,
+    selectedCabangId,
+    setSelectedCabangId,
+    loading
+  };
 };
