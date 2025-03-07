@@ -1,8 +1,8 @@
 
 import { Employee } from "../types";
-import { fetchEmployeeProfiles, fetchKaryawanData } from "./employeeQueries";
+import { fetchEmployeeProfiles } from "./employeeQueries";
 import { fetchUserPelakuUsaha } from "./businessQueries";
-import { combineEmployeeData, mapEmployeeData } from "./employeeMappers";
+import { mapEmployeeData } from "./employeeMappers";
 
 /**
  * Fetch all employees for a given pelaku usaha and branch (if specified)
@@ -19,15 +19,11 @@ export async function fetchEmployees(pelakuUsahaId: number, cabangId?: number) {
   const profileData = await fetchEmployeeProfiles(pelakuUsahaId, cabangId);
   console.log("Employee profiles data:", profileData);
 
-  // Get karyawan data
-  const karyawanData = await fetchKaryawanData(pelakuUsahaId, cabangId);
-  console.log("Karyawan data:", karyawanData);
-
-  // Combine the data from both sources
-  const combinedData = combineEmployeeData(profileData, karyawanData, pelakuUsahaId);
-  console.log("Combined employee data:", combinedData);
+  // Map profile data to employee format
+  const employeeData = mapEmployeeData(profileData, pelakuUsahaId);
+  console.log("Mapped employee data:", employeeData);
   
-  return combinedData;
+  return employeeData;
 }
 
 // Re-export the functions from businessQueries

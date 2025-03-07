@@ -5,18 +5,18 @@ export interface Branch {
 }
 
 export interface Employee {
-  karyawan_id: number;
+  karyawan_id: number; // Kept for compatibility, not using actual IDs anymore
   name: string;
   email?: string;
   role: string;
-  business_role?: string; // Made optional since it's derived from role
+  business_role?: string;
   auth_id?: string;
   is_active?: boolean;
   pelaku_usaha_id: number;
   isSameBusiness?: boolean;
   businessName?: string;
   whatsapp_contact?: string;
-  cabang_id?: number; // Added to match the profiles table
+  cabang_id?: number;
   cabang?: {
     branch_name: string;
   };

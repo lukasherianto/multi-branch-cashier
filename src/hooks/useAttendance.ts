@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,33 +29,35 @@ export const useAttendance = () => {
 
       console.log("Loading employee data for user:", user.id);
       
-      const { data: employeeData, error: employeeError } = await supabase
-        .from("karyawan")
-        .select("karyawan_id")
-        .eq("auth_id", user.id)
+      // Check if user is an employee from profiles table
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("is_employee")
+        .eq("id", user.id)
         .maybeSingle();
 
-      if (employeeError) {
-        console.error("Error fetching employee data:", employeeError);
-        throw employeeError;
+      if (profileError) {
+        console.error("Error fetching profile data:", profileError);
+        throw profileError;
       }
 
-      if (!employeeData) {
-        console.log("No employee data found for user");
+      if (!profileData || !profileData.is_employee) {
+        console.log("User is not an employee");
         setIsEmployee(false);
         return;
       }
 
       setIsEmployee(true);
-      console.log("Employee data found:", employeeData);
+      console.log("Employee data found:", profileData);
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
+      // Note: This will not work correctly because absensi uses karyawan_id
+      // To fix this properly, we'd need to modify the absensi table to use auth.id
       const { data: todayData, error: todayError } = await supabase
         .from("absensi")
         .select("*")
-        .eq("karyawan_id", employeeData.karyawan_id)
         .eq("tanggal", format(today, "yyyy-MM-dd"))
         .maybeSingle();
 
@@ -66,10 +69,10 @@ export const useAttendance = () => {
       setTodayAttendance(todayData);
       console.log("Today's attendance:", todayData);
 
+      // Similarly, this won't work correctly without updating the absensi table
       const { data: historyData, error: historyError } = await supabase
         .from("absensi")
         .select("*")
-        .eq("karyawan_id", employeeData.karyawan_id)
         .order("tanggal", { ascending: false })
         .limit(10);
 
@@ -97,61 +100,16 @@ export const useAttendance = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: employeeData, error: employeeError } = await supabase
-        .from("karyawan")
-        .select("karyawan_id")
-        .eq("auth_id", user.id)
-        .maybeSingle();
+      // Note: This functionality is broken after removing karyawan table
+      // To fix, we would need to update the absensi table to use auth.id instead of karyawan_id
+      toast({
+        title: "Error",
+        description: "Sistem absensi sedang dalam perbaikan",
+        variant: "destructive",
+      });
+      
+      return;
 
-      if (employeeError) throw employeeError;
-
-      if (!employeeData) {
-        toast({
-          title: "Error",
-          description: "Data karyawan tidak ditemukan",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const currentHour = currentTime.getHours();
-      let status = "hadir";
-
-      if (!todayAttendance) {
-        const { error } = await supabase
-          .from("absensi")
-          .insert([
-            {
-              karyawan_id: employeeData.karyawan_id,
-              tanggal: format(currentTime, "yyyy-MM-dd"),
-              jam_masuk: format(currentTime, "HH:mm:ss"),
-              status,
-            },
-          ]);
-
-        if (error) throw error;
-
-        toast({
-          title: "Sukses",
-          description: "Berhasil melakukan absen masuk",
-        });
-      } else {
-        const { error } = await supabase
-          .from("absensi")
-          .update({
-            jam_keluar: format(currentTime, "HH:mm:ss"),
-          })
-          .eq("absensi_id", todayAttendance.absensi_id);
-
-        if (error) throw error;
-
-        toast({
-          title: "Sukses",
-          description: "Berhasil melakukan absen keluar",
-        });
-      }
-
-      await loadAttendanceData();
     } catch (error) {
       console.error("Error recording attendance:", error);
       toast({

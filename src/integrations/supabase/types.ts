@@ -43,15 +43,7 @@ export type Database = {
           tanggal?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "absensi_karyawan_id_fkey"
-            columns: ["karyawan_id"]
-            isOneToOne: false
-            referencedRelation: "karyawan"
-            referencedColumns: ["karyawan_id"]
-          },
-        ]
+        Relationships: []
       }
       cabang: {
         Row: {
@@ -108,63 +100,6 @@ export type Database = {
           uraian?: string
         }
         Relationships: []
-      }
-      karyawan: {
-        Row: {
-          auth_id: string | null
-          cabang_id: number | null
-          created_at: string
-          email: string | null
-          is_active: boolean | null
-          karyawan_id: number
-          name: string
-          pelaku_usaha_id: number | null
-          role: string | null
-          updated_at: string
-          whatsapp_contact: string | null
-        }
-        Insert: {
-          auth_id?: string | null
-          cabang_id?: number | null
-          created_at?: string
-          email?: string | null
-          is_active?: boolean | null
-          karyawan_id?: number
-          name: string
-          pelaku_usaha_id?: number | null
-          role?: string | null
-          updated_at?: string
-          whatsapp_contact?: string | null
-        }
-        Update: {
-          auth_id?: string | null
-          cabang_id?: number | null
-          created_at?: string
-          email?: string | null
-          is_active?: boolean | null
-          karyawan_id?: number
-          name?: string
-          pelaku_usaha_id?: number | null
-          role?: string | null
-          updated_at?: string
-          whatsapp_contact?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "karyawan_cabang_id_fkey"
-            columns: ["cabang_id"]
-            isOneToOne: false
-            referencedRelation: "cabang"
-            referencedColumns: ["cabang_id"]
-          },
-          {
-            foreignKeyName: "karyawan_pelaku_usaha_id_fkey"
-            columns: ["pelaku_usaha_id"]
-            isOneToOne: false
-            referencedRelation: "pelaku_usaha"
-            referencedColumns: ["pelaku_usaha_id"]
-          },
-        ]
       }
       kas: {
         Row: {

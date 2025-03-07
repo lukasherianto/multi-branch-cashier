@@ -9,7 +9,7 @@ import { ResetPasswordDialog } from "./ResetPasswordDialog";
 
 interface EmployeeActionsProps {
   employee: Employee;
-  onDelete: (id: number) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
   onResetPassword: (auth_id: string, newPassword: string) => Promise<boolean>;
 }
 
@@ -18,7 +18,7 @@ export const EmployeeActions = ({
   onDelete, 
   onResetPassword 
 }: EmployeeActionsProps) => {
-  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [resettingId, setResettingId] = useState<string | null>(null);
   const [openResetDialog, setOpenResetDialog] = useState(false);
   const { userRole } = useAuth();
@@ -26,7 +26,7 @@ export const EmployeeActions = ({
   // Check if current user role has permission to reset passwords
   const canResetPassword = userRole === 'pelaku_usaha' || userRole === 'admin';
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     setDeletingId(id);
     await onDelete(id);
     setDeletingId(null);

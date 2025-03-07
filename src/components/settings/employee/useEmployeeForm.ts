@@ -10,8 +10,7 @@ import {
   getPelakuUsahaId, 
   validateBranchId, 
   createAuthAccount, 
-  updateProfileStatus, 
-  createEmployeeRecord 
+  updateProfileStatus
 } from "./services/employeeService";
 
 export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
@@ -82,7 +81,9 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
         .update({ 
           cabang_id: cabangId,
           pelaku_usaha_id: pelakuUsahaId,  // Ensure pelaku_usaha_id is also set in the profile
-          business_role: data.business_role // Explicitly set business_role
+          business_role: data.business_role, // Explicitly set business_role
+          whatsapp_contact: data.whatsapp_contact, // Add missing fields
+          email: data.email
         })
         .eq('id', authUser.id);
         
@@ -91,23 +92,7 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
         // Continue even if profile update fails
       }
 
-      // Insert employee data - make sure auth_id is correctly set
-      const employeeData = {
-        name: data.name,
-        email: data.email,
-        whatsapp_contact: data.whatsapp_contact || null,
-        role: data.business_role, // Use business_role since role column exists but business_role doesn't
-        cabang_id: cabangId,
-        pelaku_usaha_id: pelakuUsahaId,
-        auth_id: authUser.id, // This is the key connection to the auth user
-        is_active: true
-      };
-
-      console.log("Inserting employee data with UUID connection:", employeeData);
-
-      await createEmployeeRecord(employeeData);
-
-      console.log("Employee successfully inserted with UUID connection");
+      console.log("Employee successfully created with profile data");
 
       toast({
         title: "Sukses",

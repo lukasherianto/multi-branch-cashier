@@ -8,7 +8,7 @@ import { AtSign, Phone } from "lucide-react";
 
 interface EmployeeTableRowProps {
   employee: Employee;
-  onDelete: (id: number) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
   onResetPassword: (auth_id: string, newPassword: string) => Promise<boolean>;
 }
 

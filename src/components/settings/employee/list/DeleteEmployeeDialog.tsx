@@ -16,8 +16,8 @@ import {
 
 interface DeleteEmployeeDialogProps {
   employee: Employee;
-  onDelete: (id: number) => Promise<void>;
-  deletingId: number | null;
+  onDelete: (id: string) => Promise<void>;
+  deletingId: string | null;
 }
 
 export const DeleteEmployeeDialog = ({ 
@@ -45,9 +45,9 @@ export const DeleteEmployeeDialog = ({
           <AlertDialogCancel>Batal</AlertDialogCancel>
           <AlertDialogAction
             className="bg-red-500 hover:bg-red-600"
-            onClick={() => onDelete(employee.karyawan_id)}
+            onClick={() => employee.auth_id && onDelete(employee.auth_id)}
           >
-            {deletingId === employee.karyawan_id ? (
+            {deletingId === employee.auth_id ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
             ) : null}
             Hapus
