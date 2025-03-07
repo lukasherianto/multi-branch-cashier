@@ -40,14 +40,18 @@ const EmployeeReport = () => {
 
       if (attendanceError) throw attendanceError;
 
-      // Get employee roles from profiles
+      // Get employee auth_ids to fetch roles from profiles
+      const authIds = employees?.map(emp => emp.auth_id).filter(Boolean) || [];
+      
+      // Get profiles data for employees
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select(`
           id,
-          status_id,
+          role,
           full_name
-        `);
+        `)
+        .in('id', authIds);
       
       if (profilesError) throw profilesError;
 
@@ -55,28 +59,28 @@ const EmployeeReport = () => {
       const { data: userStatus, error: statusError } = await supabase
         .from("user_status")
         .select(`
-          status_id,
+          wewenang,
           uraian
         `);
       
       if (statusError) throw statusError;
 
-      // Create a map of status_id to role description
+      // Create a map of wewenang (role) to role description
       const roleMap = new Map();
       userStatus?.forEach(status => {
-        roleMap.set(status.status_id, status.uraian);
+        roleMap.set(status.wewenang, status.uraian);
       });
 
       // Enrich employee data with role information
       const enrichedEmployees = employees?.map(employee => {
-        // Try to find matching profile
+        // Try to find matching profile by auth_id
         const profile = profiles?.find(p => 
-          employee.email && p.full_name === employee.name
+          employee.auth_id && p.id === employee.auth_id
         );
         
-        const role = profile?.status_id 
-          ? roleMap.get(profile.status_id) || "Employee" 
-          : "Employee";
+        const role = profile?.role 
+          ? roleMap.get(profile.role) || "Karyawan" 
+          : "Karyawan";
         
         return {
           ...employee,

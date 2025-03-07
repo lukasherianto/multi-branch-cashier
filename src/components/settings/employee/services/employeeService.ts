@@ -36,6 +36,7 @@ export async function validateBranchId(cabangId: number) {
 
 export async function createAuthAccount(data: EmployeeFormData & { cabang_id?: string }) {
   const statusId = mapRoleToStatusId(data.business_role);
+  const role = data.business_role; // Use business_role as role
 
   // Create Supabase auth account for employee with cabang_id
   const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -46,7 +47,7 @@ export async function createAuthAccount(data: EmployeeFormData & { cabang_id?: s
         full_name: data.name,
         whatsapp_number: data.whatsapp_contact,
         is_employee: true,
-        status_id: statusId,
+        role: role, // Use role instead of status_id
         cabang_id: data.cabang_id || "0" // Include cabang_id in user metadata
       }
     }
@@ -64,15 +65,15 @@ export async function createAuthAccount(data: EmployeeFormData & { cabang_id?: s
   return authData.user;
 }
 
-export async function updateProfileStatus(userId: string, statusId: number) {
-  // Update the status_id in profiles table
+export async function updateProfileStatus(userId: string, role: string) {
+  // Update the role in profiles table
   const { error: profileError } = await supabase
     .from('profiles')
-    .update({ status_id: statusId })
+    .update({ role: role })
     .eq('id', userId);
 
   if (profileError) {
-    console.error("Error updating profile status_id:", profileError);
+    console.error("Error updating profile role:", profileError);
     // Don't throw, just log the error
   }
 }

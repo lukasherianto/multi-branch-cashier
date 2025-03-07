@@ -50,9 +50,6 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
       // Get pelaku usaha ID
       const pelakuUsahaId = await getPelakuUsahaId(user.id);
 
-      // Get status ID for the role
-      const statusId = mapRoleToStatusId(data.business_role);
-
       // Parse and validate cabang ID
       let cabangId: number | null = null;
       if (data.cabang_id && data.cabang_id !== "0") {
@@ -77,8 +74,8 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
         cabang_id: cabangId ? cabangId.toString() : "0" // Pass the cabang_id to be stored in user metadata
       });
       
-      // Update profile status
-      await updateProfileStatus(authUser.id, statusId);
+      // Update profile role (instead of status_id)
+      await updateProfileStatus(authUser.id, data.business_role);
 
       // Update the profile with cabang_id
       const { error: profileUpdateError } = await supabase

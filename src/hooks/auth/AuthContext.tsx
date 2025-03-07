@@ -78,18 +78,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (profileError) {
         console.error("Error fetching profile:", profileError);
       } else if (profileData) {
-        setUserStatusId(profileData.status_id);
-        
-        // Get user role from status_id using user_status table
-        if (profileData.status_id) {
+        // Get user role directly from the profile
+        if (profileData.role) {
+          setUserRole(profileData.role);
+          
+          // Get status_id from user_status table using role
           const { data: statusData } = await supabase
             .from('user_status')
-            .select('wewenang')
-            .eq('status_id', profileData.status_id)
+            .select('status_id')
+            .eq('wewenang', profileData.role)
             .maybeSingle();
             
           if (statusData) {
-            setUserRole(statusData.wewenang);
+            setUserStatusId(statusData.status_id);
           }
         }
         
