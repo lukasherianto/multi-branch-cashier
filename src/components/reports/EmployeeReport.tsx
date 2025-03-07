@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,7 +20,7 @@ const EmployeeReport = () => {
         .select(`
           karyawan_id,
           name,
-          role,
+          email,
           cabang:cabang_id (
             branch_name
           )
@@ -39,8 +40,52 @@ const EmployeeReport = () => {
 
       if (attendanceError) throw attendanceError;
 
+      // Get employee roles from profiles
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select(`
+          id,
+          status_id,
+          full_name
+        `);
+      
+      if (profilesError) throw profilesError;
+
+      // Get role descriptions from user_status
+      const { data: userStatus, error: statusError } = await supabase
+        .from("user_status")
+        .select(`
+          status_id,
+          uraian
+        `);
+      
+      if (statusError) throw statusError;
+
+      // Create a map of status_id to role description
+      const roleMap = new Map();
+      userStatus?.forEach(status => {
+        roleMap.set(status.status_id, status.uraian);
+      });
+
+      // Enrich employee data with role information
+      const enrichedEmployees = employees?.map(employee => {
+        // Try to find matching profile
+        const profile = profiles?.find(p => 
+          employee.email && p.full_name === employee.name
+        );
+        
+        const role = profile?.status_id 
+          ? roleMap.get(profile.status_id) || "Employee" 
+          : "Employee";
+        
+        return {
+          ...employee,
+          role
+        };
+      });
+
       return {
-        employees,
+        employees: enrichedEmployees || [],
         attendance,
       };
     },
