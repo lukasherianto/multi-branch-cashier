@@ -575,6 +575,7 @@ export type Database = {
           full_name: string
           id: string
           is_employee: boolean | null
+          pelaku_usaha_id: number | null
           status_id: number | null
           updated_at: string
           whatsapp_number: string | null
@@ -586,6 +587,7 @@ export type Database = {
           full_name: string
           id: string
           is_employee?: boolean | null
+          pelaku_usaha_id?: number | null
           status_id?: number | null
           updated_at?: string
           whatsapp_number?: string | null
@@ -597,6 +599,7 @@ export type Database = {
           full_name?: string
           id?: string
           is_employee?: boolean | null
+          pelaku_usaha_id?: number | null
           status_id?: number | null
           updated_at?: string
           whatsapp_number?: string | null
@@ -608,6 +611,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "cabang"
             referencedColumns: ["cabang_id"]
+          },
+          {
+            foreignKeyName: "profiles_pelaku_usaha_id_fkey"
+            columns: ["pelaku_usaha_id"]
+            isOneToOne: false
+            referencedRelation: "pelaku_usaha"
+            referencedColumns: ["pelaku_usaha_id"]
           },
           {
             foreignKeyName: "profiles_status_id_fkey"

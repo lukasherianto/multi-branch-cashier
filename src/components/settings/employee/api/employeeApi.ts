@@ -11,6 +11,7 @@ export async function fetchEmployees(pelakuUsahaId: number) {
   }
   
   // Get all employees from profiles table where is_employee is true
+  // and belongs to the current pelaku_usaha_id or has pelaku_usaha_id NULL
   const { data: profileData, error: profileError } = await supabase
     .from("profiles")
     .select(`
@@ -20,12 +21,14 @@ export async function fetchEmployees(pelakuUsahaId: number) {
       business_role,
       is_employee,
       status_id,
+      pelaku_usaha_id,
       cabang_id,
       cabang (
         branch_name
       )
     `)
-    .eq("is_employee", true);
+    .eq("is_employee", true)
+    .or(`pelaku_usaha_id.eq.${pelakuUsahaId},pelaku_usaha_id.is.null`);
 
   if (profileError) {
     console.error("Error fetching employee profiles:", profileError);
@@ -101,7 +104,7 @@ export async function fetchEmployees(pelakuUsahaId: number) {
         business_role: profile.business_role,
         auth_id: profile.id,
         is_active: true,
-        pelaku_usaha_id: pelakuUsahaId, // Set to current business ID since they are associated
+        pelaku_usaha_id: profile.pelaku_usaha_id || pelakuUsahaId, // Use profile's pelaku_usaha_id or current business ID
         whatsapp_contact: profile.whatsapp_number,
         cabang_id: profile.cabang_id,
         cabang: profile.cabang
