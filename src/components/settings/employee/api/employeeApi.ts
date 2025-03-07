@@ -64,28 +64,46 @@ export async function fetchEmployees(pelakuUsahaId: number) {
   console.log("Karyawan data:", karyawanData);
 
   // Combine the data from both sources
-  // Profile data will be used as a base, with additional data from karyawan table when available
-  const combinedData = [...profileData];
+  // Use karyawan data as base, with additional data from profiles when available
+  const combinedData = [];
   
-  // Add karyawan data that might not be in profiles
+  // First add all karyawan data
   karyawanData.forEach(karyawan => {
-    // Check if this karyawan already exists in combined data
-    const existsInProfiles = combinedData.some(profile => profile.id === karyawan.auth_id);
+    combinedData.push({
+      source: 'karyawan',
+      karyawan_id: karyawan.karyawan_id,
+      name: karyawan.name,
+      email: karyawan.email,
+      role: karyawan.role,
+      business_role: karyawan.role,
+      auth_id: karyawan.auth_id,
+      is_active: karyawan.is_active,
+      pelaku_usaha_id: karyawan.pelaku_usaha_id,
+      whatsapp_contact: karyawan.whatsapp_contact,
+      cabang_id: karyawan.cabang_id,
+      cabang: karyawan.cabang,
+      pelaku_usaha: karyawan.pelaku_usaha
+    });
+  });
+  
+  // Then add profile data that doesn't have corresponding karyawan entry
+  profileData.forEach(profile => {
+    const existsInKaryawan = combinedData.some(emp => emp.auth_id === profile.id);
     
-    if (!existsInProfiles && karyawan.auth_id) {
+    if (!existsInKaryawan) {
       combinedData.push({
-        id: karyawan.auth_id,
-        full_name: karyawan.name,
-        whatsapp_number: karyawan.whatsapp_contact,
-        business_role: karyawan.role,
-        is_employee: true,
-        status_id: null,
-        cabang_id: karyawan.cabang_id,
-        cabang: karyawan.cabang,
-        // Add extra karyawan-specific data
-        karyawan_id: karyawan.karyawan_id,
-        pelaku_usaha_id: karyawan.pelaku_usaha_id,
-        pelaku_usaha: karyawan.pelaku_usaha
+        source: 'profile',
+        karyawan_id: 0, // Default value for employees without karyawan entry
+        name: profile.full_name,
+        email: "", // Email not available in profiles
+        role: profile.business_role,
+        business_role: profile.business_role,
+        auth_id: profile.id,
+        is_active: true,
+        pelaku_usaha_id: 0, // Unknown business for profile-only entries
+        whatsapp_contact: profile.whatsapp_number,
+        cabang_id: profile.cabang_id,
+        cabang: profile.cabang
       });
     }
   });
@@ -138,9 +156,10 @@ export function mapEmployeeData(employeesData: any[] | null, currentPelakuUsahaI
     }
     
     // Safely extract values with type checks
-    const authId = typeof emp.id === 'string' ? emp.id : "";
-    const name = typeof emp.full_name === 'string' ? emp.full_name : "Unknown";
-    const whatsappContact = typeof emp.whatsapp_number === 'string' ? emp.whatsapp_number : undefined;
+    const authId = typeof emp.auth_id === 'string' ? emp.auth_id : "";
+    const name = typeof emp.name === 'string' ? emp.name : "Unknown";
+    const email = typeof emp.email === 'string' ? emp.email : "";
+    const whatsappContact = typeof emp.whatsapp_contact === 'string' ? emp.whatsapp_contact : undefined;
     const businessRole = typeof emp.business_role === 'string' ? emp.business_role : "";
     const cabangId = emp.cabang_id || null;
     
@@ -158,7 +177,7 @@ export function mapEmployeeData(employeesData: any[] | null, currentPelakuUsahaI
     return {
       karyawan_id: karyawanId,
       name: name,
-      email: "", // Email not available in profiles, would need to join with auth.users
+      email: email,
       role: businessRole,
       business_role: businessRole,
       auth_id: authId,
