@@ -46,7 +46,6 @@ export async function createAuthAccount(data: EmployeeFormData & { cabang_id?: s
         full_name: data.name,
         whatsapp_number: data.whatsapp_contact,
         is_employee: true,
-        business_role: data.business_role,
         status_id: statusId,
         cabang_id: data.cabang_id || "0" // Include cabang_id in user metadata
       }

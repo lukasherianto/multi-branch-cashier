@@ -79,7 +79,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         console.error("Error fetching profile:", profileError);
       } else if (profileData) {
         setUserStatusId(profileData.status_id);
-        setUserRole(profileData.business_role || 'user');
+        
+        // Get user role from status_id using user_status table
+        if (profileData.status_id) {
+          const { data: statusData } = await supabase
+            .from('user_status')
+            .select('wewenang')
+            .eq('status_id', profileData.status_id)
+            .maybeSingle();
+            
+          if (statusData) {
+            setUserRole(statusData.wewenang);
+          }
+        }
         
         // If profile has a cabang_id and cabang data, use it
         if (profileData.cabang_id && profileData.cabang) {

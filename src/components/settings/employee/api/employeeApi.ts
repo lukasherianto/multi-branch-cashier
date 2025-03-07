@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Employee } from "../types";
 
@@ -18,7 +17,6 @@ export async function fetchEmployees(pelakuUsahaId: number, cabangId?: number) {
       id,
       full_name,
       whatsapp_number,
-      business_role,
       is_employee,
       status_id,
       pelaku_usaha_id,
@@ -91,7 +89,6 @@ export async function fetchEmployees(pelakuUsahaId: number, cabangId?: number) {
   
   // First add all karyawan data
   karyawanData.forEach(karyawan => {
-    // PERBAIKAN: Pastikan business_role berasal dari kolom role, karena di tabel karyawan hanya ada kolom role
     combinedData.push({
       source: 'karyawan',
       karyawan_id: karyawan.karyawan_id,
@@ -114,13 +111,15 @@ export async function fetchEmployees(pelakuUsahaId: number, cabangId?: number) {
     const existsInKaryawan = combinedData.some(emp => emp.auth_id === profile.id);
     
     if (!existsInKaryawan) {
+      // Since business_role column has been removed from profiles,
+      // We need to get the role from user_status table or use a default value
       combinedData.push({
         source: 'profile',
         karyawan_id: 0, // Default value for employees without karyawan entry
         name: profile.full_name,
         email: "", // Email not available in profiles
-        role: profile.business_role, 
-        business_role: profile.business_role,
+        role: "employee", // Default role
+        business_role: "employee", // Default business_role
         auth_id: profile.id,
         is_active: true,
         pelaku_usaha_id: profile.pelaku_usaha_id || pelakuUsahaId,
