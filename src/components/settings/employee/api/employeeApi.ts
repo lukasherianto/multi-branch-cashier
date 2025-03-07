@@ -54,6 +54,7 @@ export async function fetchEmployees(pelakuUsahaId: number) {
         business_name
       )
     `)
+    .eq("pelaku_usaha_id", pelakuUsahaId)
     .order('name', { ascending: true });
 
   if (karyawanError) {
@@ -100,7 +101,7 @@ export async function fetchEmployees(pelakuUsahaId: number) {
         business_role: profile.business_role,
         auth_id: profile.id,
         is_active: true,
-        pelaku_usaha_id: 0, // Unknown business for profile-only entries
+        pelaku_usaha_id: pelakuUsahaId, // Set to current business ID since they are associated
         whatsapp_contact: profile.whatsapp_number,
         cabang_id: profile.cabang_id,
         cabang: profile.cabang
