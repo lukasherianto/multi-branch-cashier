@@ -572,7 +572,7 @@ export type Database = {
           id: string
           is_employee: boolean | null
           pelaku_usaha_id: number | null
-          status_id: number | null
+          role: string | null
           updated_at: string
           whatsapp_number: string | null
         }
@@ -583,7 +583,7 @@ export type Database = {
           id: string
           is_employee?: boolean | null
           pelaku_usaha_id?: number | null
-          status_id?: number | null
+          role?: string | null
           updated_at?: string
           whatsapp_number?: string | null
         }
@@ -594,7 +594,7 @@ export type Database = {
           id?: string
           is_employee?: boolean | null
           pelaku_usaha_id?: number | null
-          status_id?: number | null
+          role?: string | null
           updated_at?: string
           whatsapp_number?: string | null
         }
@@ -612,13 +612,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "pelaku_usaha"
             referencedColumns: ["pelaku_usaha_id"]
-          },
-          {
-            foreignKeyName: "profiles_status_id_fkey"
-            columns: ["status_id"]
-            isOneToOne: false
-            referencedRelation: "user_status"
-            referencedColumns: ["status_id"]
           },
         ]
       }
@@ -850,16 +843,19 @@ export type Database = {
       }
       user_status: {
         Row: {
+          role: string | null
           status_id: number
           uraian: string
           wewenang: string
         }
         Insert: {
+          role?: string | null
           status_id: number
           uraian: string
           wewenang: string
         }
         Update: {
+          role?: string | null
           status_id?: number
           uraian?: string
           wewenang?: string

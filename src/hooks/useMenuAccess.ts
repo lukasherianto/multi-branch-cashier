@@ -15,9 +15,11 @@ export const useMenuAccess = () => {
   useEffect(() => {
     const fetchMenuAccess = async () => {
       setIsLoading(true);
+      console.log("Fetching menu access for role:", userRole);
+      
       try {
         if (userRole) {
-          // The correct way to query the menu_access table with proper typing
+          // Query the menu_access table for the current user role
           const { data, error } = await supabase
             .from('menu_access')
             .select('menu_code')
@@ -29,11 +31,13 @@ export const useMenuAccess = () => {
             return;
           }
           
-          // Correctly type the data and extract menu_code values
+          // Extract the menu codes from the response
           const menuCodes = (data as MenuAccessData[]).map(item => item.menu_code);
+          console.log("Menu access data fetched:", menuCodes);
           setAllowedMenu(menuCodes);
         } else {
           // Default empty array if no user role
+          console.log("No user role, setting empty menu access");
           setAllowedMenu([]);
         }
       } catch (err) {

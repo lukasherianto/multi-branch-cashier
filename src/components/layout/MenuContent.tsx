@@ -40,11 +40,8 @@ export const MenuContent = ({
                 return true;
               }
               
-              // Map the path to a menu_code
-              const menuCode = item.path.replace('/', '').split('/')[0] || 'dashboard';
-              
-              // Check if the menuCode is in the allowedMenu array
-              return allowedMenu.includes(menuCode);
+              // Use the code property from each menu item to check permissions
+              return allowedMenu.includes(item.code);
             });
             
             // Skip sections with no visible items
