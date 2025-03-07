@@ -73,7 +73,7 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
         cabang_id: cabangId ? cabangId.toString() : "0" // Pass the cabang_id to be stored in user metadata
       });
       
-      // Update profile role
+      // Update profile role and business_role
       await updateProfileStatus(authUser.id, data.business_role);
 
       // Update the profile with cabang_id
@@ -81,7 +81,8 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
         .from('profiles')
         .update({ 
           cabang_id: cabangId,
-          pelaku_usaha_id: pelakuUsahaId  // Ensure pelaku_usaha_id is also set in the profile
+          pelaku_usaha_id: pelakuUsahaId,  // Ensure pelaku_usaha_id is also set in the profile
+          business_role: data.business_role // Explicitly set business_role
         })
         .eq('id', authUser.id);
         

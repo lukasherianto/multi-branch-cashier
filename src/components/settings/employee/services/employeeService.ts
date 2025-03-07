@@ -46,7 +46,8 @@ export async function createAuthAccount(data: EmployeeFormData & { cabang_id?: s
         full_name: data.name,
         whatsapp_number: data.whatsapp_contact,
         is_employee: true,
-        role: role, // Use role instead of business_role to match database column
+        role: role, // Store as role in user metadata
+        business_role: role, // Also store as business_role
         cabang_id: data.cabang_id || "0" // Include cabang_id in user metadata
       }
     }
@@ -65,10 +66,13 @@ export async function createAuthAccount(data: EmployeeFormData & { cabang_id?: s
 }
 
 export async function updateProfileStatus(userId: string, role: string) {
-  // Update the role in profiles table
+  // Update both role and business_role in profiles table
   const { error: profileError } = await supabase
     .from('profiles')
-    .update({ role: role }) // Use role column, not business_role
+    .update({ 
+      role: role,
+      business_role: role
+    })
     .eq('id', userId);
 
   if (profileError) {
