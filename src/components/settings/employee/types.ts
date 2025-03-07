@@ -2,6 +2,7 @@
 export interface Branch {
   cabang_id: number;
   branch_name: string;
+  status?: number; // Adding status field to identify HQ branches
 }
 
 export interface Employee {
@@ -19,6 +20,7 @@ export interface Employee {
   cabang_id?: number;
   cabang?: {
     branch_name: string;
+    status?: number; // Added status to identify headquarters branch
   };
   pelaku_usaha?: {
     business_name: string;

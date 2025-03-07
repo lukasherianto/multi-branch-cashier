@@ -23,6 +23,15 @@ export const BranchSelector = ({
   sourceBranches, 
   destinationBranches 
 }: BranchSelectorProps) => {
+  // Helper function to determine if a branch is the headquarters
+  const isHeadquarters = (branchName: string, status?: number) => {
+    // Exclude "Cabang Pasar Ujung" from being labeled as headquarters
+    if (branchName.includes("Pasar Ujung")) {
+      return false;
+    }
+    return status === 1;
+  };
+
   return (
     <div className="flex flex-col md:flex-row gap-4">
       <div className="flex-1">
@@ -48,7 +57,7 @@ export const BranchSelector = ({
                       key={branch.cabang_id}
                       value={branch.cabang_id.toString()}
                     >
-                      {branch.branch_name}{branch.status === 1 ? " (Pusat)" : ""}
+                      {branch.branch_name}{isHeadquarters(branch.branch_name, branch.status) ? " (Pusat)" : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -82,7 +91,7 @@ export const BranchSelector = ({
                       key={branch.cabang_id}
                       value={branch.cabang_id.toString()}
                     >
-                      {branch.branch_name}{branch.status === 1 ? " (Pusat)" : ""}
+                      {branch.branch_name}{isHeadquarters(branch.branch_name, branch.status) ? " (Pusat)" : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>

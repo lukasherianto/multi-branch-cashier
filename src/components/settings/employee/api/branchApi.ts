@@ -7,7 +7,7 @@ export async function fetchBranches(pelakuUsahaId: number): Promise<Branch[]> {
   
   const { data, error } = await supabase
     .from("cabang")
-    .select("cabang_id, branch_name")
+    .select("cabang_id, branch_name, status")
     .eq("pelaku_usaha_id", pelakuUsahaId)
     .order('branch_name', { ascending: true });
 

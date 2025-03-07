@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Building, Phone, MapPin, Loader2, Plus, Home } from "lucide-react";
@@ -12,6 +13,7 @@ interface Branch {
   branch_name: string;
   address: string | null;
   contact_whatsapp: string | null;
+  status?: number; // Added status to identify HQ
 }
 
 const Branches = () => {
@@ -59,7 +61,16 @@ const Branches = () => {
     }
   };
 
-  const headquartersId = branches.length > 0 ? branches[0].cabang_id : null;
+  // Identify the headquarters branch by status=1 or first branch in list if no status is set
+  const headquartersBranch = branches.find(branch => branch.status === 1) || (branches.length > 0 ? branches[0] : null);
+  
+  // Ensure "Cabang Pasar Ujung" is not marked as headquarters
+  const isHeadquarters = (branch: Branch) => {
+    if (branch.branch_name.includes("Pasar Ujung")) {
+      return false;
+    }
+    return branch.cabang_id === headquartersBranch?.cabang_id;
+  };
 
   if (!pelakuUsaha) {
     return (
@@ -151,14 +162,14 @@ const Branches = () => {
           </Card>
         ) : (
           branches.map((branch) => (
-            <Card key={branch.cabang_id} className={`p-6 hover:shadow-lg transition-shadow duration-200 ${branch.cabang_id === headquartersId ? 'border-mint-400' : ''}`}>
+            <Card key={branch.cabang_id} className={`p-6 hover:shadow-lg transition-shadow duration-200 ${isHeadquarters(branch) ? 'border-mint-400' : ''}`}>
               <div className="flex items-center space-x-3 mb-4">
                 <div className="bg-mint-50 p-2 rounded-lg">
                   <Building className="w-5 h-5 text-mint-600" />
                 </div>
                 <h3 className="font-semibold text-gray-800">
                   {branch.branch_name}
-                  {branch.cabang_id === headquartersId && (
+                  {isHeadquarters(branch) && branch.branch_name !== "Cabang Pasar Ujung" && (
                     <span className="ml-2 text-xs bg-mint-100 text-mint-700 px-2 py-1 rounded-full">
                       Pusat
                     </span>
