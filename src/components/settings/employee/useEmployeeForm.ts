@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { EmployeeFormData } from "./types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { employeeSchema } from "./schema";
-import { mapRoleToStatusId } from "./utils/roleMapper";
 import { 
   getPelakuUsahaId, 
   validateBranchId, 
@@ -88,8 +87,7 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
         // Continue even if profile update fails
       }
 
-      // Insert employee data
-      // Use business_role as role since the karyawan table only has a role column
+      // Insert employee data - make sure auth_id is correctly set
       const employeeData = {
         name: data.name,
         email: data.email,
@@ -97,7 +95,7 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
         role: data.business_role, // Use business_role since role column exists but business_role doesn't
         cabang_id: cabangId,
         pelaku_usaha_id: pelakuUsahaId,
-        auth_id: authUser.id,
+        auth_id: authUser.id, // This is the key connection to the auth user
         is_active: true
       };
 

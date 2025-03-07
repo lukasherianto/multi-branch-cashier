@@ -35,7 +35,6 @@ export async function validateBranchId(cabangId: number) {
 }
 
 export async function createAuthAccount(data: EmployeeFormData & { cabang_id?: string }) {
-  const statusId = mapRoleToStatusId(data.business_role);
   const role = data.business_role; // Use business_role as role
 
   // Create Supabase auth account for employee with cabang_id
@@ -79,6 +78,8 @@ export async function updateProfileStatus(userId: string, role: string) {
 }
 
 export async function createEmployeeRecord(employeeData: any) {
+  console.log("Creating employee record with data:", employeeData);
+  
   const { data: insertedEmployee, error: employeeError } = await supabase
     .from("karyawan")
     .insert(employeeData)
@@ -90,5 +91,6 @@ export async function createEmployeeRecord(employeeData: any) {
     throw new Error(employeeError.message);
   }
 
+  console.log("Successfully inserted employee:", insertedEmployee);
   return insertedEmployee;
 }
