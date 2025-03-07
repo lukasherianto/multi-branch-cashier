@@ -80,6 +80,13 @@ export async function updateProfileStatus(userId: string, role: string) {
 export async function createEmployeeRecord(employeeData: any) {
   console.log("Creating employee record with data:", employeeData);
   
+  // Ensure that auth_id is correctly set
+  if (!employeeData.auth_id) {
+    console.error("Missing auth_id in employee data!");
+    throw new Error("UUID pengguna tidak valid");
+  }
+
+  // Insert record into karyawan table, connecting to the auth UUID
   const { data: insertedEmployee, error: employeeError } = await supabase
     .from("karyawan")
     .insert(employeeData)

@@ -73,13 +73,16 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
         cabang_id: cabangId ? cabangId.toString() : "0" // Pass the cabang_id to be stored in user metadata
       });
       
-      // Update profile role (instead of status_id)
+      // Update profile role
       await updateProfileStatus(authUser.id, data.business_role);
 
       // Update the profile with cabang_id
       const { error: profileUpdateError } = await supabase
         .from('profiles')
-        .update({ cabang_id: cabangId })
+        .update({ 
+          cabang_id: cabangId,
+          pelaku_usaha_id: pelakuUsahaId  // Ensure pelaku_usaha_id is also set in the profile
+        })
         .eq('id', authUser.id);
         
       if (profileUpdateError) {
@@ -99,11 +102,11 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
         is_active: true
       };
 
-      console.log("Inserting employee data:", employeeData);
+      console.log("Inserting employee data with UUID connection:", employeeData);
 
       await createEmployeeRecord(employeeData);
 
-      console.log("Employee successfully inserted");
+      console.log("Employee successfully inserted with UUID connection");
 
       toast({
         title: "Sukses",
