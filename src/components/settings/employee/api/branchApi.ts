@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Branch } from "../types";
 
 export async function fetchBranches(pelakuUsahaId: number): Promise<Branch[]> {
-  console.log("Fetching branches for:", pelakuUsahaId);
+  console.log("Fetching branches for pelakuUsahaId:", pelakuUsahaId);
+  
   const { data, error } = await supabase
     .from("cabang")
     .select("cabang_id, branch_name")
@@ -15,5 +16,6 @@ export async function fetchBranches(pelakuUsahaId: number): Promise<Branch[]> {
     throw error;
   }
 
+  console.log("Branches data from database:", data);
   return data as Branch[];
 }

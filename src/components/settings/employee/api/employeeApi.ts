@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Employee } from "../types";
 
 export async function fetchEmployees(pelakuUsahaId: number) {
+  console.log("Fetching employees for pelaku usaha ID:", pelakuUsahaId);
+  
   const { data, error } = await supabase
     .from("karyawan")
     .select(`
@@ -29,6 +31,7 @@ export async function fetchEmployees(pelakuUsahaId: number) {
     throw error;
   }
 
+  console.log("Employees data from database:", data);
   return data;
 }
 
@@ -50,6 +53,8 @@ export async function fetchUserPelakuUsaha(userId: string) {
 // Map raw data to Employee objects with safety checks
 export function mapEmployeeData(employeesData: any[] | null, currentPelakuUsahaId: number): Employee[] {
   if (!employeesData) return [];
+  
+  console.log("Mapping employee data:", employeesData);
   
   return employeesData.map((emp) => {
     // Create a default employee object to ensure type safety

@@ -11,11 +11,20 @@ export const useEmployeeList = () => {
 
   const loadEmployees = async (pelakuUsahaId: number) => {
     try {
-      console.log("Loading employees...");
+      console.log("Loading employees for pelakuUsahaId:", pelakuUsahaId);
       const employeesData = await fetchEmployees(pelakuUsahaId);
+      
+      console.log("Raw employees data received:", employeesData);
+      
+      if (!employeesData || employeesData.length === 0) {
+        console.log("No employee data returned from the database");
+        setEmployees([]);
+        return [];
+      }
+      
       const formattedEmployees = mapEmployeeData(employeesData, pelakuUsahaId);
       
-      console.log("Employees loaded:", formattedEmployees);
+      console.log("Formatted employees:", formattedEmployees);
       setEmployees(formattedEmployees);
       return formattedEmployees;
     } catch (err: any) {
