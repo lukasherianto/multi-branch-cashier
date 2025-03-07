@@ -21,6 +21,7 @@ const EmployeeReport = () => {
           karyawan_id,
           name,
           email,
+          whatsapp_contact,
           auth_id,
           cabang:cabang_id (
             branch_name
@@ -117,6 +118,8 @@ const EmployeeReport = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Nama</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>WhatsApp</TableHead>
               <TableHead>Jabatan</TableHead>
               <TableHead>Cabang</TableHead>
               <TableHead className="text-right">Kehadiran Bulan Ini</TableHead>
@@ -130,6 +133,8 @@ const EmployeeReport = () => {
               return (
                 <TableRow key={employee.karyawan_id}>
                   <TableCell>{employee.name}</TableCell>
+                  <TableCell>{employee.email || '-'}</TableCell>
+                  <TableCell>{employee.whatsapp_contact || '-'}</TableCell>
                   <TableCell>{employee.role}</TableCell>
                   <TableCell>{employee.cabang?.branch_name || '-'}</TableCell>
                   <TableCell className="text-right">{presentDays} hari</TableCell>

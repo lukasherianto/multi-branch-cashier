@@ -36,6 +36,7 @@ export const EmployeeTable = ({
         <TableRow>
           <TableHead>Nama</TableHead>
           <TableHead>Email</TableHead>
+          <TableHead>WhatsApp</TableHead>
           <TableHead>Jabatan</TableHead>
           <TableHead>Penempatan</TableHead>
           <TableHead className="text-right">Aksi</TableHead>
