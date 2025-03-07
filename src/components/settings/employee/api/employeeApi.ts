@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Employee } from "../types";
 
@@ -90,13 +91,14 @@ export async function fetchEmployees(pelakuUsahaId: number, cabangId?: number) {
   
   // First add all karyawan data
   karyawanData.forEach(karyawan => {
+    // PERBAIKAN: Pastikan business_role berasal dari kolom role, karena di tabel karyawan hanya ada kolom role
     combinedData.push({
       source: 'karyawan',
       karyawan_id: karyawan.karyawan_id,
       name: karyawan.name,
       email: karyawan.email,
       role: karyawan.role,
-      business_role: karyawan.role,
+      business_role: karyawan.role, // Gunakan nilai dari kolom role
       auth_id: karyawan.auth_id,
       is_active: karyawan.is_active,
       pelaku_usaha_id: karyawan.pelaku_usaha_id,
@@ -117,7 +119,7 @@ export async function fetchEmployees(pelakuUsahaId: number, cabangId?: number) {
         karyawan_id: 0, // Default value for employees without karyawan entry
         name: profile.full_name,
         email: "", // Email not available in profiles
-        role: profile.business_role,
+        role: profile.business_role, 
         business_role: profile.business_role,
         auth_id: profile.id,
         is_active: true,
@@ -181,7 +183,8 @@ export function mapEmployeeData(employeesData: any[] | null, currentPelakuUsahaI
     const name = typeof emp.name === 'string' ? emp.name : "Unknown";
     const email = typeof emp.email === 'string' ? emp.email : "";
     const whatsappContact = typeof emp.whatsapp_contact === 'string' ? emp.whatsapp_contact : undefined;
-    const businessRole = typeof emp.business_role === 'string' ? emp.business_role : "";
+    const role = typeof emp.role === 'string' ? emp.role : "";
+    const businessRole = typeof emp.business_role === 'string' ? emp.business_role : role; // Gunakan role jika business_role tidak ada
     const cabangId = emp.cabang_id || null;
     
     // Get karyawan-specific data if available
@@ -199,8 +202,8 @@ export function mapEmployeeData(employeesData: any[] | null, currentPelakuUsahaI
       karyawan_id: karyawanId,
       name: name,
       email: email,
-      role: businessRole,
-      business_role: businessRole,
+      role: role,
+      business_role: businessRole, // Pastikan business_role diisi dengan benar
       auth_id: authId,
       is_active: true,
       pelaku_usaha_id: pelakuUsahaId,
