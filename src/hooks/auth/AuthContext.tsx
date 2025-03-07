@@ -63,7 +63,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // 1. Ambil profile (jika ada)
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          *,
+          cabang (
+            cabang_id,
+            branch_name,
+            address,
+            contact_whatsapp
+          )
+        `)
         .eq('id', userId)
         .maybeSingle();
 
@@ -72,6 +80,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       } else if (profileData) {
         setUserStatusId(profileData.status_id);
         setUserRole(profileData.business_role || 'user');
+        
+        // If profile has a cabang_id and cabang data, use it
+        if (profileData.cabang_id && profileData.cabang) {
+          setCabang(profileData.cabang);
+          setSelectedCabangId(profileData.cabang_id);
+        }
       }
 
       // 2. Ambil data pelaku usaha (jika user adalah pelaku usaha)
@@ -100,10 +114,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           console.log("Found cabang:", cabangData);
           setCabangList(cabangData);
           
-          // Pilih cabang pertama sebagai default
-          const defaultCabang = cabangData[0];
-          setCabang(defaultCabang);
-          setSelectedCabangId(defaultCabang.cabang_id);
+          // Only set default cabang if not already set from profile
+          if (!selectedCabangId) {
+            // Pilih cabang pertama sebagai default
+            const defaultCabang = cabangData[0];
+            setCabang(defaultCabang);
+            setSelectedCabangId(defaultCabang.cabang_id);
+          }
         }
       }
     } catch (error) {

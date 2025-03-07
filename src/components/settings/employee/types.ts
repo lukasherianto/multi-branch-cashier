@@ -16,6 +16,7 @@ export interface Employee {
   isSameBusiness?: boolean;
   businessName?: string;
   whatsapp_contact?: string;
+  cabang_id?: number; // Added to match the profiles table
   cabang?: {
     branch_name: string;
   };

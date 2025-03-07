@@ -19,7 +19,11 @@ export async function fetchEmployees(pelakuUsahaId: number) {
       whatsapp_number,
       business_role,
       is_employee,
-      status_id
+      status_id,
+      cabang_id,
+      cabang (
+        branch_name
+      )
     `)
     .eq("is_employee", true);
 
@@ -76,10 +80,10 @@ export async function fetchEmployees(pelakuUsahaId: number) {
         business_role: karyawan.role,
         is_employee: true,
         status_id: null,
-        // Add extra karyawan-specific data
-        karyawan_id: karyawan.karyawan_id,
         cabang_id: karyawan.cabang_id,
         cabang: karyawan.cabang,
+        // Add extra karyawan-specific data
+        karyawan_id: karyawan.karyawan_id,
         pelaku_usaha_id: karyawan.pelaku_usaha_id,
         pelaku_usaha: karyawan.pelaku_usaha
       });
@@ -138,6 +142,7 @@ export function mapEmployeeData(employeesData: any[] | null, currentPelakuUsahaI
     const name = typeof emp.full_name === 'string' ? emp.full_name : "Unknown";
     const whatsappContact = typeof emp.whatsapp_number === 'string' ? emp.whatsapp_number : undefined;
     const businessRole = typeof emp.business_role === 'string' ? emp.business_role : "";
+    const cabangId = emp.cabang_id || null;
     
     // Get karyawan-specific data if available
     const karyawanId = emp.karyawan_id || 0;
@@ -162,6 +167,7 @@ export function mapEmployeeData(employeesData: any[] | null, currentPelakuUsahaI
       whatsapp_contact: whatsappContact,
       isSameBusiness: isSameBusiness,
       businessName: businessName,
+      cabang_id: cabangId,
       cabang: cabangData
     };
   });

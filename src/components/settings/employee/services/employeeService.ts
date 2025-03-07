@@ -34,10 +34,10 @@ export async function validateBranchId(cabangId: number) {
   return true;
 }
 
-export async function createAuthAccount(data: EmployeeFormData) {
+export async function createAuthAccount(data: EmployeeFormData & { cabang_id?: string }) {
   const statusId = mapRoleToStatusId(data.business_role);
 
-  // Create Supabase auth account for employee
+  // Create Supabase auth account for employee with cabang_id
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email: data.email,
     password: data.password,
@@ -47,7 +47,8 @@ export async function createAuthAccount(data: EmployeeFormData) {
         whatsapp_number: data.whatsapp_contact,
         is_employee: true,
         business_role: data.business_role,
-        status_id: statusId
+        status_id: statusId,
+        cabang_id: data.cabang_id || "0" // Include cabang_id in user metadata
       }
     }
   });

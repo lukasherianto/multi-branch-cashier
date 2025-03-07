@@ -570,6 +570,7 @@ export type Database = {
       profiles: {
         Row: {
           business_role: string | null
+          cabang_id: number | null
           created_at: string
           full_name: string
           id: string
@@ -580,6 +581,7 @@ export type Database = {
         }
         Insert: {
           business_role?: string | null
+          cabang_id?: number | null
           created_at?: string
           full_name: string
           id: string
@@ -590,6 +592,7 @@ export type Database = {
         }
         Update: {
           business_role?: string | null
+          cabang_id?: number | null
           created_at?: string
           full_name?: string
           id?: string
@@ -599,6 +602,13 @@ export type Database = {
           whatsapp_number?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_cabang_id_fkey"
+            columns: ["cabang_id"]
+            isOneToOne: false
+            referencedRelation: "cabang"
+            referencedColumns: ["cabang_id"]
+          },
           {
             foreignKeyName: "profiles_status_id_fkey"
             columns: ["status_id"]

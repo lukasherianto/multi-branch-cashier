@@ -71,11 +71,25 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
         }
       }
 
-      // Create auth account
-      const authUser = await createAuthAccount(data);
+      // Create auth account with cabang_id in user metadata
+      const authUser = await createAuthAccount({
+        ...data,
+        cabang_id: cabangId ? cabangId.toString() : "0" // Pass the cabang_id to be stored in user metadata
+      });
       
       // Update profile status
       await updateProfileStatus(authUser.id, statusId);
+
+      // Update the profile with cabang_id
+      const { error: profileUpdateError } = await supabase
+        .from('profiles')
+        .update({ cabang_id: cabangId })
+        .eq('id', authUser.id);
+        
+      if (profileUpdateError) {
+        console.error("Error updating profile cabang_id:", profileUpdateError);
+        // Continue even if profile update fails
+      }
 
       // Insert employee data
       // Use business_role as role since the karyawan table only has a role column
