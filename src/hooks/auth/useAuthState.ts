@@ -1,39 +1,45 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { User } from "@supabase/supabase-js";
+import { Session, User } from "@supabase/supabase-js";
+import { useToast } from "../use-toast";
 
 export const useAuthState = () => {
+  const { toast } = useToast();
+  const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string>("");
   const [userStatusId, setUserStatusId] = useState<number | null>(null);
-  const [pelakuUsaha, setPelakuUsaha] = useState<any>(null);
-  const [cabang, setCabang] = useState<any>(null);
-  const [cabangList, setCabangList] = useState<any[]>([]);
-  const [selectedCabangId, setSelectedCabangId] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [userBranch, setUserBranch] = useState<any>(null);
+  const [userBranchId, setUserBranchId] = useState<number | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Get current session
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          throw sessionError;
-        }
+    // Subscribe to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+    });
 
-        if (!sessionData.session) {
-          // No active session
-          setUser(null);
-          setLoading(false);
-          return;
-        }
+    // Initial session
+    getSession();
 
-        // Set user from session
-        setUser(sessionData.session.user);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
-        // Get user profile
+  const getSession = async () => {
+    try {
+      setIsLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      setUser(session?.user ?? null);
+
+      // If user exists, get profile and role
+      if (session?.user) {
+        // Get profile data
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select(`
@@ -44,13 +50,14 @@ export const useAuthState = () => {
             pelaku_usaha_id,
             cabang_id,
             cabang (
+              cabang_id,
               branch_name,
               address,
               contact_whatsapp
             )
           `)
-          .eq('id', sessionData.session.user.id)
-          .maybeSingle();
+          .eq('id', session.user.id)
+          .single();
 
         if (profileError) {
           console.error("Error fetching profile:", profileError);
@@ -71,84 +78,33 @@ export const useAuthState = () => {
             }
           }
           
-          // Set cabang data if exists
+          // Set user branch data
           if (profileData.cabang_id && profileData.cabang) {
-            setCabang(profileData.cabang);
-            setSelectedCabangId(profileData.cabang_id);
+            setUserBranch(profileData.cabang);
+            setUserBranchId(profileData.cabang_id);
           }
         }
-
-        // Get pelaku usaha data
-        const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
-          .from('pelaku_usaha')
-          .select('*')
-          .eq('user_id', sessionData.session.user.id)
-          .maybeSingle();
-
-        if (pelakuUsahaError) {
-          console.error("Error fetching pelaku usaha:", pelakuUsahaError);
-        } else if (pelakuUsahaData) {
-          setPelakuUsaha(pelakuUsahaData);
-
-          // Get branch data for this pelaku_usaha
-          const { data: branchData, error: branchError } = await supabase
-            .from('cabang')
-            .select('*')
-            .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id);
-
-          if (branchError) {
-            console.error("Error fetching branches:", branchError);
-          } else if (branchData && branchData.length > 0) {
-            setCabangList(branchData);
-            
-            // If cabang wasn't set from profile, use the first branch as default
-            if (!selectedCabangId) {
-              setCabang(branchData[0]);
-              setSelectedCabangId(branchData[0].cabang_id);
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Error in useAuthState:", error);
-      } finally {
-        setLoading(false);
       }
-    };
-
-    fetchData();
-
-    // Set up auth state change listener
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          fetchData();
-        } else if (event === 'SIGNED_OUT') {
-          setUser(null);
-          setUserRole(null);
-          setUserStatusId(null);
-          setPelakuUsaha(null);
-          setCabang(null);
-          setCabangList([]);
-          setSelectedCabangId(null);
-        }
-      }
-    );
-
-    // Cleanup
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
+    } catch (error) {
+      console.error("Error getting session:", error);
+      toast({
+        title: "Authentication Error",
+        description: "Failed to get user session",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return {
+    session,
     user,
+    isLoading,
     userRole,
+    userBranch,
+    userBranchId,
     userStatusId,
-    pelakuUsaha,
-    cabang,
-    cabangList,
-    selectedCabangId,
-    setSelectedCabangId,
-    loading
+    refreshSession: getSession
   };
 };
