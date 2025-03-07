@@ -139,9 +139,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     cabang,
     cabangList,
     selectedCabangId,
+    selectedBranchId: selectedCabangId, // Make selectedBranchId an alias for selectedCabangId
     setSelectedCabangId,
     isLoading
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
+}

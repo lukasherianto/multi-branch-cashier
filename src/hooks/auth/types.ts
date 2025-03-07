@@ -11,6 +11,7 @@ export interface AuthContextType {
   cabang: any;
   cabangList: any[];
   selectedCabangId: number | null;
+  selectedBranchId: number | null;  // Added this property to match what's used in useEmployeeData
   setSelectedCabangId: (id: number | null) => void;
   isLoading: boolean;
 }
