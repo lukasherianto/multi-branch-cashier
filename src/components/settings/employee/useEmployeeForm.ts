@@ -154,12 +154,12 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
       }
 
       // Insert employee data
+      // Use business_role as role since the karyawan table only has a role column
       const employeeData = {
         name: data.name,
         email: data.email,
         whatsapp_contact: data.whatsapp_contact || null,
-        role: data.role || data.business_role, // Use business_role as fallback if role is not provided
-        business_role: data.business_role,
+        role: data.business_role, // Use business_role since role column exists but business_role doesn't
         cabang_id: cabangId,
         pelaku_usaha_id: pelakuUsaha.pelaku_usaha_id,
         auth_id: authData.user.id,

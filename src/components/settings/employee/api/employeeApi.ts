@@ -10,7 +10,6 @@ export async function fetchEmployees(pelakuUsahaId: number) {
       name,
       email,
       role,
-      business_role,
       auth_id,
       is_active,
       pelaku_usaha_id,
@@ -73,7 +72,6 @@ export function mapEmployeeData(employeesData: any[] | null, currentPelakuUsahaI
     const name = typeof emp.name === 'string' ? emp.name : "Unknown";
     const email = typeof emp.email === 'string' ? emp.email : undefined;
     const role = typeof emp.role === 'string' ? emp.role : "";
-    const businessRole = typeof emp.business_role === 'string' ? emp.business_role : undefined;
     const authId = typeof emp.auth_id === 'string' ? emp.auth_id : undefined;
     const isActive = typeof emp.is_active === 'boolean' ? emp.is_active : undefined;
     const pelakuUsahaId = typeof emp.pelaku_usaha_id === 'number' ? emp.pelaku_usaha_id : 0;
@@ -90,12 +88,15 @@ export function mapEmployeeData(employeesData: any[] | null, currentPelakuUsahaI
         emp.pelaku_usaha.business_name : 'Tidak diketahui';
     }
     
+    // Use the role for business_role since business_role column doesn't exist
+    const businessRole = role;
+    
     return {
       karyawan_id: karyawanId,
       name: name,
       email: email,
       role: role,
-      business_role: businessRole,
+      business_role: businessRole, // Use role as business_role
       auth_id: authId,
       is_active: isActive,
       pelaku_usaha_id: pelakuUsahaId,

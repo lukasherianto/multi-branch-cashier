@@ -9,7 +9,7 @@ export interface Employee {
   name: string;
   email?: string;
   role: string;
-  business_role?: string;
+  business_role?: string; // Made optional since it's derived from role
   auth_id?: string;
   is_active?: boolean;
   pelaku_usaha_id: number;
