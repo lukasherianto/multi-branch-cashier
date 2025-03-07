@@ -1,9 +1,8 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Employee } from "../types";
 
-export async function fetchEmployees(pelakuUsahaId: number) {
-  console.log("Fetching employees for pelaku usaha ID:", pelakuUsahaId);
+export async function fetchEmployees(pelakuUsahaId: number, cabangId?: number) {
+  console.log("Fetching employees for pelaku usaha ID:", pelakuUsahaId, "and cabang ID:", cabangId);
   
   if (!pelakuUsahaId) {
     console.error("Invalid pelakuUsahaId:", pelakuUsahaId);
@@ -11,8 +10,8 @@ export async function fetchEmployees(pelakuUsahaId: number) {
   }
   
   // Get all employees from profiles table where is_employee is true
-  // and belongs to the current pelaku_usaha_id
-  const { data: profileData, error: profileError } = await supabase
+  // and belongs to the current pelaku_usaha_id or has the same cabang_id
+  let profileQuery = supabase
     .from("profiles")
     .select(`
       id,
@@ -27,8 +26,17 @@ export async function fetchEmployees(pelakuUsahaId: number) {
         branch_name
       )
     `)
-    .eq("is_employee", true)
-    .eq("pelaku_usaha_id", pelakuUsahaId);
+    .eq("is_employee", true);
+  
+  // Add filter for cabang_id if provided
+  if (cabangId) {
+    profileQuery = profileQuery.eq("cabang_id", cabangId);
+  } else {
+    // Otherwise filter by pelaku_usaha_id
+    profileQuery = profileQuery.eq("pelaku_usaha_id", pelakuUsahaId);
+  }
+
+  const { data: profileData, error: profileError } = await profileQuery;
 
   if (profileError) {
     console.error("Error fetching employee profiles:", profileError);
@@ -37,8 +45,8 @@ export async function fetchEmployees(pelakuUsahaId: number) {
 
   console.log("Employee profiles data:", profileData);
 
-  // Get employee data from karyawan table that belongs to the current business
-  const { data: karyawanData, error: karyawanError } = await supabase
+  // Get employee data from karyawan table that belongs to the current business or branch
+  let karyawanQuery = supabase
     .from("karyawan")
     .select(`
       karyawan_id,
@@ -57,8 +65,17 @@ export async function fetchEmployees(pelakuUsahaId: number) {
         business_name
       )
     `)
-    .eq("pelaku_usaha_id", pelakuUsahaId)
     .order('name', { ascending: true });
+  
+  // Add filter for cabang_id if provided
+  if (cabangId) {
+    karyawanQuery = karyawanQuery.eq("cabang_id", cabangId);
+  } else {
+    // Otherwise filter by pelaku_usaha_id
+    karyawanQuery = karyawanQuery.eq("pelaku_usaha_id", pelakuUsahaId);
+  }
+
+  const { data: karyawanData, error: karyawanError } = await karyawanQuery;
 
   if (karyawanError) {
     console.error("Error fetching karyawan data:", karyawanError);
@@ -104,7 +121,7 @@ export async function fetchEmployees(pelakuUsahaId: number) {
         business_role: profile.business_role,
         auth_id: profile.id,
         is_active: true,
-        pelaku_usaha_id: profile.pelaku_usaha_id,
+        pelaku_usaha_id: profile.pelaku_usaha_id || pelakuUsahaId,
         whatsapp_contact: profile.whatsapp_number,
         cabang_id: profile.cabang_id,
         cabang: profile.cabang

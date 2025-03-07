@@ -10,11 +10,11 @@ export const useEmployeeList = () => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const loadEmployees = async (pelakuUsahaId: number) => {
+  const loadEmployees = async (pelakuUsahaId: number, cabangId?: number) => {
     try {
       setIsLoading(true);
-      console.log("Loading employees for pelakuUsahaId:", pelakuUsahaId);
-      const employeesData = await fetchEmployees(pelakuUsahaId);
+      console.log("Loading employees for pelakuUsahaId:", pelakuUsahaId, "and cabangId:", cabangId);
+      const employeesData = await fetchEmployees(pelakuUsahaId, cabangId);
       
       console.log("Raw employees data received:", employeesData);
       

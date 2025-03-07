@@ -8,7 +8,7 @@ import { useBusinessProfile } from "./useBusinessProfile";
 
 export const useEmployeeData = () => {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, selectedBranchId } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -33,8 +33,8 @@ export const useEmployeeData = () => {
         return; // Error already set in useBusinessProfile
       }
 
-      // Load employees
-      await loadEmployees(businessId);
+      // Load employees with cabang_id filter if available
+      await loadEmployees(businessId, selectedBranchId);
       
       // Load branches
       await loadBranches(businessId);
@@ -57,7 +57,7 @@ export const useEmployeeData = () => {
     } else {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user, selectedBranchId]);
 
   return {
     isLoading: isLoading || employeesLoading,
