@@ -1,9 +1,11 @@
+
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { MenuItem } from "./MenuItem";
 import menuConfig from "./menuConfig";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/auth";
+import { useMenuAccess } from "@/hooks/useMenuAccess";
 
 interface MenuContentProps {
   expandedMenus: string[];
@@ -21,17 +23,34 @@ export const MenuContent = ({
   onLogout 
 }: MenuContentProps) => {
   const { userRole } = useAuth();
+  const { allowedMenu, isLoading } = useMenuAccess();
   
-  // Untuk debugging
-  console.log('MenuContent rendering:', { userRole, menuConfig });
+  // For debugging
+  console.log('MenuContent rendering:', { userRole, allowedMenu, menuConfig });
 
   return (
     <div className="flex flex-col h-full">
       <ScrollArea className="flex-grow">
         <div className="space-y-0.5 py-2 pr-2">
           {menuConfig.map((section) => {
-            // Tampilkan semua item tanpa filter
-            const items = section.items;
+            // Filter items based on user role and permissions
+            const items = section.items.filter(item => {
+              // If no permissions loaded yet or user is pelaku_usaha, show all
+              if (isLoading || userRole === 'pelaku_usaha') {
+                return true;
+              }
+              
+              // Map the path to a menu_code
+              const menuCode = item.path.replace('/', '').split('/')[0] || 'dashboard';
+              
+              // Check if the menuCode is in the allowedMenu array
+              return allowedMenu.includes(menuCode);
+            });
+            
+            // Skip sections with no visible items
+            if (items.length === 0) {
+              return null;
+            }
             
             return (
               <div key={section.title} className="mb-3">

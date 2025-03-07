@@ -21,6 +21,7 @@ const menuConfig = [
         title: 'Ringkasan',
         icon: LayoutDashboard,
         path: '/',
+        code: 'dashboard'
       },
     ],
   },
@@ -31,16 +32,19 @@ const menuConfig = [
         title: 'Daftar Produk',
         icon: ListChecks,
         path: '/products',
+        code: 'products'
       },
       {
         title: 'Kategori Produk',
         icon: FolderOpen,
         path: '/products/categories',
+        code: 'products_categories'
       },
       {
         title: 'Transfer Stok',
         icon: Package,
         path: '/stock-transfer',
+        code: 'stock_transfer'
       },
     ],
   },
@@ -51,16 +55,19 @@ const menuConfig = [
         title: 'POS',
         icon: Scale,
         path: '/pos',
+        code: 'pos'
       },
       {
         title: 'Riwayat Transaksi',
         icon: ListChecks,
         path: '/history',
+        code: 'history'
       },
       {
         title: 'Retur',
         icon: ArrowLeftRight,
         path: '/returns',
+        code: 'returns'
       },
     ],
   },
@@ -71,16 +78,19 @@ const menuConfig = [
         title: 'Kas',
         icon: Wallet,
         path: '/kas',
+        code: 'kas'
       },
       {
         title: 'Pembelian',
         icon: Wallet,
         path: '/kas/purchases',
+        code: 'purchases'
       },
       {
         title: 'Laporan',
         icon: FileText,
         path: '/reports',
+        code: 'reports'
       },
     ],
   },
@@ -91,16 +101,19 @@ const menuConfig = [
         title: 'Cabang',
         icon: LayoutDashboard,
         path: '/branches',
+        code: 'branches'
       },
       {
         title: 'Absensi',
         icon: CalendarDays,
         path: '/attendance',
+        code: 'attendance'
       },
       {
         title: 'Data Member',
         icon: Users,
         path: '/members',
+        code: 'members'
       },
     ],
   },
@@ -111,6 +124,7 @@ const menuConfig = [
         title: 'Pengaturan',
         icon: Settings,
         path: '/settings',
+        code: 'settings'
       },
     ],
   },

@@ -119,7 +119,6 @@ export type Database = {
           karyawan_id: number
           name: string
           pelaku_usaha_id: number | null
-          role: string
           updated_at: string
           whatsapp_contact: string | null
         }
@@ -132,7 +131,6 @@ export type Database = {
           karyawan_id?: number
           name: string
           pelaku_usaha_id?: number | null
-          role: string
           updated_at?: string
           whatsapp_contact?: string | null
         }
@@ -145,7 +143,6 @@ export type Database = {
           karyawan_id?: number
           name?: string
           pelaku_usaha_id?: number | null
-          role?: string
           updated_at?: string
           whatsapp_contact?: string | null
         }
