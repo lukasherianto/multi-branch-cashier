@@ -20,6 +20,16 @@ export const EmployeeTable = ({
   onDelete, 
   onResetPassword 
 }: EmployeeTableProps) => {
+  // Sort employees - first show employees from current business, then others
+  const sortedEmployees = [...employees].sort((a, b) => {
+    // First sort by isSameBusiness (true first)
+    if (a.isSameBusiness === b.isSameBusiness) {
+      // Then sort by name alphabetically
+      return a.name.localeCompare(b.name);
+    }
+    return a.isSameBusiness ? -1 : 1;
+  });
+
   return (
     <Table>
       <TableHeader>
@@ -32,9 +42,9 @@ export const EmployeeTable = ({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {employees.map((employee) => (
+        {sortedEmployees.map((employee) => (
           <EmployeeTableRow
-            key={employee.karyawan_id}
+            key={`${employee.karyawan_id}-${employee.auth_id}`}
             employee={employee}
             onDelete={onDelete}
             onResetPassword={onResetPassword}

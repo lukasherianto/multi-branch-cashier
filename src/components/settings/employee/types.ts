@@ -15,6 +15,7 @@ export interface Employee {
   pelaku_usaha_id: number;
   isSameBusiness?: boolean;
   businessName?: string;
+  whatsapp_contact?: string;
   cabang?: {
     branch_name: string;
   };

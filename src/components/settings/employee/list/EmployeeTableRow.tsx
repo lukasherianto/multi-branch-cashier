@@ -3,6 +3,7 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { Employee } from "../types";
 import { EmployeeActions } from "./EmployeeActions";
 import { RoleBadge } from "./RoleBadge";
+import { Badge } from "@/components/ui/badge";
 
 interface EmployeeTableRowProps {
   employee: Employee;
@@ -16,8 +17,17 @@ export const EmployeeTableRow = ({
   onResetPassword 
 }: EmployeeTableRowProps) => {
   return (
-    <TableRow>
-      <TableCell className="font-medium">{employee.name}</TableCell>
+    <TableRow className={!employee.isSameBusiness ? "bg-gray-50" : ""}>
+      <TableCell className="font-medium">
+        {employee.name}
+        {!employee.isSameBusiness && (
+          <div className="mt-1">
+            <Badge variant="outline" className="text-xs">
+              {employee.businessName || "Usaha Lain"}
+            </Badge>
+          </div>
+        )}
+      </TableCell>
       <TableCell>{employee.email || "-"}</TableCell>
       <TableCell>
         {employee.business_role && (

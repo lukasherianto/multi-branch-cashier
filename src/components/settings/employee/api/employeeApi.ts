@@ -11,7 +11,7 @@ export async function fetchEmployees(pelakuUsahaId: number) {
   }
   
   // Get all employees from profiles table where is_employee is true
-  const { data, error } = await supabase
+  const { data: profileData, error: profileError } = await supabase
     .from("profiles")
     .select(`
       id,
@@ -23,13 +23,71 @@ export async function fetchEmployees(pelakuUsahaId: number) {
     `)
     .eq("is_employee", true);
 
-  if (error) {
-    console.error("Error fetching employees:", error);
-    throw error;
+  if (profileError) {
+    console.error("Error fetching employee profiles:", profileError);
+    throw profileError;
   }
 
-  console.log("Employees data from profiles table:", data);
-  return data;
+  console.log("Employee profiles data:", profileData);
+
+  // Get employee data from karyawan table that belongs to the current business
+  const { data: karyawanData, error: karyawanError } = await supabase
+    .from("karyawan")
+    .select(`
+      karyawan_id,
+      name,
+      email,
+      role,
+      whatsapp_contact,
+      auth_id,
+      is_active,
+      cabang_id,
+      cabang (
+        branch_name
+      ),
+      pelaku_usaha_id,
+      pelaku_usaha (
+        business_name
+      )
+    `)
+    .order('name', { ascending: true });
+
+  if (karyawanError) {
+    console.error("Error fetching karyawan data:", karyawanError);
+    throw karyawanError;
+  }
+
+  console.log("Karyawan data:", karyawanData);
+
+  // Combine the data from both sources
+  // Profile data will be used as a base, with additional data from karyawan table when available
+  const combinedData = [...profileData];
+  
+  // Add karyawan data that might not be in profiles
+  karyawanData.forEach(karyawan => {
+    // Check if this karyawan already exists in combined data
+    const existsInProfiles = combinedData.some(profile => profile.id === karyawan.auth_id);
+    
+    if (!existsInProfiles && karyawan.auth_id) {
+      combinedData.push({
+        id: karyawan.auth_id,
+        full_name: karyawan.name,
+        whatsapp_number: karyawan.whatsapp_contact,
+        business_role: karyawan.role,
+        is_employee: true,
+        status_id: null,
+        // Add extra karyawan-specific data
+        karyawan_id: karyawan.karyawan_id,
+        cabang_id: karyawan.cabang_id,
+        cabang: karyawan.cabang,
+        pelaku_usaha_id: karyawan.pelaku_usaha_id,
+        pelaku_usaha: karyawan.pelaku_usaha
+      });
+    }
+  });
+
+  console.log("Combined employee data:", combinedData);
+  return combinedData;
 }
 
 export async function fetchUserPelakuUsaha(userId: string) {
@@ -56,14 +114,14 @@ export async function fetchUserPelakuUsaha(userId: string) {
 export function mapEmployeeData(employeesData: any[] | null, currentPelakuUsahaId: number): Employee[] {
   if (!employeesData) return [];
   
-  console.log("Mapping employee data from profiles:", employeesData);
+  console.log("Mapping employee data:", employeesData);
   
   return employeesData.map((emp) => {
     // Create a default employee object to ensure type safety
     const defaultEmployee: Employee = {
       karyawan_id: 0,
       name: "Unknown",
-      pelaku_usaha_id: currentPelakuUsahaId,
+      pelaku_usaha_id: currentPelakuUsahaId, 
       role: "",
       isSameBusiness: true,
       businessName: 'Tidak diketahui'
@@ -81,19 +139,30 @@ export function mapEmployeeData(employeesData: any[] | null, currentPelakuUsahaI
     const whatsappContact = typeof emp.whatsapp_number === 'string' ? emp.whatsapp_number : undefined;
     const businessRole = typeof emp.business_role === 'string' ? emp.business_role : "";
     
-    // Create employee object from profiles data
+    // Get karyawan-specific data if available
+    const karyawanId = emp.karyawan_id || 0;
+    const cabangData = emp.cabang || null;
+    const pelakuUsahaId = emp.pelaku_usaha_id || currentPelakuUsahaId;
+    const pelakuUsahaData = emp.pelaku_usaha || null;
+    
+    // Determine if employee belongs to current business
+    const isSameBusiness = pelakuUsahaId === currentPelakuUsahaId;
+    const businessName = pelakuUsahaData?.business_name || 'Current Business';
+    
+    // Create employee object
     return {
-      karyawan_id: 0, // Use 0 as placeholder since profiles doesn't have karyawan_id
+      karyawan_id: karyawanId,
       name: name,
       email: "", // Email not available in profiles, would need to join with auth.users
       role: businessRole,
       business_role: businessRole,
       auth_id: authId,
       is_active: true,
-      pelaku_usaha_id: currentPelakuUsahaId,
+      pelaku_usaha_id: pelakuUsahaId,
       whatsapp_contact: whatsappContact,
-      isSameBusiness: true,
-      businessName: 'Current Business'
+      isSameBusiness: isSameBusiness,
+      businessName: businessName,
+      cabang: cabangData
     };
   });
 }
