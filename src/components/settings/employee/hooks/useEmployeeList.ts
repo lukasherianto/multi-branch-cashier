@@ -16,10 +16,10 @@ export const useEmployeeList = () => {
       console.log("Loading employees for pelakuUsahaId:", pelakuUsahaId);
       const employeesData = await fetchEmployees(pelakuUsahaId);
       
-      console.log("Raw employees data received:", employeesData);
+      console.log("Raw employees data received from profiles:", employeesData);
       
       if (!employeesData || employeesData.length === 0) {
-        console.log("No employee data returned from the database");
+        console.log("No employee data returned from the profiles table");
         setEmployees([]);
         return [];
       }
