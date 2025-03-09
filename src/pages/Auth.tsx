@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,9 +15,6 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [whatsappNumber, setWhatsappNumber] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -48,79 +46,32 @@ const Auth = () => {
       return;
     }
 
-    if (isSignUp) {
-      if (!fullName) {
-        setError("Nama lengkap harus diisi.");
-        setIsLoading(false);
-        return;
-      }
-      if (!whatsappNumber) {
-        setError("Nomor WhatsApp harus diisi.");
-        setIsLoading(false);
-        return;
-      }
-    }
-
-    console.log(`Mencoba ${isSignUp ? 'mendaftar' : 'masuk'} dengan:`, email);
+    console.log('Mencoba masuk dengan:', email);
 
     try {
-      if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              full_name: fullName,
-              whatsapp_number: whatsappNumber
-            },
-            emailRedirectTo: window.location.origin,
-          }
-        });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-        if (error) {
-          console.error("Error pendaftaran:", error);
-          if (error.message.includes("already registered")) {
-            setError("Email sudah terdaftar. Silakan masuk dengan email tersebut.");
-            setIsSignUp(false);
-          } else if (error.message.includes("invalid")) {
-            setError("Format email tidak valid atau domain email tidak diizinkan.");
-          } else {
-            setError(error.message);
-          }
-          setIsLoading(false);
-          return;
+      if (error) {
+        console.error("Error masuk:", error);
+        if (error.message === "Invalid login credentials") {
+          setError("Email atau kata sandi salah. Silakan coba lagi.");
+        } else {
+          setError(error.message);
         }
+        setIsLoading(false);
+        return;
+      }
 
+      if (data.user) {
+        console.log("Login berhasil, mengarahkan ke halaman utama");
         toast({
-          title: "Pendaftaran berhasil",
-          description: "Silakan masuk dengan akun yang baru dibuat",
+          title: "Berhasil masuk",
+          description: "Anda akan diarahkan ke halaman utama",
         });
-        setIsSignUp(false);
-      } else {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (error) {
-          console.error("Error masuk:", error);
-          if (error.message === "Invalid login credentials") {
-            setError("Email atau kata sandi salah. Silakan coba lagi atau daftar jika belum memiliki akun.");
-          } else {
-            setError(error.message);
-          }
-          setIsLoading(false);
-          return;
-        }
-
-        if (data.user) {
-          console.log("Login berhasil, mengarahkan ke halaman utama");
-          toast({
-            title: "Berhasil masuk",
-            description: "Anda akan diarahkan ke halaman utama",
-          });
-          navigate("/", { replace: true });
-        }
+        navigate("/", { replace: true });
       }
     } catch (error: any) {
       console.error("Error tidak terduga:", error);
@@ -138,7 +89,7 @@ const Auth = () => {
             Xaviera Pos
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            {isSignUp ? 'Daftar akun baru' : 'Masuk ke akun Anda'}
+            Masuk ke akun pemilik usaha
           </p>
         </div>
         {error && (
@@ -148,34 +99,6 @@ const Auth = () => {
         )}
         <form className="mt-8 space-y-6" onSubmit={handleAuth}>
           <div className="rounded-md shadow-sm -space-y-px">
-            {isSignUp && (
-              <>
-                <div className="mb-2">
-                  <Input
-                    id="fullName"
-                    name="fullName"
-                    type="text"
-                    autoComplete="name"
-                    placeholder="Nama Lengkap"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="mb-2"
-                  />
-                </div>
-                <div className="mb-2">
-                  <Input
-                    id="whatsapp"
-                    name="whatsapp"
-                    type="tel"
-                    autoComplete="tel"
-                    placeholder="Nomor WhatsApp"
-                    value={whatsappNumber}
-                    onChange={(e) => setWhatsappNumber(e.target.value)}
-                    className="mb-2"
-                  />
-                </div>
-              </>
-            )}
             <div>
               <Input
                 id="email"
@@ -194,7 +117,7 @@ const Auth = () => {
                 id="password"
                 name="password"
                 type="password"
-                autoComplete={isSignUp ? 'new-password' : 'current-password'}
+                autoComplete="current-password"
                 required
                 placeholder="Kata Sandi"
                 value={password}
@@ -209,21 +132,7 @@ const Auth = () => {
               className="w-full"
               disabled={isLoading}
             >
-              {isLoading ? "Memproses..." : (isSignUp ? "Daftar" : "Masuk")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={() => {
-                setError(null);
-                setIsSignUp(!isSignUp);
-                setFullName("");
-                setWhatsappNumber("");
-              }}
-              disabled={isLoading}
-            >
-              {isSignUp ? "Sudah punya akun? Masuk" : "Belum punya akun? Daftar"}
+              {isLoading ? "Memproses..." : "Masuk"}
             </Button>
           </div>
         </form>

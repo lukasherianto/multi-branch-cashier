@@ -229,6 +229,7 @@ export type Database = {
           created_at: string
           id: number
           menu_code: string
+          profile_id: string | null
           role: string
           updated_at: string
         }
@@ -236,6 +237,7 @@ export type Database = {
           created_at?: string
           id?: number
           menu_code: string
+          profile_id?: string | null
           role: string
           updated_at?: string
         }
@@ -243,10 +245,19 @@ export type Database = {
           created_at?: string
           id?: number
           menu_code?: string
+          profile_id?: string | null
           role?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "menu_access_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pelaku_usaha: {
         Row: {
@@ -499,6 +510,39 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "produk"
             referencedColumns: ["produk_id"]
+          },
+        ]
+      }
+      profile_menu_access: {
+        Row: {
+          id: number
+          menu_access_id: number
+          profile_id: string
+        }
+        Insert: {
+          id?: number
+          menu_access_id: number
+          profile_id: string
+        }
+        Update: {
+          id?: number
+          menu_access_id?: number
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_menu_access"
+            columns: ["menu_access_id"]
+            isOneToOne: false
+            referencedRelation: "menu_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_profile"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
           },
         ]
       }

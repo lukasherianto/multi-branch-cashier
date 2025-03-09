@@ -5,7 +5,6 @@ import { MenuItem } from "./MenuItem";
 import menuConfig from "./menuConfig";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/auth";
-import { useMenuAccess } from "@/hooks/useMenuAccess";
 
 interface MenuContentProps {
   expandedMenus: string[];
@@ -23,26 +22,17 @@ export const MenuContent = ({
   onLogout 
 }: MenuContentProps) => {
   const { userRole } = useAuth();
-  const { allowedMenu, isLoading } = useMenuAccess();
   
   // For debugging
-  console.log('MenuContent rendering:', { userRole, allowedMenu, menuConfig });
+  console.log('MenuContent rendering:', { userRole, menuConfig });
 
   return (
     <div className="flex flex-col h-full">
       <ScrollArea className="flex-grow">
         <div className="space-y-0.5 py-2 pr-2">
           {menuConfig.map((section) => {
-            // Filter items based on user role and permissions
-            const items = section.items.filter(item => {
-              // If no permissions loaded yet or user is pelaku_usaha, show all
-              if (isLoading || userRole === 'pelaku_usaha') {
-                return true;
-              }
-              
-              // Use the code property from each menu item to check permissions
-              return allowedMenu.includes(item.code);
-            });
+            // Show all menu items for business owner
+            const items = section.items;
             
             // Skip sections with no visible items
             if (items.length === 0) {

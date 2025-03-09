@@ -3,7 +3,7 @@ import { createContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthContextType } from "./types";
 
-// Buat context dengan nilai default undefined
+// Create context with default undefined value
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 interface AuthProviderProps {
@@ -12,8 +12,8 @@ interface AuthProviderProps {
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [userStatusId, setUserStatusId] = useState<number | null>(null);
+  const [userRole, setUserRole] = useState<string | null>('pelaku_usaha');
+  const [userStatusId, setUserStatusId] = useState<number | null>(1);
   const [pelakuUsaha, setPelakuUsaha] = useState<any>(null);
   const [cabang, setCabang] = useState<any>(null);
   const [cabangList, setCabangList] = useState<any[]>([]);
@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Ambil session pengguna saat ini
+    // Get current user session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setUser(session.user);
@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     });
 
-    // Set up listener untuk perubahan auth state
+    // Set up listener for auth state change
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -54,54 +54,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Fungsi untuk mengambil data user, pelaku usaha, dan cabang
+  // Function to fetch user data and business data
   const fetchUserData = async (userId: string) => {
     setIsLoading(true);
     try {
       console.log("Fetching user data for ID:", userId);
 
-      // 1. Ambil profile (jika ada)
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select(`
-          *,
-          cabang (
-            cabang_id,
-            branch_name,
-            address,
-            contact_whatsapp
-          )
-        `)
-        .eq('id', userId)
-        .maybeSingle();
+      // For simplicity, set default role to 'pelaku_usaha'
+      setUserRole('pelaku_usaha');
+      setUserStatusId(1); // Status ID for pelaku_usaha
 
-      if (profileError) {
-        console.error("Error fetching profile:", profileError);
-      } else if (profileData) {
-        // Get user role directly from the profile
-        if (profileData.role) {
-          setUserRole(profileData.role);
-          
-          // Get status_id from user_status table using role
-          const { data: statusData } = await supabase
-            .from('user_status')
-            .select('status_id')
-            .eq('wewenang', profileData.role)
-            .maybeSingle();
-            
-          if (statusData) {
-            setUserStatusId(statusData.status_id);
-          }
-        }
-        
-        // If profile has a cabang_id and cabang data, use it
-        if (profileData.cabang_id && profileData.cabang) {
-          setCabang(profileData.cabang);
-          setSelectedCabangId(profileData.cabang_id);
-        }
-      }
-
-      // 2. Ambil data pelaku usaha (jika user adalah pelaku usaha)
+      // Get pelaku_usaha data
       const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
         .from('pelaku_usaha')
         .select('*')
@@ -114,7 +77,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         console.log("Found pelaku usaha:", pelakuUsahaData);
         setPelakuUsaha(pelakuUsahaData);
         
-        // 3. Jika pelaku usaha ditemukan, ambil data cabang
+        // Get branches data
         const { data: cabangData, error: cabangError } = await supabase
           .from('cabang')
           .select('*')
@@ -127,13 +90,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           console.log("Found cabang:", cabangData);
           setCabangList(cabangData);
           
-          // Only set default cabang if not already set from profile
-          if (!selectedCabangId) {
-            // Pilih cabang pertama sebagai default
-            const defaultCabang = cabangData[0];
-            setCabang(defaultCabang);
-            setSelectedCabangId(defaultCabang.cabang_id);
-          }
+          // Find the main branch (HQ) or use the first branch
+          const mainCabang = cabangData.find(c => c.status === 1) || cabangData[0];
+          setCabang(mainCabang);
+          setSelectedCabangId(mainCabang.cabang_id);
         }
       }
     } catch (error) {
@@ -143,7 +103,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  // Nilai yang akan dishare melalui context
+  // Values to share through context
   const value: AuthContextType = {
     user,
     userRole,
@@ -152,10 +112,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     cabang,
     cabangList,
     selectedCabangId,
-    selectedBranchId: selectedCabangId, // Make selectedBranchId an alias for selectedCabangId
+    selectedBranchId: selectedCabangId, // Alias for selectedCabangId
     setSelectedCabangId,
     isLoading
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
+};

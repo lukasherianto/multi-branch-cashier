@@ -1,12 +1,10 @@
 
 import { Employee } from "../types";
 import { EmptyState } from "./EmptyState";
-import { EmployeeTable } from "./EmployeeTable";
-import { Loader2 } from "lucide-react";
 
 interface EmployeeListProps {
   employees: Employee[];
-  onDelete: (id: string) => Promise<void>; // Updated to use string instead of number
+  onDelete: (id: string) => Promise<void>;
   onResetPassword: (auth_id: string, newPassword: string) => Promise<boolean>;
   isLoading: boolean;
 }
@@ -17,27 +15,11 @@ export const EmployeeList = ({
   onResetPassword, 
   isLoading 
 }: EmployeeListProps) => {
-  if (employees.length === 0 && !isLoading) {
-    return <EmptyState />;
-  }
-
   return (
-    <>
-      <div className="border rounded-md overflow-hidden">
-        {isLoading ? (
-          <div className="text-center py-8">
-            <div className="flex justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          </div>
-        ) : (
-          <EmployeeTable 
-            employees={employees} 
-            onDelete={onDelete} 
-            onResetPassword={onResetPassword} 
-          />
-        )}
-      </div>
-    </>
+    <div className="border rounded-md p-8 text-center">
+      <p className="text-muted-foreground">
+        Fitur karyawan telah dinonaktifkan. Aplikasi ini hanya untuk pengguna pemilik usaha.
+      </p>
+    </div>
   );
 };
