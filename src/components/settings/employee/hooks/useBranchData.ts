@@ -2,37 +2,59 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Branch } from "../types";
-import { fetchBranches } from "../api/branchApi";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useBranchData = () => {
   const { toast } = useToast();
   const [branches, setBranches] = useState<Branch[]>([]);
-  const [error, setError] = useState<string | null>(null);
-
+  const [isLoading, setIsLoading] = useState(false);
+  
   const loadBranches = async (pelakuUsahaId: number) => {
+    if (!pelakuUsahaId) {
+      console.error("Invalid pelaku_usaha_id provided to loadBranches");
+      return [];
+    }
+    
+    setIsLoading(true);
+    
     try {
-      console.log("Loading branches...");
-      const branchesData = await fetchBranches(pelakuUsahaId);
+      console.log("Loading branches for pelaku_usaha_id:", pelakuUsahaId);
       
-      console.log("Branches loaded:", branchesData);
-      setBranches(branchesData);
-      return branchesData;
+      const { data, error } = await supabase
+        .from('cabang')
+        .select('cabang_id, branch_name, status')
+        .eq('pelaku_usaha_id', pelakuUsahaId);
+      
+      if (error) {
+        throw error;
+      }
+      
+      console.log("Branches loaded:", data);
+      
+      const formattedBranches: Branch[] = data.map(branch => ({
+        cabang_id: branch.cabang_id,
+        branch_name: branch.branch_name,
+        status: branch.status
+      }));
+      
+      setBranches(formattedBranches);
+      return formattedBranches;
     } catch (err: any) {
       console.error("Error loading branches:", err);
-      setError(err.message || "Gagal memuat data cabang");
       toast({
         title: "Error",
         description: "Gagal memuat data cabang",
         variant: "destructive",
       });
       return [];
+    } finally {
+      setIsLoading(false);
     }
   };
-
+  
   return {
     branches,
-    setBranches,
     loadBranches,
-    error
+    isLoading
   };
 };

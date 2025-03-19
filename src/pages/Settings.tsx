@@ -46,7 +46,11 @@ const Settings = () => {
     return (
       <div className="container mx-auto p-4 space-y-6">
         <h1 className="text-2xl font-bold">Pengaturan</h1>
-        <CashierProfileForm />
+        <CashierProfileForm 
+          userId={profileData.userId}
+          initialName={profileData.name}
+          initialEmail={profileData.email}
+        />
       </div>
     );
   }
