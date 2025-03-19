@@ -26,9 +26,10 @@ import {
 
 interface CategoryManagementProps {
   onSuccess?: () => void;
+  hiddenAddButton?: boolean;
 }
 
-export const CategoryManagement = ({ onSuccess }: CategoryManagementProps) => {
+export const CategoryManagement = ({ onSuccess, hiddenAddButton }: CategoryManagementProps) => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [categories, setCategories] = useState<Array<{ kategori_id: number; kategori_name: string; description: string | null }>>([]);
@@ -117,27 +118,29 @@ export const CategoryManagement = ({ onSuccess }: CategoryManagementProps) => {
 
   return (
     <div className="space-y-4">
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-2">
-            <Plus className="h-4 w-4" />
-            Tambah Kategori
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Tambah Kategori Baru</DialogTitle>
-            <DialogDescription>
-              Isi informasi kategori dengan lengkap
-            </DialogDescription>
-          </DialogHeader>
+      {!hiddenAddButton && (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <Plus className="h-4 w-4" />
+              Tambah Kategori
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Tambah Kategori Baru</DialogTitle>
+              <DialogDescription>
+                Isi informasi kategori dengan lengkap
+              </DialogDescription>
+            </DialogHeader>
 
-          <CategoryForm 
-            onSubmit={handleSubmit}
-            isSubmitting={isSubmitting}
-          />
-        </DialogContent>
-      </Dialog>
+            <CategoryForm 
+              onSubmit={handleSubmit}
+              isSubmitting={isSubmitting}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
 
       <div className="rounded-md border">
         <Table>
