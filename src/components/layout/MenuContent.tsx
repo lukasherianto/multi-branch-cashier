@@ -31,8 +31,20 @@ export const MenuContent = ({
       <ScrollArea className="flex-grow">
         <div className="space-y-0.5 py-2 pr-2">
           {menuConfig.map((section) => {
-            // Show all menu items for business owner
-            const items = section.items;
+            // Filter items based on user role
+            const items = section.items.filter(item => {
+              // For kasir role, only show allowed menu items
+              if (userRole === 'kasir') {
+                const allowedCodesCashier = [
+                  'products', 'products_categories', 'pos', 
+                  'history', 'returns', 'attendance', 'profile'
+                ];
+                return allowedCodesCashier.includes(item.code);
+              }
+              
+              // Show all menu items for business owner and other roles
+              return true;
+            });
             
             // Skip sections with no visible items
             if (items.length === 0) {

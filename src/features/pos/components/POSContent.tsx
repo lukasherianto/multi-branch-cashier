@@ -14,7 +14,7 @@ import { toast } from "sonner";
 
 export const POSContent = () => {
   const navigate = useNavigate();
-  const { pelakuUsaha, cabang, cabangList, selectedCabangId, setSelectedCabangId } = useAuth();
+  const { pelakuUsaha, cabang, cabangList, selectedCabangId, setSelectedCabangId, userRole } = useAuth();
   const { filteredProducts, handleSearch, fetchProducts } = useProducts();
   const { cartItems, addToCart, updateQuantity, removeItem, clearCart } = useCart();
   

@@ -12,7 +12,7 @@ interface AuthProviderProps {
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState(null);
-  const [userRole, setUserRole] = useState<string | null>('pelaku_usaha');
+  const [userRole, setUserRole] = useState<string | null>('pelaku_usaha'); // Default role for all users currently
   const [userStatusId, setUserStatusId] = useState<number | null>(1);
   const [pelakuUsaha, setPelakuUsaha] = useState<any>(null);
   const [cabang, setCabang] = useState<any>(null);
@@ -60,9 +60,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       console.log("Fetching user data for ID:", userId);
 
-      // For simplicity, set default role to 'pelaku_usaha'
-      setUserRole('pelaku_usaha');
-      setUserStatusId(1); // Status ID for pelaku_usaha
+      // Check for URL parameter to set role (for testing purposes)
+      const urlParams = new URLSearchParams(window.location.search);
+      const roleParam = urlParams.get('role');
+      
+      if (roleParam === 'kasir') {
+        setUserRole('kasir');
+        console.log('Setting role to kasir from URL parameter');
+      } else {
+        // Default role is 'pelaku_usaha'
+        setUserRole('pelaku_usaha');
+      }
+      
+      setUserStatusId(1); // Status ID for active user
 
       // Get pelaku_usaha data
       const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
