@@ -1,10 +1,12 @@
 
+import { useState } from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { RoleBadge } from "./RoleBadge";
 import { Employee } from "../types";
 import { EmployeeActions } from "./EmployeeActions";
-import { RoleBadge } from "./RoleBadge";
-import { Badge } from "@/components/ui/badge";
-import { AtSign, Phone } from "lucide-react";
+import { DeleteEmployeeDialog } from "./DeleteEmployeeDialog";
+import { ResetPasswordDialog } from "./ResetPasswordDialog";
 
 interface EmployeeTableRowProps {
   employee: Employee;
@@ -17,42 +19,58 @@ export const EmployeeTableRow = ({
   onDelete, 
   onResetPassword 
 }: EmployeeTableRowProps) => {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showResetDialog, setShowResetDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [resettingId, setResettingId] = useState<string | null>(null);
+
+  const handleDelete = async () => {
+    if (!employee.auth_id) return;
+    
+    setIsDeleting(true);
+    try {
+      await onDelete(employee.auth_id);
+      setShowDeleteDialog(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
-    <TableRow className={!employee.isSameBusiness ? "bg-gray-50" : ""}>
-      <TableCell className="font-medium">
-        {employee.name}
-        {!employee.isSameBusiness && (
-          <div className="mt-1">
-            <Badge variant="outline" className="text-xs">
-              {employee.businessName || "Usaha Lain"}
-            </Badge>
-          </div>
-        )}
-      </TableCell>
+    <TableRow className={!employee.isSameBusiness ? "bg-muted/30" : ""}>
+      <TableCell>{employee.name}</TableCell>
+      <TableCell>{employee.email}</TableCell>
+      <TableCell>{employee.whatsapp || "-"}</TableCell>
       <TableCell>
-        {employee.email || "-"}
+        <RoleBadge role={employee.role} />
       </TableCell>
-      <TableCell>
-        {employee.whatsapp_contact ? (
-          <div className="flex items-center gap-1">
-            <Phone className="w-3 h-3 text-gray-500" />
-            <span>{employee.whatsapp_contact}</span>
-          </div>
-        ) : "-"}
-      </TableCell>
-      <TableCell>
-        {employee.business_role && (
-          <RoleBadge role={employee.business_role} />
-        )}
-      </TableCell>
-      <TableCell>{employee.cabang?.branch_name || "Pusat"}</TableCell>
-      <TableCell className="text-right">
+      <TableCell>{employee.branch || "-"}</TableCell>
+      <TableCell align="right">
         <EmployeeActions 
-          employee={employee} 
-          onDelete={onDelete} 
-          onResetPassword={onResetPassword}
+          employee={employee}
+          onDelete={() => setShowDeleteDialog(true)} 
+          onResetPassword={() => setShowResetDialog(true)}
         />
       </TableCell>
+
+      {/* Delete Employee Dialog */}
+      <DeleteEmployeeDialog
+        employee={employee}
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirmDelete={handleDelete}
+        isDeleting={isDeleting}
+      />
+      
+      {/* Reset Password Dialog */}
+      <ResetPasswordDialog
+        employee={employee}
+        open={showResetDialog}
+        onOpenChange={setShowResetDialog}
+        onResetPassword={onResetPassword}
+        resettingId={resettingId}
+        setResettingId={setResettingId}
+      />
     </TableRow>
   );
 };
