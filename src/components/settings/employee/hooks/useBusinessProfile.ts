@@ -27,6 +27,7 @@ export const useBusinessProfile = () => {
       console.log("Business data loaded:", businessData);
       
       setPelakuUsahaId(businessData.pelaku_usaha_id);
+      // businessData might not have business_name, so we need to handle that case
       setBusinessName(businessData.business_name || "");
       
       return businessData.pelaku_usaha_id;

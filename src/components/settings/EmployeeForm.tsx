@@ -7,6 +7,8 @@ import { EmployeeTable } from "./employee/list/EmployeeTable";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/auth";
+import { useEmployeeDelete } from "./employee/useEmployeeDelete";
+import { useEmployeePasswordReset } from "./employee/useEmployeePasswordReset";
 
 export function EmployeeForm() {
   const { isLoading, employees, branches, loadEmployees, error } = useEmployeeData();
@@ -26,6 +28,19 @@ export function EmployeeForm() {
   }
   
   const { form, isLoading: formLoading, onSubmit } = useEmployeeForm(loadEmployees);
+  const { deleteEmployee } = useEmployeeDelete(loadEmployees);
+  const { resetPassword } = useEmployeePasswordReset();
+
+  // Handler for employee deletion
+  const handleEmployeeDelete = async (authId: string) => {
+    await deleteEmployee(authId);
+    await loadEmployees();
+  };
+
+  // Handler for password reset
+  const handlePasswordReset = async (authId: string, newPassword: string) => {
+    return await resetPassword(authId, newPassword);
+  };
 
   if (error) {
     return (
@@ -54,8 +69,8 @@ export function EmployeeForm() {
         ) : (
           <EmployeeTable 
             employees={employees} 
-            onEmployeeDeleted={loadEmployees}
-            onPasswordReset={loadEmployees}
+            onEmployeeDeleted={handleEmployeeDelete}
+            onPasswordReset={handlePasswordReset}
           />
         )}
       </div>

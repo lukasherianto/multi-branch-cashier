@@ -11,14 +11,14 @@ import { EmployeeTableRow } from "./EmployeeTableRow";
 
 interface EmployeeTableProps {
   employees: Employee[];
-  onDelete: (id: string) => Promise<void>; // Updated to use string instead of number
-  onResetPassword: (auth_id: string, newPassword: string) => Promise<boolean>;
+  onEmployeeDeleted: (id: string) => Promise<void>; // Updated to match how it's called
+  onPasswordReset: (auth_id: string, newPassword: string) => Promise<boolean>;
 }
 
 export const EmployeeTable = ({ 
   employees, 
-  onDelete, 
-  onResetPassword 
+  onEmployeeDeleted, 
+  onPasswordReset 
 }: EmployeeTableProps) => {
   // Sort employees - first show employees from current business, then others
   const sortedEmployees = [...employees].sort((a, b) => {
@@ -47,8 +47,8 @@ export const EmployeeTable = ({
           <EmployeeTableRow
             key={`${employee.karyawan_id}-${employee.auth_id}`}
             employee={employee}
-            onDelete={onDelete}
-            onResetPassword={onResetPassword}
+            onDelete={onEmployeeDeleted}
+            onResetPassword={onPasswordReset}
           />
         ))}
       </TableBody>
