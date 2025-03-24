@@ -6,28 +6,27 @@ import { fetchUserPelakuUsaha } from "../api/employeeApi";
 export const useBusinessProfile = () => {
   const { toast } = useToast();
   const [pelakuUsahaId, setPelakuUsahaId] = useState<number | null>(null);
-  const [businessName, setBusinessName] = useState("");
+  const [businessName, setBusinessName] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const loadBusinessProfile = async (userId: string) => {
-    setIsLoading(true);
-    setError(null);
-
     try {
-      console.log("Loading business profile for user ID:", userId);
-      
+      setIsLoading(true);
       const businessData = await fetchUserPelakuUsaha(userId);
       
       if (!businessData) {
         setError("Data usaha tidak ditemukan");
+        toast({
+          title: "Error",
+          description: "Data usaha tidak ditemukan",
+          variant: "destructive",
+        });
         return null;
       }
       
-      console.log("Business data loaded:", businessData);
-      
       setPelakuUsahaId(businessData.pelaku_usaha_id);
-      // businessData might not have business_name, so we need to handle that case
+      // Handle possibly missing business_name safely
       setBusinessName(businessData.business_name || "");
       
       return businessData.pelaku_usaha_id;

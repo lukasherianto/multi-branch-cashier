@@ -40,11 +40,11 @@ export const EmployeeTableRow = ({
     <TableRow className={!employee.isSameBusiness ? "bg-muted/30" : ""}>
       <TableCell>{employee.name}</TableCell>
       <TableCell>{employee.email}</TableCell>
-      <TableCell>{employee.whatsapp || "-"}</TableCell>
+      <TableCell>{employee.whatsapp_contact || "-"}</TableCell>
       <TableCell>
         <RoleBadge role={employee.role} />
       </TableCell>
-      <TableCell>{employee.branch || "-"}</TableCell>
+      <TableCell>{employee.cabang?.branch_name || "-"}</TableCell>
       <TableCell align="right">
         <EmployeeActions 
           employee={employee}
@@ -56,10 +56,8 @@ export const EmployeeTableRow = ({
       {/* Delete Employee Dialog */}
       <DeleteEmployeeDialog
         employee={employee}
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
-        onConfirmDelete={handleDelete}
-        isDeleting={isDeleting}
+        onDelete={handleDelete}
+        deletingId={isDeleting ? employee.auth_id || null : null}
       />
       
       {/* Reset Password Dialog */}

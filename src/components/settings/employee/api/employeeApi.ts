@@ -1,12 +1,11 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Employee } from "../types";
-import { mapEmployeeResponse } from "./employeeMappers";
+import { mapEmployeeData } from "./employeeMappers";
 
 /**
  * Fetches employees for a specific business
  */
-export async function fetchEmployees(pelakuUsahaId: number) {
+export async function fetchEmployees(pelakuUsahaId: number, cabangId?: number) {
   if (!pelakuUsahaId) {
     console.error("Invalid pelakuUsahaId:", pelakuUsahaId);
     throw new Error("ID usaha tidak valid");
@@ -14,7 +13,8 @@ export async function fetchEmployees(pelakuUsahaId: number) {
   
   console.log("Fetching employees for pelaku usaha ID:", pelakuUsahaId);
   
-  const { data, error } = await supabase
+  // Build the query based on parameters
+  let query = supabase
     .from("profiles")
     .select(`
       id,
@@ -22,11 +22,21 @@ export async function fetchEmployees(pelakuUsahaId: number) {
       whatsapp_number,
       business_role,
       pelaku_usaha_id,
+      email,
       cabang_id,
       cabang (branch_name)
-    `)
-    .eq("business_role", "kasir")
-    .order("full_name", { ascending: true });
+    `);
+    
+  // Apply cabang filter if provided
+  if (cabangId) {
+    query = query.eq("cabang_id", cabangId);
+  } else {
+    // Otherwise filter by pelaku_usaha_id
+    query = query.eq("pelaku_usaha_id", pelakuUsahaId);
+  }
+  
+  // Get results
+  const { data, error } = await query.order("full_name", { ascending: true });
 
   if (error) {
     console.error("Error fetching employees:", error);
@@ -36,7 +46,7 @@ export async function fetchEmployees(pelakuUsahaId: number) {
   console.log("Raw employee data:", data);
   
   // Map the response to the Employee type
-  const employees = data.map(item => mapEmployeeResponse(item, pelakuUsahaId));
+  const employees = mapEmployeeData(data, pelakuUsahaId);
   
   console.log("Mapped employees:", employees);
   

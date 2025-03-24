@@ -1,8 +1,9 @@
 
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { fetchEmployees, mapEmployeeData } from "../api/employeeApi";
+import { fetchEmployees } from "../api/employeeApi";
 import { Employee } from "../types";
+import { mapEmployeeData } from "../api/employeeMappers";
 
 export const useEmployeeList = () => {
   const { toast } = useToast();
@@ -24,11 +25,8 @@ export const useEmployeeList = () => {
         return [];
       }
       
-      const formattedEmployees = mapEmployeeData(employeesData, pelakuUsahaId);
-      
-      console.log("Formatted employees:", formattedEmployees);
-      setEmployees(formattedEmployees);
-      return formattedEmployees;
+      setEmployees(employeesData);
+      return employeesData;
     } catch (err: any) {
       console.error("Error loading employees:", err);
       setError(err.message || "Gagal memuat data karyawan");
