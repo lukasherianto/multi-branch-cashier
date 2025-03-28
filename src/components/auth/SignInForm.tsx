@@ -53,15 +53,25 @@ export const SignInForm = ({
       return;
     }
 
-    console.log('Attempting login with:', email);
+    // Trim email to remove any accidental whitespace
+    const cleanEmail = email.trim();
+    
+    console.log('Attempting login with:', cleanEmail);
     console.log('Login attempt details:', { 
-      email: email.trim(), // Trim to remove any whitespace
+      email: cleanEmail,
       passwordLength: password.length
     });
 
     try {
+      // First ensure we're logged out to start with a clean slate
+      await supabase.auth.signOut();
+      
+      // Small delay to ensure signOut has processed
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Now attempt to sign in
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(), // Trim email to remove any accidental whitespace
+        email: cleanEmail,
         password,
       });
 

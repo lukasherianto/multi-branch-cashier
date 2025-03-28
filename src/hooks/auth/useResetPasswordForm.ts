@@ -41,19 +41,35 @@ export const useResetPasswordForm = () => {
     }
 
     try {
+      // Log the password reset attempt
+      console.log("Attempting to reset password");
+      
       // Update the user's password
-      const { error } = await supabase.auth.updateUser({ password });
+      const { error, data } = await supabase.auth.updateUser({ password });
 
       if (error) {
         console.error("Error resetting password:", error);
-        throw error;
+        setError(error.message || "Terjadi kesalahan saat mengubah password");
+        toast({
+          title: "Error mengubah password",
+          description: error.message,
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
       }
 
+      // Log successful password reset
+      console.log("Password reset successful, user data:", data.user);
+      
       setMessage("Password berhasil diubah. Anda akan diarahkan ke halaman login.");
       toast({
         title: "Password berhasil diubah",
         description: "Silakan masuk dengan password baru Anda",
       });
+
+      // Sign the user out to ensure a fresh login with the new password
+      await supabase.auth.signOut();
 
       // Redirect to login page after 3 seconds
       setTimeout(() => {

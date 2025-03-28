@@ -24,6 +24,7 @@ export const ForgotPasswordForm = ({
 }: ForgotPasswordFormProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
 
   const isValidEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -35,38 +36,58 @@ export const ForgotPasswordForm = ({
     setIsLoading(true);
     setError(null);
 
-    if (!isValidEmail(email)) {
+    // Clean up the email by trimming whitespace
+    const cleanEmail = email.trim();
+
+    if (!isValidEmail(cleanEmail)) {
       setError("Format email tidak valid. Mohon periksa kembali.");
       setIsLoading(false);
       return;
     }
 
     try {
+      console.log("Sending password reset email to:", cleanEmail);
+      
       // Get the current origin for creating the correct redirect URL
       const origin = window.location.origin;
       const redirectTo = `${origin}/auth/reset-password`;
       
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      console.log("Using redirect URL:", redirectTo);
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
         redirectTo
       });
 
       if (error) {
         console.error("Error reset password:", error);
         setError(error.message);
+        toast({
+          title: "Error Reset Password",
+          description: error.message,
+          variant: "destructive"
+        });
         setIsLoading(false);
         return;
       }
 
+      setEmailSent(true);
       toast({
         title: "Email reset password terkirim",
         description: "Silakan periksa email Anda untuk instruksi selanjutnya",
       });
       
-      // Return to login mode
-      onBackToLogin();
+      // Return to login mode after showing the message
+      setTimeout(() => {
+        onBackToLogin();
+      }, 3000);
     } catch (error: any) {
       console.error("Error tidak terduga:", error);
       setError("Terjadi kesalahan yang tidak terduga");
+      toast({
+        title: "Error",
+        description: "Terjadi kesalahan yang tidak terduga",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -77,6 +98,14 @@ export const ForgotPasswordForm = ({
       {error && (
         <Alert variant="destructive" className="mb-4">
           <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      
+      {emailSent && (
+        <Alert className="mb-4">
+          <AlertDescription>
+            Email reset password telah dikirim. Silakan periksa email Anda dan ikuti instruksi di dalamnya.
+          </AlertDescription>
         </Alert>
       )}
 
@@ -99,7 +128,7 @@ export const ForgotPasswordForm = ({
       <Button
         type="submit"
         className="w-full"
-        disabled={isLoading}
+        disabled={isLoading || emailSent}
       >
         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         Kirim Email Reset Password
