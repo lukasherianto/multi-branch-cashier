@@ -54,16 +54,14 @@ export const SignInForm = ({
     }
 
     console.log('Attempting login with:', email);
+    console.log('Login attempt details:', { 
+      email: email.trim(), // Trim to remove any whitespace
+      passwordLength: password.length
+    });
 
     try {
-      // Log the actual values being used for login
-      console.log('Login attempt details:', { 
-        email: email, 
-        passwordLength: password.length
-      });
-
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(), // Trim email to remove any accidental whitespace
         password,
       });
 
@@ -71,7 +69,6 @@ export const SignInForm = ({
         console.error("Login Error Details:", {
           message: error.message,
           status: error.status
-          // Removed the 'cause' property that doesn't exist on AuthError
         });
 
         if (error.message === "Invalid login credentials") {
@@ -79,6 +76,13 @@ export const SignInForm = ({
           toast({
             title: "Login Gagal",
             description: "Email atau kata sandi tidak sesuai.",
+            variant: "destructive"
+          });
+        } else if (error.message.includes("Email not confirmed")) {
+          setError("Email belum dikonfirmasi. Silakan periksa email Anda untuk tautan konfirmasi.");
+          toast({
+            title: "Email Belum Dikonfirmasi",
+            description: "Silakan periksa email Anda untuk tautan konfirmasi.",
             variant: "destructive"
           });
         } else {
@@ -96,6 +100,15 @@ export const SignInForm = ({
       if (data.user) {
         console.log("Login successful, user data:", data.user);
         console.log("Session data:", data.session);
+        
+        // Check if we have a valid session
+        if (!data.session) {
+          console.error("No session created after successful login");
+          setError("Sesi login tidak dapat dibuat. Silakan coba lagi.");
+          setIsLoading(false);
+          return;
+        }
+        
         toast({
           title: "Berhasil masuk",
           description: "Anda akan diarahkan ke halaman utama",
