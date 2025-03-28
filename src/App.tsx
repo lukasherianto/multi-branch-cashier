@@ -7,6 +7,7 @@ import { toast, Toaster as SonnerToaster } from "sonner";
 import { AuthProvider } from "./hooks/auth";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import POS from "./pages/POS";
 import Products from "./pages/Products";
 import Settings from "./pages/Settings";
@@ -35,6 +36,7 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/auth/reset-password" element={<ResetPassword />} />
             <Route path="/print-preview" element={<PrintPreview />} />
 
             <Route
