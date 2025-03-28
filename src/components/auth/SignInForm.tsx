@@ -53,7 +53,7 @@ export const SignInForm = ({
       return;
     }
 
-    console.log('Mencoba masuk dengan:', email);
+    console.log('Attempting login with:', email);
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -62,18 +62,33 @@ export const SignInForm = ({
       });
 
       if (error) {
-        console.error("Error masuk:", error);
+        console.error("Login Error Details:", {
+          message: error.message,
+          status: error.status,
+          cause: error.cause
+        });
+
         if (error.message === "Invalid login credentials") {
           setError("Email atau kata sandi salah. Silakan coba lagi.");
+          toast({
+            title: "Login Gagal",
+            description: "Email atau kata sandi tidak sesuai.",
+            variant: "destructive"
+          });
         } else {
           setError(error.message);
+          toast({
+            title: "Login Error",
+            description: error.message,
+            variant: "destructive"
+          });
         }
         setIsLoading(false);
         return;
       }
 
       if (data.user) {
-        console.log("Login berhasil, mengarahkan ke halaman utama");
+        console.log("Login successful, redirecting to home page");
         toast({
           title: "Berhasil masuk",
           description: "Anda akan diarahkan ke halaman utama",
@@ -81,8 +96,13 @@ export const SignInForm = ({
         navigate("/", { replace: true });
       }
     } catch (error: any) {
-      console.error("Error tidak terduga:", error);
+      console.error("Unexpected login error:", error);
       setError("Terjadi kesalahan yang tidak terduga");
+      toast({
+        title: "Login Error",
+        description: "Terjadi kesalahan yang tidak terduga",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
