@@ -56,6 +56,12 @@ export const SignInForm = ({
     console.log('Attempting login with:', email);
 
     try {
+      // Log the actual values being used for login
+      console.log('Login attempt details:', { 
+        email: email, 
+        passwordLength: password.length
+      });
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -88,7 +94,8 @@ export const SignInForm = ({
       }
 
       if (data.user) {
-        console.log("Login successful, redirecting to home page");
+        console.log("Login successful, user data:", data.user);
+        console.log("Session data:", data.session);
         toast({
           title: "Berhasil masuk",
           description: "Anda akan diarahkan ke halaman utama",
