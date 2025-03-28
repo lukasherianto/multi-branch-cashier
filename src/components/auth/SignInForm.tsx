@@ -64,8 +64,8 @@ export const SignInForm = ({
       if (error) {
         console.error("Login Error Details:", {
           message: error.message,
-          status: error.status,
-          cause: error.cause
+          status: error.status
+          // Removed the 'cause' property that doesn't exist on AuthError
         });
 
         if (error.message === "Invalid login credentials") {
