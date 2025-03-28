@@ -9,8 +9,8 @@ import { ResetPasswordDialog } from "./ResetPasswordDialog";
 
 interface EmployeeActionsProps {
   employee: Employee;
-  onDelete: (id: string) => Promise<void>;
-  onResetPassword: (auth_id: string, newPassword: string) => Promise<boolean>;
+  onDelete: () => Promise<void>;
+  onResetPassword: () => Promise<boolean>;
 }
 
 export const EmployeeActions = ({ 
@@ -28,7 +28,7 @@ export const EmployeeActions = ({
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
-    await onDelete(id);
+    await onDelete();
     setDeletingId(null);
   };
 
@@ -58,7 +58,7 @@ export const EmployeeActions = ({
       
       <DeleteEmployeeDialog 
         employee={employee} 
-        onDelete={handleDelete} 
+        onDelete={() => handleDelete(employee.auth_id || '')} 
         deletingId={deletingId} 
       />
     </div>

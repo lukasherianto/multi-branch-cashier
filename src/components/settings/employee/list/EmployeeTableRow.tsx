@@ -48,8 +48,14 @@ export const EmployeeTableRow = ({
       <TableCell align="right">
         <EmployeeActions 
           employee={employee}
-          onDelete={() => setShowDeleteDialog(true)} 
-          onResetPassword={() => setShowResetDialog(true)}
+          onDelete={() => {
+            setShowDeleteDialog(true);
+            return Promise.resolve();
+          }} 
+          onResetPassword={() => {
+            setShowResetDialog(true);
+            return Promise.resolve(true);
+          }}
         />
       </TableCell>
 
