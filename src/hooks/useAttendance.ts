@@ -4,6 +4,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./use-toast";
 import { useAuth } from "./auth";
 
+interface Employee {
+  karyawan_id: number;
+  name: string;
+  attendance?: any;
+}
+
+interface AttendanceRecord {
+  karyawan_id: number;
+  tanggal: string;
+  jam_masuk: string;
+  jam_keluar: string | null;
+  status: string;
+}
+
 export const useAttendance = () => {
   const { toast } = useToast();
   const { user, cabang, selectedCabangId } = useAuth();
@@ -12,6 +26,16 @@ export const useAttendance = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [todayAttendance, setTodayAttendance] = useState<any[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<number | null>(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Add currentTime to mimic the behavior expected in Attendance.tsx
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+    
+    return () => clearInterval(timer);
+  }, []);
 
   const fetchEmployees = async () => {
     try {
@@ -99,8 +123,11 @@ export const useAttendance = () => {
         return;
       }
 
+      // Type assertion to work around the TypeScript error
+      const employeesList = employees as any[];
+      
       // Get all employee IDs
-      const employeeIds = employees.map((emp) => emp.karyawan_id);
+      const employeeIds = employeesList.map((emp) => emp.karyawan_id);
 
       // Get attendance data for these employees
       const { data, error } = await supabase
@@ -114,8 +141,8 @@ export const useAttendance = () => {
       }
 
       // Combine employee data with attendance data
-      const processedData = data?.map((attendance) => {
-        const employee = employees.find(
+      const processedData = (data || []).map((attendance) => {
+        const employee = employeesList.find(
           (emp) => emp.karyawan_id === attendance.karyawan_id
         );
         return {
@@ -124,7 +151,7 @@ export const useAttendance = () => {
         };
       });
 
-      setAttendanceData(processedData || []);
+      setAttendanceData(processedData);
     } catch (error) {
       console.error("Error fetching attendance history:", error);
       toast({
@@ -250,10 +277,20 @@ export const useAttendance = () => {
     }
   }, [employeeData]);
 
+  // Function to handle attendance for the Attendance.tsx page
+  const handleAttendance = (status: string, keterangan?: string) => {
+    // Make sure we're only handling attendance for the current user
+    if (employeeData.length > 0) {
+      recordAttendance(employeeData[0].karyawan_id, status, keterangan);
+    }
+  };
+
   return {
     employeeData,
     attendanceData,
+    currentTime,
     todayAttendance,
+    attendanceHistory: attendanceData,
     isLoading,
     selectedEmployee,
     setSelectedEmployee,
@@ -262,6 +299,7 @@ export const useAttendance = () => {
     fetchEmployees,
     fetchTodayAttendance,
     fetchAttendanceHistory,
+    handleAttendance,
   };
 };
 

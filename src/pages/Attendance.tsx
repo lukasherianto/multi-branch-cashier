@@ -8,33 +8,18 @@ import { useAttendance } from "@/hooks/useAttendance";
 import { useAuth } from "@/hooks/auth";
 
 const Attendance = () => {
-  const [currentTime, setCurrentTime] = useState(new Date());
   const {
     employeeData,
-    attendanceData: attendanceHistory,
+    attendanceHistory,
     todayAttendance,
     isLoading,
     recordAttendance,
-    clockOut
+    clockOut,
+    currentTime,
+    handleAttendance
   } = useAttendance();
   
   const { isEmployee } = useAuth();
-  
-  // Update current time every minute
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 60000);
-    
-    return () => clearInterval(timer);
-  }, []);
-
-  const handleAttendance = (status: string, keterangan?: string) => {
-    // Make sure we're only handling attendance for the current user
-    if (employeeData.length > 0) {
-      recordAttendance(employeeData[0].karyawan_id, status, keterangan);
-    }
-  };
 
   if (isEmployee === false) {
     return (

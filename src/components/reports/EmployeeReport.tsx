@@ -37,6 +37,7 @@ const EmployeeReport = () => {
   const { data: employeeData } = useQuery<EmployeeData, Error>({
     queryKey: ["employee-report"],
     queryFn: async () => {
+      // Use any type assertion for now until Supabase types are updated
       const { data: employees, error: employeeError } = await supabase
         .from("karyawan" as any)
         .select(`
@@ -63,7 +64,12 @@ const EmployeeReport = () => {
       if (attendanceError) throw attendanceError;
 
       return {
-        employees: employees as Employee[] || [],
+        employees: (employees as any[] || []).map(emp => ({
+          karyawan_id: emp.karyawan_id,
+          name: emp.name,
+          role: emp.role || '-',
+          cabang: emp.cabang
+        })),
         attendance: attendance as AttendanceRecord[] || [],
       };
     },

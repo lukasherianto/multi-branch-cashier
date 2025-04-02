@@ -1,5 +1,8 @@
 
 import { useAuth as useAuthOriginal } from './useAuth';
+import { AuthProvider as AuthProviderOriginal } from './AuthContext';
+
+export const AuthProvider = AuthProviderOriginal;
 
 export const useAuth = () => {
   const auth = useAuthOriginal();

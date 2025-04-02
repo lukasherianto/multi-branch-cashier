@@ -5,22 +5,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Branch, Employee } from "./types";
 import { useAuth } from "@/hooks/auth";
 
-interface EmployeeData {
-  karyawan_id: number;
-  name: string;
-  email?: string;
-  role?: string;
-  auth_id?: string;
-  is_active?: boolean;
-  pelaku_usaha_id?: number;
-  cabang?: {
-    branch_name: string;
-  };
-  pelaku_usaha?: {
-    business_name: string;
-  };
-}
-
 export const useEmployeeData = () => {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -119,8 +103,19 @@ export const useEmployeeData = () => {
         throw employeesError;
       }
 
-      const formattedEmployees = (employeesData as EmployeeData[] || []).map(emp => ({
-        ...emp,
+      // Cast to any to avoid type errors until Supabase types are updated
+      const employeesList = employeesData as any[] || [];
+      
+      const formattedEmployees: Employee[] = employeesList.map(emp => ({
+        karyawan_id: emp.karyawan_id,
+        name: emp.name,
+        email: emp.email,
+        role: emp.role,
+        auth_id: emp.auth_id,
+        is_active: emp.is_active,
+        pelaku_usaha_id: emp.pelaku_usaha_id,
+        cabang: emp.cabang,
+        pelaku_usaha: emp.pelaku_usaha,
         isSameBusiness: emp.pelaku_usaha_id === currentPelakuUsaha.pelaku_usaha_id,
         businessName: emp.pelaku_usaha?.business_name || 'Tidak diketahui'
       }));

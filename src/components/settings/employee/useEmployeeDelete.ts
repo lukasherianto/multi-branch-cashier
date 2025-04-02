@@ -34,9 +34,10 @@ export const useEmployeeDelete = (loadEmployees: () => Promise<void>) => {
       if (deleteError) throw deleteError;
 
       // Deactivate Supabase auth account
-      if ((employee as Employee)?.auth_id) {
+      const employeeData = employee as any;
+      if (employeeData?.auth_id) {
         const { error: authError } = await supabase.auth.admin.updateUserById(
-          (employee as Employee).auth_id!,
+          employeeData.auth_id,
           { user_metadata: { is_active: false } }
         );
         if (authError) throw authError;
