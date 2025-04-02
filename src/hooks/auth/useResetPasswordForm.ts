@@ -13,17 +13,46 @@ export const useResetPasswordForm = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [isValidLink, setIsValidLink] = useState(true);
-
+  const [isValidLink, setIsValidLink] = useState(false);
+  
   useEffect(() => {
-    // Check if there is a hash in the URL (this means we have access token)
-    if (!location.hash) {
-      setIsValidLink(false);
-      setError("Link reset password tidak valid atau telah kadaluarsa.");
-    } else {
-      // Log that we have a valid hash
-      console.log("Reset password hash detected in URL");
-    }
+    const validateResetLink = async () => {
+      // Check if there is a hash in the URL (this means we have access token)
+      if (!location.hash) {
+        console.log("No hash found in URL, link is invalid");
+        setIsValidLink(false);
+        setError("Link reset password tidak valid atau telah kadaluarsa.");
+        return;
+      }
+      
+      try {
+        // Check if we can get a session from the URL hash
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error validating reset link:", error);
+          setIsValidLink(false);
+          setError("Link reset password tidak valid atau telah kadaluarsa.");
+          return;
+        }
+        
+        if (!data.session) {
+          console.log("No session from hash, link may be expired");
+          setIsValidLink(false);
+          setError("Link reset password tidak valid atau telah kadaluarsa.");
+          return;
+        }
+        
+        console.log("Valid session found from reset link");
+        setIsValidLink(true);
+      } catch (err) {
+        console.error("Unexpected error validating reset link:", err);
+        setIsValidLink(false);
+        setError("Terjadi kesalahan saat memvalidasi link reset password.");
+      }
+    };
+    
+    validateResetLink();
   }, [location]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -51,9 +80,25 @@ export const useResetPasswordForm = () => {
       // Log information about current session
       console.log("Current session before password update:", 
                  sessionData.session ? "Session exists" : "No session");
+      
+      if (!sessionData.session) {
+        setError("Sesi telah kadaluarsa. Silakan meminta link reset password baru.");
+        setIsLoading(false);
+        toast({
+          title: "Link Kadaluarsa",
+          description: "Sesi telah kadaluarsa. Silakan meminta link reset password baru.",
+          variant: "destructive"
+        });
+        
+        setTimeout(() => {
+          navigate("/auth", { replace: true });
+        }, 3000);
+        
+        return;
+      }
 
       // Update the user's password
-      const { error: updateError, data } = await supabase.auth.updateUser({ 
+      const { error: updateError } = await supabase.auth.updateUser({ 
         password 
       });
 

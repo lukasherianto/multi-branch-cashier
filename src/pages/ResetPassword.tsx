@@ -9,6 +9,7 @@ import { AuthLayout } from "@/components/auth/AuthLayout";
 import { AuthHeader } from "@/components/auth/AuthHeader";
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -27,9 +28,17 @@ const ResetPassword = () => {
   // Check authentication state when component mounts
   useEffect(() => {
     const checkAuth = async () => {
-      const { data } = await supabase.auth.getSession();
-      console.log("Reset password page - Auth check:", 
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        console.log("Reset password page - Auth check:", 
                  data.session ? "User is authenticated" : "No session");
+        
+        if (error) {
+          console.error("Error checking session:", error);
+        }
+      } catch (err) {
+        console.error("Unexpected error checking auth:", err);
+      }
     };
     
     checkAuth();
@@ -65,6 +74,28 @@ const ResetPassword = () => {
             isLoading={isLoading}
             onSubmit={handleResetPassword}
           />
+        )}
+        
+        {!isValidLink && !message && (
+          <div className="text-center py-4">
+            {isLoading ? (
+              <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+            ) : (
+              <div>
+                <p className="text-sm text-gray-600 mb-4">
+                  Link reset password tidak valid atau telah kadaluarsa.
+                  Silakan meminta reset password baru.
+                </p>
+                <Button 
+                  variant="primary" 
+                  className="w-full mt-2"
+                  onClick={() => navigate("/auth")}
+                >
+                  Kembali ke Login
+                </Button>
+              </div>
+            )}
+          </div>
         )}
       </CardContent>
       
