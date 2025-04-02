@@ -16,6 +16,7 @@ import Reports from "./pages/Reports";
 import Kas from "./pages/Kas";
 import KasPurchases from "./pages/KasPurchases";
 import Attendance from "./pages/Attendance";
+import Employee from "./pages/Employee";
 import HomeIndex from "./pages/Index";
 import PrintPreview from "./pages/PrintPreview";
 import OrderConfirmation from "./pages/OrderConfirmation";
@@ -56,6 +57,7 @@ function App() {
               <Route path="kas" element={<Kas />} />
               <Route path="kas/purchases" element={<KasPurchases />} />
               <Route path="attendance" element={<Attendance />} />
+              <Route path="employee" element={<Employee />} />
               <Route path="order-confirmation" element={<OrderConfirmation />} />
               <Route path="stock-transfer" element={<StockTransfer />} />
               <Route path="returns" element={<Returns />} />

@@ -13,7 +13,7 @@ const Employee = () => {
     <div className="container mx-auto p-4">
       <Card>
         <CardHeader>
-          <CardTitle>Employee Management</CardTitle>
+          <CardTitle>Manajemen Karyawan</CardTitle>
         </CardHeader>
         <CardContent>
           <EmployeeList 

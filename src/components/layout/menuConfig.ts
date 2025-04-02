@@ -11,6 +11,7 @@ import {
   FileText,
   Settings,
   Package,
+  UserRound,
 } from 'lucide-react';
 
 const menuConfig = [
@@ -91,6 +92,11 @@ const menuConfig = [
         title: 'Cabang',
         icon: LayoutDashboard,
         path: '/branches',
+      },
+      {
+        title: 'Karyawan',
+        icon: UserRound,
+        path: '/employee',
       },
       {
         title: 'Absensi',
