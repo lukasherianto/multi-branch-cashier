@@ -79,7 +79,7 @@ export const useEmployeeData = () => {
         return;
       }
 
-      // Fetch from profiles table instead of karyawan table
+      // Filter profiles to show employees from the user's business first
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
         .select(`
@@ -97,7 +97,8 @@ export const useEmployeeData = () => {
             business_name
           )
         `)
-        .eq("is_employee", true);
+        .eq("is_employee", true)
+        .order("pelaku_usaha_id", { ascending: false, nullsFirst: false });
 
       if (profilesError) {
         console.error("Error fetching profiles:", profilesError);
@@ -122,8 +123,25 @@ export const useEmployeeData = () => {
         businessName: profile.pelaku_usaha?.business_name || 'Tidak diketahui'
       }));
 
-      console.log("Employees loaded from profiles:", formattedEmployees);
-      setEmployees(formattedEmployees);
+      // Sort employees: first show employees from current business, then others
+      const sortedEmployees = formattedEmployees.sort((a, b) => {
+        // First sort by isSameBusiness (current business first)
+        if (a.isSameBusiness && !b.isSameBusiness) return -1;
+        if (!a.isSameBusiness && b.isSameBusiness) return 1;
+        
+        // Then sort by branch within the same business
+        if (a.isSameBusiness && b.isSameBusiness) {
+          if (a.cabang?.branch_name && b.cabang?.branch_name) {
+            return a.cabang.branch_name.localeCompare(b.cabang.branch_name);
+          }
+        }
+        
+        // Finally sort by name
+        return a.name.localeCompare(b.name);
+      });
+
+      console.log("Employees loaded from profiles:", sortedEmployees);
+      setEmployees(sortedEmployees);
     } catch (error) {
       console.error("Error loading employees:", error);
       toast({
