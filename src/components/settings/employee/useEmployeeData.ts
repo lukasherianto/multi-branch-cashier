@@ -79,16 +79,15 @@ export const useEmployeeData = () => {
         return;
       }
 
-      // Use explicit column selection instead of * for better performance and type safety
-      const { data: employeesData, error: employeesError } = await supabase
-        .from("karyawan")
+      // Fetch from profiles table instead of karyawan table
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
         .select(`
-          karyawan_id,
-          name,
-          email,
+          id,
+          full_name,
           role,
-          auth_id,
-          is_active,
+          business_role,
+          is_employee,
           pelaku_usaha_id,
           cabang_id,
           cabang:cabang_id (
@@ -97,32 +96,33 @@ export const useEmployeeData = () => {
           pelaku_usaha:pelaku_usaha_id (
             business_name
           )
-        `);
+        `)
+        .eq("is_employee", true);
 
-      if (employeesError) {
-        console.error("Error fetching employees:", employeesError);
-        throw employeesError;
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+        throw profilesError;
       }
 
-      console.log("Raw employees data:", employeesData);
+      console.log("Raw profiles data:", profilesData);
       
-      // Format the employees data
-      const formattedEmployees: Employee[] = (employeesData || []).map(emp => ({
-        karyawan_id: emp.karyawan_id,
-        name: emp.name,
-        email: emp.email,
-        role: emp.role,
-        auth_id: emp.auth_id,
-        is_active: emp.is_active,
-        pelaku_usaha_id: emp.pelaku_usaha_id,
-        cabang_id: emp.cabang_id,
-        cabang: emp.cabang,
-        pelaku_usaha: emp.pelaku_usaha,
-        isSameBusiness: emp.pelaku_usaha_id === currentPelakuUsaha.pelaku_usaha_id,
-        businessName: emp.pelaku_usaha?.business_name || 'Tidak diketahui'
+      // Format the profiles data to match Employee structure
+      const formattedEmployees: Employee[] = (profilesData || []).map(profile => ({
+        karyawan_id: parseInt(profile.id.replace(/-/g, "").substring(0, 8), 16), // Generate numeric ID from UUID
+        name: profile.full_name,
+        email: "",  // Profiles don't store email directly
+        role: profile.role || profile.business_role,
+        auth_id: profile.id,
+        is_active: true,
+        pelaku_usaha_id: profile.pelaku_usaha_id,
+        cabang_id: profile.cabang_id,
+        cabang: profile.cabang,
+        pelaku_usaha: profile.pelaku_usaha,
+        isSameBusiness: profile.pelaku_usaha_id === currentPelakuUsaha.pelaku_usaha_id,
+        businessName: profile.pelaku_usaha?.business_name || 'Tidak diketahui'
       }));
 
-      console.log("Employees loaded:", formattedEmployees);
+      console.log("Employees loaded from profiles:", formattedEmployees);
       setEmployees(formattedEmployees);
     } catch (error) {
       console.error("Error loading employees:", error);
