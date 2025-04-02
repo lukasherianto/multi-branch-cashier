@@ -54,13 +54,22 @@ export const ForgotPasswordForm = ({
       
       console.log("Using redirect URL:", redirectTo);
       
+      // First, sign out to ensure a clean state
+      await supabase.auth.signOut();
+      
       const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
         redirectTo
       });
 
       if (error) {
         console.error("Error reset password:", error);
-        setError(error.message);
+        
+        if (error.message.includes("rate limit")) {
+          setError("Terlalu banyak permintaan reset password. Silakan tunggu beberapa saat dan coba lagi.");
+        } else {
+          setError(error.message);
+        }
+        
         toast({
           title: "Error Reset Password",
           description: error.message,
@@ -122,6 +131,7 @@ export const ForgotPasswordForm = ({
           placeholder="Alamat Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          disabled={isLoading || emailSent}
         />
       </div>
       

@@ -40,10 +40,15 @@ export const ResetPasswordForm = ({
           name="password"
           type="password"
           required
+          autoComplete="new-password"
           placeholder="Password Baru"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          disabled={isLoading}
         />
+        <p className="text-xs text-gray-500 mt-1">
+          Password harus minimal 6 karakter.
+        </p>
       </div>
       
       <div>
@@ -55,9 +60,11 @@ export const ResetPasswordForm = ({
           name="confirmPassword"
           type="password"
           required
+          autoComplete="new-password"
           placeholder="Konfirmasi Password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
+          disabled={isLoading}
         />
       </div>
       

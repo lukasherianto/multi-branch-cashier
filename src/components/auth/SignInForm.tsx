@@ -41,7 +41,10 @@ export const SignInForm = ({
     setIsLoading(true);
     setError(null);
 
-    if (!isValidEmail(email)) {
+    // Trim email to remove any accidental whitespace
+    const cleanEmail = email.trim();
+    
+    if (!isValidEmail(cleanEmail)) {
       setError("Format email tidak valid. Mohon periksa kembali.");
       setIsLoading(false);
       return;
@@ -52,19 +55,13 @@ export const SignInForm = ({
       setIsLoading(false);
       return;
     }
-
-    // Trim email to remove any accidental whitespace
-    const cleanEmail = email.trim();
     
     console.log('Attempting login with:', cleanEmail);
-    console.log('Login attempt details:', { 
-      email: cleanEmail,
-      passwordLength: password.length
-    });
 
     try {
       // First ensure we're logged out to start with a clean slate
       await supabase.auth.signOut();
+      console.log("Signed out before login attempt");
       
       // Small delay to ensure signOut has processed
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -109,9 +106,8 @@ export const SignInForm = ({
 
       if (data.user) {
         console.log("Login successful, user data:", data.user);
-        console.log("Session data:", data.session);
         
-        // Check if we have a valid session
+        // Verify we have a valid session
         if (!data.session) {
           console.error("No session created after successful login");
           setError("Sesi login tidak dapat dibuat. Silakan coba lagi.");
@@ -159,6 +155,7 @@ export const SignInForm = ({
           placeholder="Alamat Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          disabled={isLoading}
         />
       </div>
       
@@ -171,6 +168,7 @@ export const SignInForm = ({
             type="button"
             onClick={onForgotPassword}
             className="text-xs text-primary hover:underline"
+            disabled={isLoading}
           >
             Lupa password?
           </button>
@@ -184,6 +182,7 @@ export const SignInForm = ({
           placeholder="Kata Sandi"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          disabled={isLoading}
         />
       </div>
       

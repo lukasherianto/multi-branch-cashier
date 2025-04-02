@@ -1,12 +1,14 @@
 
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useResetPasswordForm } from "@/hooks/auth/useResetPasswordForm";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardFooter } from "@/components/ui/card";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { AuthHeader } from "@/components/auth/AuthHeader";
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
+import { supabase } from "@/integrations/supabase/client";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -21,6 +23,17 @@ const ResetPassword = () => {
     isValidLink,
     handleResetPassword
   } = useResetPasswordForm();
+  
+  // Check authentication state when component mounts
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      console.log("Reset password page - Auth check:", 
+                 data.session ? "User is authenticated" : "No session");
+    };
+    
+    checkAuth();
+  }, []);
 
   return (
     <AuthLayout>
@@ -42,7 +55,7 @@ const ResetPassword = () => {
           </Alert>
         )}
         
-        {!error && !message && isValidLink && (
+        {!message && isValidLink && (
           <ResetPasswordForm
             password={password}
             setPassword={setPassword}
