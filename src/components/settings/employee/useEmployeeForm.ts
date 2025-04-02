@@ -12,6 +12,7 @@ import {
   createAuthAccount, 
   updateProfileStatus
 } from "./services/employeeService";
+import { fetchUserPelakuUsaha } from "./api/employeeApi";
 
 export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
   const { toast } = useToast();
@@ -48,6 +49,25 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
       // Get pelaku usaha ID
       const pelakuUsahaId = await getPelakuUsahaId(user.id);
 
+      // Fetch business owner's data
+      const businessData = await fetchUserPelakuUsaha(user.id);
+      
+      if (!businessData) {
+        toast({
+          title: "Error",
+          description: "Data usaha tidak ditemukan",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Override some employee data with business owner's data
+      const employeeDataWithBusinessInfo = {
+        ...data,
+        name: businessData.business_name || data.name,
+        whatsapp_contact: businessData.contact_whatsapp || data.whatsapp_contact,
+      };
+
       // Parse and validate cabang ID
       let cabangId: number | null = null;
       if (data.cabang_id && data.cabang_id !== "0") {
@@ -68,26 +88,27 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
 
       // Create auth account with cabang_id in user metadata
       const authUser = await createAuthAccount({
-        ...data,
-        cabang_id: cabangId ? cabangId.toString() : "0" // Pass the cabang_id to be stored in user metadata
+        ...employeeDataWithBusinessInfo,
+        cabang_id: cabangId ? cabangId.toString() : "0"
       });
       
       // Update profile role and business_role
       await updateProfileStatus(authUser.id, data.business_role);
 
-      // Update the profile with cabang_id
+      // Update the profile with cabang_id and business info
       const { error: profileUpdateError } = await supabase
         .from('profiles')
         .update({ 
           cabang_id: cabangId,
-          pelaku_usaha_id: pelakuUsahaId,  // Ensure pelaku_usaha_id is also set in the profile
-          business_role: data.business_role, // Explicitly set business_role
-          whatsapp_number: data.whatsapp_contact // Add missing fields but don't include email as it doesn't exist in profiles
+          pelaku_usaha_id: pelakuUsahaId,
+          business_role: data.business_role,
+          whatsapp_number: employeeDataWithBusinessInfo.whatsapp_contact,
+          full_name: employeeDataWithBusinessInfo.name
         })
         .eq('id', authUser.id);
         
       if (profileUpdateError) {
-        console.error("Error updating profile cabang_id:", profileUpdateError);
+        console.error("Error updating profile:", profileUpdateError);
         // Continue even if profile update fails
       }
 
