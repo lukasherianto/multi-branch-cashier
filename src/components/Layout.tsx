@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { AppHeader } from "./layout/AppHeader";
 import { MenuContent } from "./layout/MenuContent";
 import menuConfig from "./layout/menuConfig";
 import { toast } from "sonner";
+import { useLogout } from "@/hooks/auth/useLogout";
 
 const Layout = () => {
   const location = useLocation();
@@ -20,6 +22,7 @@ const Layout = () => {
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
   const { user } = useAuth();
   const { toast: legacyToast } = useToast();
+  const { logout } = useLogout();
 
   const handleNavigate = (path: string) => {
     navigate(path);
@@ -35,23 +38,9 @@ const Layout = () => {
   };
 
   const handleLogout = async () => {
-    try {
-      toast.loading("Sedang keluar...");
-      
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error("Logout error:", error);
-        toast.error("Gagal keluar: " + error.message);
-        return;
-      }
-      
+    const success = await logout();
+    if (success) {
       setOpen(false);
-      
-      window.location.href = "/auth";
-    } catch (error) {
-      console.error("Unexpected logout error:", error);
-      toast.error("Gagal keluar, terjadi kesalahan");
     }
   };
 
