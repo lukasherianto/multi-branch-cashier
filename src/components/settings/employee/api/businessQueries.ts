@@ -12,7 +12,7 @@ export async function fetchUserPelakuUsaha(userId: string) {
   
   const { data, error } = await supabase
     .from("pelaku_usaha")
-    .select("pelaku_usaha_id, business_name")
+    .select("pelaku_usaha_id, business_name, contact_whatsapp")
     .eq("user_id", userId)
     .maybeSingle();
 

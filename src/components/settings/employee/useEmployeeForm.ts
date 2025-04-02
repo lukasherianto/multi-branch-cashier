@@ -12,7 +12,7 @@ import {
   createAuthAccount, 
   updateProfileStatus
 } from "./services/employeeService";
-import { fetchUserPelakuUsaha } from "./api/employeeApi";
+import { fetchUserPelakuUsaha } from "./api/businessQueries";
 
 export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
   const { toast } = useToast();

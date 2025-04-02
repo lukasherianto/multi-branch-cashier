@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Employee } from "../types";
 import { mapEmployeeData } from "./employeeMappers";
@@ -54,6 +55,7 @@ export async function fetchEmployees(pelakuUsahaId: number, cabangId?: number) {
 
 /**
  * Fetch pelaku usaha data for a given user
+ * @deprecated Use the same function from businessQueries.ts instead
  */
 export async function fetchUserPelakuUsaha(userId: string) {
   if (!userId) {
