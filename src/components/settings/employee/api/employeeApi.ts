@@ -22,7 +22,6 @@ export async function fetchEmployees(pelakuUsahaId: number, cabangId?: number) {
       whatsapp_number,
       business_role,
       pelaku_usaha_id,
-      email,
       cabang_id,
       cabang (branch_name)
     `);

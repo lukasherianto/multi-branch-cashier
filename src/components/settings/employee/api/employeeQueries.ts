@@ -15,7 +15,6 @@ export async function fetchEmployeeProfiles(pelakuUsahaId: number, cabangId?: nu
       is_employee,
       pelaku_usaha_id,
       cabang_id,
-      email,
       role,
       business_role,
       cabang (

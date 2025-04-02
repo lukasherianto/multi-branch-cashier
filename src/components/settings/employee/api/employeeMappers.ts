@@ -29,7 +29,6 @@ export function mapEmployeeData(profilesData: any[] | null, currentPelakuUsahaId
     // Safely extract values with type checks
     const authId = profile.id || "";
     const name = profile.full_name || "Unknown";
-    const email = profile.email || "";
     const whatsappContact = profile.whatsapp_number || profile.whatsapp_contact || "";
     const role = profile.role || "";
     const businessRole = profile.business_role || role;
@@ -44,7 +43,6 @@ export function mapEmployeeData(profilesData: any[] | null, currentPelakuUsahaId
     return {
       karyawan_id: 0, // Use 0 as this is no longer relevant but kept for compatibility
       name: name,
-      email: email,
       role: role,
       business_role: businessRole,
       auth_id: authId,
@@ -58,8 +56,3 @@ export function mapEmployeeData(profilesData: any[] | null, currentPelakuUsahaId
     };
   });
 }
-
-// This function is no longer needed as we're only using profiles now
-// export function combineEmployeeData(profileData: any[], karyawanData: any[], pelakuUsahaId: number) {
-//   // Removed since we're no longer combining data from two sources
-// }

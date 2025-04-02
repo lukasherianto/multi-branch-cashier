@@ -82,8 +82,7 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
           cabang_id: cabangId,
           pelaku_usaha_id: pelakuUsahaId,  // Ensure pelaku_usaha_id is also set in the profile
           business_role: data.business_role, // Explicitly set business_role
-          whatsapp_contact: data.whatsapp_contact, // Add missing fields
-          email: data.email
+          whatsapp_number: data.whatsapp_contact // Add missing fields but don't include email as it doesn't exist in profiles
         })
         .eq('id', authUser.id);
         
