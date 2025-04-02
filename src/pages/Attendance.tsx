@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AttendanceCard } from "@/components/attendance/AttendanceCard";
@@ -13,8 +13,6 @@ const Attendance = () => {
     attendanceHistory,
     todayAttendance,
     isLoading,
-    recordAttendance,
-    clockOut,
     currentTime,
     handleAttendance
   } = useAttendance();
@@ -42,7 +40,7 @@ const Attendance = () => {
         currentTime={currentTime}
         todayAttendance={todayAttendance}
         isLoading={isLoading}
-        onAttendance={(status, keterangan) => handleAttendance(status, keterangan)}
+        onAttendance={handleAttendance}
       />
 
       <AttendanceHistory attendanceHistory={attendanceHistory} />

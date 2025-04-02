@@ -1,3 +1,4 @@
+
 import React from "react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
@@ -8,7 +9,7 @@ interface AttendanceCardProps {
   currentTime: Date;
   todayAttendance: any;
   isLoading: boolean;
-  onAttendance: () => void;
+  onAttendance: (status: string, keterangan?: string) => void;
 }
 
 export const AttendanceCard: React.FC<AttendanceCardProps> = ({
@@ -27,7 +28,7 @@ export const AttendanceCard: React.FC<AttendanceCardProps> = ({
           {format(currentTime, "EEEE, dd MMMM yyyy", { locale: id })}
         </div>
         <Button
-          onClick={onAttendance}
+          onClick={() => onAttendance(todayAttendance ? "keluar" : "masuk")}
           disabled={isLoading}
           className="w-full md:w-auto"
         >
