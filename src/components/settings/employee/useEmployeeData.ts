@@ -5,6 +5,22 @@ import { useToast } from "@/hooks/use-toast";
 import { Branch, Employee } from "./types";
 import { useAuth } from "@/hooks/auth";
 
+interface EmployeeData {
+  karyawan_id: number;
+  name: string;
+  email?: string;
+  role?: string;
+  auth_id?: string;
+  is_active?: boolean;
+  pelaku_usaha_id?: number;
+  cabang?: {
+    branch_name: string;
+  };
+  pelaku_usaha?: {
+    business_name: string;
+  };
+}
+
 export const useEmployeeData = () => {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -103,11 +119,11 @@ export const useEmployeeData = () => {
         throw employeesError;
       }
 
-      const formattedEmployees = employeesData?.map(emp => ({
+      const formattedEmployees = (employeesData as EmployeeData[] || []).map(emp => ({
         ...emp,
         isSameBusiness: emp.pelaku_usaha_id === currentPelakuUsaha.pelaku_usaha_id,
         businessName: emp.pelaku_usaha?.business_name || 'Tidak diketahui'
-      })) || [];
+      }));
 
       console.log("Employees loaded:", formattedEmployees);
       setEmployees(formattedEmployees);

@@ -11,8 +11,30 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+interface Employee {
+  karyawan_id: number;
+  name: string;
+  role: string;
+  cabang?: {
+    branch_name: string;
+  };
+}
+
+interface AttendanceRecord {
+  karyawan_id: number;
+  tanggal: string;
+  jam_masuk: string;
+  jam_keluar: string | null;
+  status: string;
+}
+
+interface EmployeeData {
+  employees: Employee[];
+  attendance: AttendanceRecord[];
+}
+
 const EmployeeReport = () => {
-  const { data: employeeData } = useQuery({
+  const { data: employeeData } = useQuery<EmployeeData, Error>({
     queryKey: ["employee-report"],
     queryFn: async () => {
       const { data: employees, error: employeeError } = await supabase
@@ -41,8 +63,8 @@ const EmployeeReport = () => {
       if (attendanceError) throw attendanceError;
 
       return {
-        employees,
-        attendance,
+        employees: employees as Employee[] || [],
+        attendance: attendance as AttendanceRecord[] || [],
       };
     },
   });

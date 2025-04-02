@@ -1,19 +1,40 @@
-import React from "react";
+
+import React, { useState, useEffect } from "react";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AttendanceCard } from "@/components/attendance/AttendanceCard";
 import { AttendanceHistory } from "@/components/attendance/AttendanceHistory";
 import { useAttendance } from "@/hooks/useAttendance";
+import { useAuth } from "@/hooks/auth";
 
 const Attendance = () => {
+  const [currentTime, setCurrentTime] = useState(new Date());
   const {
-    currentTime,
-    attendanceHistory,
+    employeeData,
+    attendanceData: attendanceHistory,
     todayAttendance,
     isLoading,
-    isEmployee,
-    handleAttendance,
+    recordAttendance,
+    clockOut
   } = useAttendance();
+  
+  const { isEmployee } = useAuth();
+  
+  // Update current time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+    
+    return () => clearInterval(timer);
+  }, []);
+
+  const handleAttendance = (status: string, keterangan?: string) => {
+    // Make sure we're only handling attendance for the current user
+    if (employeeData.length > 0) {
+      recordAttendance(employeeData[0].karyawan_id, status, keterangan);
+    }
+  };
 
   if (isEmployee === false) {
     return (
