@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { Employee } from "./types";
@@ -18,7 +19,7 @@ export const EmployeeList = ({ employees, onDelete, isLoading }: EmployeeListPro
     <div className="space-y-6">
       {/* Current Business Employees */}
       <div>
-        <h4 className="text-sm font-semibold mb-3">Karyawan Usaha Anda</h4>
+        <h4 className="text-sm font-semibold mb-3">List Karyawan</h4>
         <div className="space-y-4">
           {currentBusinessEmployees.map((employee) => (
             <div
@@ -58,7 +59,7 @@ export const EmployeeList = ({ employees, onDelete, isLoading }: EmployeeListPro
       {/* Other Business Employees */}
       {otherBusinessEmployees.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold mb-3">Karyawan Usaha Lain</h4>
+          <h4 className="text-sm font-semibold mb-3">List Karyawan Usaha Lain</h4>
           <div className="space-y-4">
             {otherBusinessEmployees.map((employee) => (
               <div
