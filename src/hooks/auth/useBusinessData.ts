@@ -1,80 +1,64 @@
 
-import { useEffect } from "react";
-import { User } from "@supabase/supabase-js";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export const useBusinessData = (
-  user: User | null,
-  selectedCabangId: number | null,
-  setPelakuUsaha: (data: any) => void,
-  setCabangList: (data: any[]) => void,
-  setCabang: (data: any) => void,
-  setSelectedCabangId: (id: number | null) => void
-) => {
-  useEffect(() => {
-    if (user) {
-      const fetchPelakuUsaha = async () => {
-        try {
-          console.log("Fetching pelaku usaha for user:", user.id);
+export const useBusinessData = () => {
+  const [pelakuUsaha, setPelakuUsaha] = useState<any>(null);
+  const [cabang, setCabang] = useState<any>(null);
+  const [cabangList, setCabangList] = useState<any[]>([]);
+  const [selectedCabangId, setSelectedCabangId] = useState<number | null>(null);
+
+  // Function to fetch user's business data
+  const fetchBusinessData = async (userId: string) => {
+    try {
+      console.log("Fetching business data for user ID:", userId);
+      
+      // Get pelaku_usaha data
+      const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
+        .from('pelaku_usaha')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (pelakuUsahaError) {
+        console.error("Error fetching pelaku usaha:", pelakuUsahaError);
+      } else if (pelakuUsahaData) {
+        console.log("Found pelaku usaha:", pelakuUsahaData);
+        setPelakuUsaha(pelakuUsahaData);
+        
+        // Get branches data
+        const { data: cabangData, error: cabangError } = await supabase
+          .from('cabang')
+          .select('*')
+          .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id)
+          .order('cabang_id', { ascending: true });
+
+        if (cabangError) {
+          console.error("Error fetching cabang:", cabangError);
+        } else if (cabangData && cabangData.length > 0) {
+          console.log("Found cabang:", cabangData);
+          setCabangList(cabangData);
           
-          const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
-            .from('pelaku_usaha')
-            .select('*')
-            .eq('user_id', user.id)
-            .maybeSingle();
-
-          if (pelakuUsahaError) {
-            console.error('Error mengambil data pelaku usaha:', pelakuUsahaError);
-            return;
-          }
-
-          if (!pelakuUsahaData) {
-            console.log("No pelaku_usaha found for user:", user.id);
-            setPelakuUsaha(null);
-            setCabangList([]);
-            setCabang(null);
-            setSelectedCabangId(null);
-            return;
-          }
-
-          console.log("Data pelaku usaha ditemukan:", pelakuUsahaData);
-          setPelakuUsaha(pelakuUsahaData);
-
-          // Get all branches for this pelaku usaha
-          const { data: cabangData, error: cabangError } = await supabase
-            .from('cabang')
-            .select('*')
-            .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id);
-
-          if (cabangError) {
-            console.error('Error mengambil data cabang:', cabangError);
-            return;
-          }
-
-          console.log("Data cabang:", cabangData);
-
-          // Sort branches by ID to ensure the first branch (headquarters) is first
-          const sortedBranches = (cabangData || []).sort((a, b) => a.cabang_id - b.cabang_id);
-          setCabangList(sortedBranches);
-          
-          // If there's only one branch, select it automatically
-          if (sortedBranches.length === 1) {
-            setSelectedCabangId(sortedBranches[0].cabang_id);
-            setCabang(sortedBranches[0]);
-          }
-          // If there are multiple branches and none selected, default to Pusat (first/lowest ID branch)
-          else if (sortedBranches.length > 1 && !selectedCabangId) {
-            // The headquarters is considered the first branch (lowest ID)
-            const headquartersId = sortedBranches[0].cabang_id;
-            setSelectedCabangId(headquartersId);
-            setCabang(sortedBranches[0]);
-          }
-        } catch (error) {
-          console.error('Error in fetchPelakuUsaha:', error);
+          // Find the main branch (HQ) or use the first branch
+          const mainCabang = cabangData.find(c => c.status === 1) || cabangData[0];
+          setCabang(mainCabang);
+          setSelectedCabangId(mainCabang.cabang_id);
         }
-      };
-
-      fetchPelakuUsaha();
+      }
+    } catch (error) {
+      console.error("Error in fetchBusinessData:", error);
     }
-  }, [user, selectedCabangId, setPelakuUsaha, setCabangList, setCabang, setSelectedCabangId]);
+  };
+
+  return {
+    pelakuUsaha,
+    setPelakuUsaha,
+    cabang,
+    setCabang,
+    cabangList,
+    setCabangList,
+    selectedCabangId,
+    setSelectedCabangId,
+    fetchBusinessData
+  };
 };

@@ -2,6 +2,9 @@
 import { createContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthContextType } from "./types";
+import { useBusinessData } from "./useBusinessData";
+import { useUserRole } from "./useUserRole";
+import { useAuthMethods } from "./useAuthMethods";
 
 // Create context with default undefined value
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -11,121 +14,102 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState(null);
-  const [userRole, setUserRole] = useState<string | null>('pelaku_usaha'); // Default role for all users currently
-  const [userStatusId, setUserStatusId] = useState<number | null>(1);
-  const [pelakuUsaha, setPelakuUsaha] = useState<any>(null);
-  const [cabang, setCabang] = useState<any>(null);
-  const [cabangList, setCabangList] = useState<any[]>([]);
-  const [selectedCabangId, setSelectedCabangId] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<any | null>(null);
+  
+  // Use our custom hooks
+  const { 
+    userRole, setUserRole, userStatusId, setUserStatusId, 
+    fetchUserRole, setDefaultUserStatus 
+  } = useUserRole();
+  
+  const {
+    pelakuUsaha, cabang, cabangList, selectedCabangId,
+    setSelectedCabangId, fetchBusinessData
+  } = useBusinessData();
+  
+  const {
+    isLoading, setIsLoading, signIn, signOut, resetPassword, setNewPassword
+  } = useAuthMethods();
 
+  // Check for the initial session when the component mounts
   useEffect(() => {
-    // Get current user session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setUser(session.user);
-        fetchUserData(session.user.id);
-      } else {
-        setUser(null);
-        setIsLoading(false);
-      }
-    });
-
-    // Set up listener for auth state change
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        setUser(session.user);
-        fetchUserData(session.user.id);
-      } else {
+    // Check for active session
+    const checkSession = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error checking session:", error);
+          setUser(null);
+          setUserRole(null);
+        } else if (data.session) {
+          setUser(data.session.user);
+          const role = await fetchUserRole(data.session.user.id);
+          setUserRole(role);
+          setDefaultUserStatus(); // Set default status ID
+          await fetchBusinessData(data.session.user.id);
+        } else {
+          setUser(null);
+          setUserRole(null);
+        }
+      } catch (error) {
+        console.error("Unexpected error in auth check:", error);
         setUser(null);
         setUserRole(null);
-        setUserStatusId(null);
-        setPelakuUsaha(null);
-        setCabang(null);
-        setCabangList([]);
-        setSelectedCabangId(null);
+      } finally {
         setIsLoading(false);
       }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  // Function to fetch user data and business data
-  const fetchUserData = async (userId: string) => {
-    setIsLoading(true);
-    try {
-      console.log("Fetching user data for ID:", userId);
-
-      // Check for URL parameter to set role (for testing purposes)
-      const urlParams = new URLSearchParams(window.location.search);
-      const roleParam = urlParams.get('role');
-      
-      if (roleParam === 'kasir') {
-        setUserRole('kasir');
-        console.log('Setting role to kasir from URL parameter');
-      } else {
-        // Default role is 'pelaku_usaha'
-        setUserRole('pelaku_usaha');
-      }
-      
-      setUserStatusId(1); // Status ID for active user
-
-      // Get pelaku_usaha data
-      const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
-        .from('pelaku_usaha')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (pelakuUsahaError) {
-        console.error("Error fetching pelaku usaha:", pelakuUsahaError);
-      } else if (pelakuUsahaData) {
-        console.log("Found pelaku usaha:", pelakuUsahaData);
-        setPelakuUsaha(pelakuUsahaData);
+    };
+    
+    checkSession();
+    
+    // Set up listener for auth state changes
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log("Auth state changed:", event);
         
-        // Get branches data
-        const { data: cabangData, error: cabangError } = await supabase
-          .from('cabang')
-          .select('*')
-          .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id)
-          .order('cabang_id', { ascending: true });
-
-        if (cabangError) {
-          console.error("Error fetching cabang:", cabangError);
-        } else if (cabangData && cabangData.length > 0) {
-          console.log("Found cabang:", cabangData);
-          setCabangList(cabangData);
-          
-          // Find the main branch (HQ) or use the first branch
-          const mainCabang = cabangData.find(c => c.status === 1) || cabangData[0];
-          setCabang(mainCabang);
-          setSelectedCabangId(mainCabang.cabang_id);
+        if (session) {
+          setUser(session.user);
+          const role = await fetchUserRole(session.user.id);
+          setUserRole(role);
+          setDefaultUserStatus(); // Set default status ID
+          await fetchBusinessData(session.user.id);
+        } else {
+          setUser(null);
+          setUserRole(null);
+          // Reset business data
+          setSelectedCabangId(null);
         }
+        
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error in fetchUserData:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Values to share through context
-  const value: AuthContextType = {
-    user,
-    userRole,
-    userStatusId,
-    pelakuUsaha,
-    cabang,
-    cabangList,
-    selectedCabangId,
-    selectedBranchId: selectedCabangId, // Alias for selectedCabangId
-    setSelectedCabangId,
-    isLoading
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    );
+    
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+  
+  // Provide the auth context to the app
+  return (
+    <AuthContext.Provider value={{
+      user,
+      userRole,
+      userStatusId,
+      pelakuUsaha,
+      cabang,
+      cabangList,
+      selectedCabangId,
+      selectedBranchId: selectedCabangId, // Alias for selectedCabangId
+      setSelectedCabangId,
+      isLoading,
+      signIn,
+      signOut,
+      resetPassword,
+      setNewPassword,
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
