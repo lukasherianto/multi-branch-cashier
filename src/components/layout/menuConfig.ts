@@ -100,24 +100,6 @@ const menuConfig = [
     title: 'Manajemen',
     items: [
       {
-        title: 'Cabang',
-        icon: LayoutDashboard,
-        path: '/branches',
-        code: 'branches'
-      },
-      {
-        title: 'Karyawan',
-        icon: Users,
-        path: '/employee',
-        code: 'employee'
-      },
-      {
-        title: 'Absensi',
-        icon: CalendarDays,
-        path: '/attendance',
-        code: 'attendance'
-      },
-      {
         title: 'Data Member',
         icon: Users,
         path: '/members',
