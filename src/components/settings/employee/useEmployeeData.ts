@@ -79,9 +79,9 @@ export const useEmployeeData = () => {
         return;
       }
 
-      // Use any instead of specific typing until Supabase types are regenerated
+      // Use explicit column selection instead of * for better performance and type safety
       const { data: employeesData, error: employeesError } = await supabase
-        .from("karyawan" as any)
+        .from("karyawan")
         .select(`
           karyawan_id,
           name,
@@ -90,6 +90,7 @@ export const useEmployeeData = () => {
           auth_id,
           is_active,
           pelaku_usaha_id,
+          cabang_id,
           cabang:cabang_id (
             branch_name
           ),
@@ -103,10 +104,10 @@ export const useEmployeeData = () => {
         throw employeesError;
       }
 
-      // Cast to any to avoid type errors until Supabase types are updated
-      const employeesList = employeesData as any[] || [];
+      console.log("Raw employees data:", employeesData);
       
-      const formattedEmployees: Employee[] = employeesList.map(emp => ({
+      // Format the employees data
+      const formattedEmployees: Employee[] = (employeesData || []).map(emp => ({
         karyawan_id: emp.karyawan_id,
         name: emp.name,
         email: emp.email,
@@ -114,6 +115,7 @@ export const useEmployeeData = () => {
         auth_id: emp.auth_id,
         is_active: emp.is_active,
         pelaku_usaha_id: emp.pelaku_usaha_id,
+        cabang_id: emp.cabang_id,
         cabang: emp.cabang,
         pelaku_usaha: emp.pelaku_usaha,
         isSameBusiness: emp.pelaku_usaha_id === currentPelakuUsaha.pelaku_usaha_id,
