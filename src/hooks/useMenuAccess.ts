@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
-import { useAuth } from "@/hooks/auth";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/auth";
 
 interface MenuAccessData {
   menu_code: string;
@@ -10,73 +10,32 @@ interface MenuAccessData {
 export const useMenuAccess = () => {
   const { userRole } = useAuth();
   const [allowedMenu, setAllowedMenu] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchMenuAccess = async () => {
       setIsLoading(true);
-      
       try {
-        if (userRole === 'kasir') {
-          // For cashier role, only allow specific menus
-          const cashierMenus = [
-            'dashboard',
-            'products', 
-            'pos',
-            'history',
-            'returns',
-            'attendance',
-            'members',
-            'settings'
-          ];
-          setAllowedMenu(cashierMenus);
-        } else if (userRole === 'gudang') {
-          // For warehouse staff role
-          const warehouseMenus = [
-            'dashboard',
-            'products',
-            'products_categories',
-            'stock_transfer',
-            'attendance',
-            'settings'
-          ];
-          setAllowedMenu(warehouseMenus);
-        } else if (userRole === 'pelayan') {
-          // For waiter role
-          const waiterMenus = [
-            'dashboard',
-            'pos',
-            'history',
-            'attendance',
-            'settings'
-          ];
-          setAllowedMenu(waiterMenus);
-        } else {
-          // For business owner, we assume access to all menus
-          // Get all menu codes from menuConfig.ts
-          // This approach ensures the owner has full access
-          const allMenuCodes = [
-            'dashboard',
-            'products',
-            'products_categories',
-            'stock_transfer',
-            'pos',
-            'history',
-            'returns',
-            'kas',
-            'purchases',
-            'reports',
-            'branches',
-            'attendance',
-            'members',
-            'settings',
-            'employee'
-          ];
+        if (userRole) {
+          // The correct way to query the menu_access table with proper typing
+          const { data, error } = await supabase
+            .from('menu_access')
+            .select('menu_code')
+            .eq('role', userRole);
+
+          if (error) {
+            console.error("Error fetching menu access:", error);
+            setAllowedMenu([]);
+            return;
+          }
           
-          console.log("Menu access for owner granted:", allMenuCodes);
-          setAllowedMenu(allMenuCodes);
+          // Correctly type the data and extract menu_code values
+          const menuCodes = (data as MenuAccessData[]).map(item => item.menu_code);
+          setAllowedMenu(menuCodes);
+        } else {
+          // Default empty array if no user role
+          setAllowedMenu([]);
         }
-        
       } catch (err) {
         console.error("Unexpected error in menu access:", err);
         setAllowedMenu([]);

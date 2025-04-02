@@ -4,22 +4,12 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { EmployeeFormData } from "./types";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { employeeSchema } from "./schema";
-import { 
-  getPelakuUsahaId, 
-  validateBranchId, 
-  createAuthAccount, 
-  updateProfileStatus
-} from "./services/employeeService";
-import { fetchUserPelakuUsaha } from "./api/businessQueries";
 
 export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<EmployeeFormData>({
-    resolver: zodResolver(employeeSchema),
     defaultValues: {
       name: "",
       email: "",
@@ -46,13 +36,13 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
         return;
       }
 
-      // Get pelaku usaha ID
-      const pelakuUsahaId = await getPelakuUsahaId(user.id);
+      const { data: pelakuUsaha } = await supabase
+        .from("pelaku_usaha")
+        .select("pelaku_usaha_id")
+        .eq("user_id", user.id)
+        .single();
 
-      // Fetch business owner's data
-      const businessData = await fetchUserPelakuUsaha(user.id);
-      
-      if (!businessData) {
+      if (!pelakuUsaha) {
         toast({
           title: "Error",
           description: "Data usaha tidak ditemukan",
@@ -61,58 +51,99 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
         return;
       }
 
-      // Override some employee data with business owner's data
-      const employeeDataWithBusinessInfo = {
-        ...data,
-        name: businessData.business_name || data.name,
-        whatsapp_contact: businessData.contact_whatsapp || data.whatsapp_contact,
-      };
+      // Map business_role to the appropriate user_status ID
+      let statusId: number;
+      
+      switch (data.business_role) {
+        case 'pelaku_usaha':
+          statusId = 1;
+          break;
+        case 'admin':
+          statusId = 2;
+          break;
+        case 'kasir':
+          statusId = 3;
+          break;
+        case 'pelayan':
+          statusId = 4;
+          break;
+        default:
+          statusId = 3; // Default to 'kasir' if unknown role
+      }
 
-      // Parse and validate cabang ID
-      let cabangId: number | null = null;
+      // Create Supabase auth account for employee
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            full_name: data.name,
+            whatsapp_number: data.whatsapp_contact,
+            is_employee: true,
+            business_role: data.business_role,
+            status_id: statusId
+          }
+        }
+      });
+
+      if (authError) {
+        console.error("Auth error:", authError);
+        throw authError;
+      }
+
+      if (!authData.user) {
+        throw new Error("Failed to create employee account");
+      }
+
+      // Update the status_id in profiles table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ status_id: statusId })
+        .eq('id', authData.user.id);
+
+      if (profileError) {
+        console.error("Error updating profile status_id:", profileError);
+      }
+
+      // Verify if the selected branch exists (if one was selected)
       if (data.cabang_id && data.cabang_id !== "0") {
-        const parsedCabangId = parseInt(data.cabang_id, 10);
-        if (!isNaN(parsedCabangId)) {
-          cabangId = parsedCabangId;
-          await validateBranchId(cabangId);
-        } else {
-          console.error("Invalid cabang_id format:", data.cabang_id);
+        const { data: branchData, error: branchError } = await supabase
+          .from("cabang")
+          .select("cabang_id")
+          .eq("cabang_id", parseInt(data.cabang_id))
+          .single();
+
+        if (branchError || !branchData) {
           toast({
             title: "Error",
-            description: "Format ID cabang tidak valid",
+            description: "Cabang yang dipilih tidak valid",
             variant: "destructive",
           });
           return;
         }
       }
 
-      // Create auth account with cabang_id in user metadata
-      const authUser = await createAuthAccount({
-        ...employeeDataWithBusinessInfo,
-        cabang_id: cabangId ? cabangId.toString() : "0"
-      });
-      
-      // Update profile role and business_role
-      await updateProfileStatus(authUser.id, data.business_role);
-
-      // Update the profile with cabang_id and business info
-      const { error: profileUpdateError } = await supabase
-        .from('profiles')
-        .update({ 
-          cabang_id: cabangId,
-          pelaku_usaha_id: pelakuUsahaId,
+      // Insert employee data
+      const { data: employeeData, error: employeeError } = await supabase
+        .from("karyawan")
+        .insert({
+          name: data.name,
+          email: data.email,
+          whatsapp_contact: data.whatsapp_contact,
+          role: data.role,
           business_role: data.business_role,
-          whatsapp_number: employeeDataWithBusinessInfo.whatsapp_contact,
-          full_name: employeeDataWithBusinessInfo.name
+          cabang_id: data.cabang_id === "0" ? null : parseInt(data.cabang_id),
+          pelaku_usaha_id: pelakuUsaha.pelaku_usaha_id,
+          auth_id: authData.user.id,
+          is_active: true
         })
-        .eq('id', authUser.id);
-        
-      if (profileUpdateError) {
-        console.error("Error updating profile:", profileUpdateError);
-        // Continue even if profile update fails
-      }
+        .select()
+        .single();
 
-      console.log("Employee successfully created with profile data");
+      if (employeeError) {
+        console.error("Employee insert error:", employeeError);
+        throw employeeError;
+      }
 
       toast({
         title: "Sukses",
@@ -120,7 +151,7 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
       });
 
       form.reset();
-      await loadEmployees();
+      loadEmployees();
     } catch (error: any) {
       console.error("Error adding employee:", error);
       toast({

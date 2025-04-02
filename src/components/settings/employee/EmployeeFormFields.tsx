@@ -3,10 +3,10 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UseFormReturn } from "react-hook-form";
-import { Branch, EmployeeFormData } from "./types";
+import { Branch } from "./types";
 
 interface EmployeeFormFieldsProps {
-  form: UseFormReturn<EmployeeFormData>;
+  form: UseFormReturn<any>;
   branches: Branch[];
 }
 
@@ -18,7 +18,7 @@ export const EmployeeFormFields = ({ form, branches }: EmployeeFormFieldsProps) 
         name="name"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Nama <span className="text-red-500">*</span></FormLabel>
+            <FormLabel>Nama</FormLabel>
             <FormControl>
               <Input placeholder="Nama karyawan" {...field} />
             </FormControl>
@@ -32,7 +32,7 @@ export const EmployeeFormFields = ({ form, branches }: EmployeeFormFieldsProps) 
         name="email"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Email <span className="text-red-500">*</span></FormLabel>
+            <FormLabel>Email</FormLabel>
             <FormControl>
               <Input type="email" placeholder="Email karyawan" {...field} />
             </FormControl>
@@ -46,7 +46,7 @@ export const EmployeeFormFields = ({ form, branches }: EmployeeFormFieldsProps) 
         name="password"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Password <span className="text-red-500">*</span></FormLabel>
+            <FormLabel>Password</FormLabel>
             <FormControl>
               <Input 
                 type="password" 
@@ -78,8 +78,8 @@ export const EmployeeFormFields = ({ form, branches }: EmployeeFormFieldsProps) 
         name="business_role"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Jabatan <span className="text-red-500">*</span></FormLabel>
-            <Select onValueChange={field.onChange} value={field.value || undefined}>
+            <FormLabel>Jabatan</FormLabel>
+            <Select onValueChange={field.onChange} value={field.value}>
               <FormControl>
                 <SelectTrigger>
                   <SelectValue placeholder="Pilih jabatan" />
@@ -89,7 +89,6 @@ export const EmployeeFormFields = ({ form, branches }: EmployeeFormFieldsProps) 
                 <SelectItem value="pelaku_usaha">Pelaku Usaha</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="kasir">Kasir</SelectItem>
-                <SelectItem value="gudang">Staf Gudang</SelectItem>
                 <SelectItem value="pelayan">Pelayan</SelectItem>
               </SelectContent>
             </Select>
@@ -117,8 +116,8 @@ export const EmployeeFormFields = ({ form, branches }: EmployeeFormFieldsProps) 
         name="cabang_id"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Cabang <span className="text-red-500">*</span></FormLabel>
-            <Select onValueChange={field.onChange} value={field.value || undefined}>
+            <FormLabel>Cabang</FormLabel>
+            <Select onValueChange={field.onChange} value={field.value}>
               <FormControl>
                 <SelectTrigger>
                   <SelectValue placeholder="Pilih cabang" />

@@ -7,25 +7,36 @@ export const useEmployeeDelete = (loadEmployees: () => Promise<void>) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  const deleteEmployee = async (authId: string) => {
+  const deleteEmployee = async (karyawanId: number) => {
     try {
       setIsLoading(true);
-      console.log("Deactivating employee with auth ID:", authId);
+      console.log("Deleting employee:", karyawanId);
       
-      // Update profile to mark employee as inactive
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({ is_employee: false })
-        .eq("id", authId);
+      // Get employee data first to get auth_id
+      const { data: employee, error: getError } = await supabase
+        .from("karyawan")
+        .select("auth_id")
+        .eq("karyawan_id", karyawanId)
+        .single();
 
-      if (updateError) throw updateError;
+      if (getError) throw getError;
+
+      // Delete from karyawan table
+      const { error: deleteError } = await supabase
+        .from("karyawan")
+        .delete()
+        .eq("karyawan_id", karyawanId);
+
+      if (deleteError) throw deleteError;
 
       // Deactivate Supabase auth account
-      const { error: authError } = await supabase.auth.admin.updateUserById(
-        authId,
-        { user_metadata: { is_active: false } }
-      );
-      if (authError) throw authError;
+      if (employee?.auth_id) {
+        const { error: authError } = await supabase.auth.admin.updateUserById(
+          employee.auth_id,
+          { user_metadata: { is_active: false } }
+        );
+        if (authError) throw authError;
+      }
 
       toast({
         title: "Sukses",

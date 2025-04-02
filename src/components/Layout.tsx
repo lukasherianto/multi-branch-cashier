@@ -12,7 +12,6 @@ import { AppHeader } from "./layout/AppHeader";
 import { MenuContent } from "./layout/MenuContent";
 import menuConfig from "./layout/menuConfig";
 import { toast } from "sonner";
-import { useLogout } from "@/hooks/auth/useLogout";
 
 const Layout = () => {
   const location = useLocation();
@@ -22,7 +21,6 @@ const Layout = () => {
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
   const { user } = useAuth();
   const { toast: legacyToast } = useToast();
-  const { logout } = useLogout();
 
   const handleNavigate = (path: string) => {
     navigate(path);
@@ -38,13 +36,39 @@ const Layout = () => {
   };
 
   const handleLogout = async () => {
-    const success = await logout();
-    if (success) {
+    try {
+      console.log("Logout button handler triggered");
+      
+      // Menggunakan toast dari sonner yang lebih sederhana dan reliable
+      toast.loading("Sedang keluar...");
+      
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("Error during logout:", error);
+        toast.error("Gagal keluar: " + error.message);
+        return;
+      }
+      
+      console.log("Sign out successful, redirecting to auth page");
+      toast.success("Berhasil keluar");
+      
+      // Membersihkan state
       setOpen(false);
+      
+      // Menunda navigasi untuk memastikan state sudah terupdate
+      setTimeout(() => {
+        // Force navigation to auth page
+        window.location.href = "/auth";
+      }, 500);
+    } catch (error) {
+      console.error("Exception during logout:", error);
+      toast.error("Gagal keluar, terjadi kesalahan");
     }
   };
 
   useEffect(() => {
+    // Add a debugging console log to help identify any issues
     console.log('Layout component mounted', { location, expandedMenus, menuConfig });
     
     try {
@@ -60,6 +84,7 @@ const Layout = () => {
     }
   }, [location.pathname]);
 
+  // Add a debugging console log for the render path
   console.log('Layout rendering', { isMobile, user });
 
   if (isMobile) {

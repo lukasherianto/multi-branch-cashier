@@ -1,2 +1,0 @@
-
-export { EmployeeList } from './EmployeeList';

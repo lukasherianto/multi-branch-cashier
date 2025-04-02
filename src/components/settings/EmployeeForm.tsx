@@ -1,81 +1,37 @@
 
-import { useEmployeeData } from "./employee/hooks/useEmployeeData";
-import { EmployeeFormSection } from "./employee/EmployeeFormSection";
-import { EmployeeTable } from "./employee/list/EmployeeTable";
+import { Users } from "lucide-react";
+import { EmployeeList } from "./employee/EmployeeList";
+import { useEmployeeData } from "./employee/useEmployeeData";
 import { useEmployeeForm } from "./employee/useEmployeeForm";
-import { EmptyState } from "./employee/list/EmptyState";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Loader2 } from "lucide-react";
-import { useAuth } from "@/hooks/auth";
 import { useEmployeeDelete } from "./employee/useEmployeeDelete";
-import { useEmployeePasswordReset } from "./employee/useEmployeePasswordReset";
+import { EmployeeFormSection } from "./employee/EmployeeFormSection";
 
 export function EmployeeForm() {
-  const { isLoading, employees, branches, loadEmployees, error } = useEmployeeData();
-  const { user } = useAuth();
-  
-  if (!user) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          Silakan login terlebih dahulu untuk mengelola karyawan.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-  
+  const { isLoading: dataLoading, employees, branches, loadEmployees } = useEmployeeData();
   const { form, isLoading: formLoading, onSubmit } = useEmployeeForm(loadEmployees);
-  const { deleteEmployee } = useEmployeeDelete(loadEmployees);
-  const { resetPassword, isResetting } = useEmployeePasswordReset();
+  const { deleteEmployee, isDeleting } = useEmployeeDelete(loadEmployees);
 
-  // Handler for employee deletion
-  const handleEmployeeDelete = async (authId: string) => {
-    await deleteEmployee(authId);
-    await loadEmployees();
-  };
-
-  // Handler for password reset
-  const handlePasswordReset = async (authId: string, newPassword: string) => {
-    return await resetPassword(authId, newPassword);
-  };
-
-  if (error) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          Gagal memuat data karyawan: {error}
-        </AlertDescription>
-      </Alert>
-    );
-  }
+  const isLoading = dataLoading || formLoading || isDeleting;
 
   return (
     <div className="space-y-6">
-      <EmployeeFormSection
+      <EmployeeFormSection 
         form={form}
         branches={branches}
-        isLoading={formLoading}
+        isLoading={isLoading}
         onSubmit={onSubmit}
       />
-      
+
       <div className="mt-8">
-        <h2 className="text-xl font-bold mb-4">Daftar Karyawan</h2>
-        
-        {isLoading ? (
-          <div className="flex justify-center p-8">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : employees.length === 0 ? (
-          <EmptyState />
-        ) : (
-          <EmployeeTable 
-            employees={employees} 
-            onEmployeeDeleted={handleEmployeeDelete}
-            onPasswordReset={handlePasswordReset}
-          />
-        )}
+        <div className="flex items-center gap-2 mb-4">
+          <Users className="h-5 w-5" />
+          <h3 className="text-lg font-medium">Daftar Karyawan</h3>
+        </div>
+        <EmployeeList 
+          employees={employees}
+          onDelete={deleteEmployee}
+          isLoading={isLoading}
+        />
       </div>
     </div>
   );

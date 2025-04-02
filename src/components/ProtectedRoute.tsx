@@ -5,6 +5,7 @@ import { useAuth } from "../hooks/auth";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  allowedRoles?: string[]; // Prop ini masih disimpan untuk kompatibilitas
 }
 
 function ProtectedRoute({ children }: ProtectedRouteProps) {
@@ -20,18 +21,18 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
     user: !!user
   });
 
-  // If loading is taking too long, add a 3-second timeout
+  // Jika loadingnya terlalu lama, kita tambahkan maksimal 3 detik
   React.useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (isLoading) {
         console.log('Loading timeout triggered, forcing continuation');
       }
-    }, 3000);
+    }, 3000); // 3 detik timeout
     
     return () => clearTimeout(timeoutId);
   }, [isLoading]);
 
-  // Wait for loading only if user is unknown
+  // Tunggu loading hanya jika user belum diketahui
   if (isLoading && !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">

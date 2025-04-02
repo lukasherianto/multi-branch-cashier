@@ -2,19 +2,11 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/auth";
-import { Palette, Users, LineChart, ShoppingCart, Store, ArrowRight, FileText, Receipt, RotateCcw, CalendarDays } from "lucide-react";
-import { Navigate } from "react-router-dom";
+import { Palette, Users, LineChart, ShoppingCart, Store, ArrowRight, FileText, Receipt, RotateCcw } from "lucide-react";
 
 export default function Index() {
-  const { user, userRole } = useAuth();
-  const isCashier = userRole === 'kasir';
+  const { user } = useAuth();
 
-  // Redirect cashiers to dedicated dashboard
-  if (isCashier) {
-    return <Navigate to="/cashier-dashboard" />;
-  }
-
-  // Business owner dashboard - original with all options
   return (
     <div className="min-h-screen animate-fade-in">
       {/* Hero Section */}

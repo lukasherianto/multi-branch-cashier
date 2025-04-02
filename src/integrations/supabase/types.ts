@@ -43,7 +43,15 @@ export type Database = {
           tanggal?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "absensi_karyawan_id_fkey"
+            columns: ["karyawan_id"]
+            isOneToOne: false
+            referencedRelation: "karyawan"
+            referencedColumns: ["karyawan_id"]
+          },
+        ]
       }
       cabang: {
         Row: {
@@ -100,6 +108,63 @@ export type Database = {
           uraian?: string
         }
         Relationships: []
+      }
+      karyawan: {
+        Row: {
+          auth_id: string | null
+          cabang_id: number | null
+          created_at: string
+          email: string | null
+          is_active: boolean | null
+          karyawan_id: number
+          name: string
+          pelaku_usaha_id: number | null
+          role: string
+          updated_at: string
+          whatsapp_contact: string | null
+        }
+        Insert: {
+          auth_id?: string | null
+          cabang_id?: number | null
+          created_at?: string
+          email?: string | null
+          is_active?: boolean | null
+          karyawan_id?: number
+          name: string
+          pelaku_usaha_id?: number | null
+          role: string
+          updated_at?: string
+          whatsapp_contact?: string | null
+        }
+        Update: {
+          auth_id?: string | null
+          cabang_id?: number | null
+          created_at?: string
+          email?: string | null
+          is_active?: boolean | null
+          karyawan_id?: number
+          name?: string
+          pelaku_usaha_id?: number | null
+          role?: string
+          updated_at?: string
+          whatsapp_contact?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "karyawan_cabang_id_fkey"
+            columns: ["cabang_id"]
+            isOneToOne: false
+            referencedRelation: "cabang"
+            referencedColumns: ["cabang_id"]
+          },
+          {
+            foreignKeyName: "karyawan_pelaku_usaha_id_fkey"
+            columns: ["pelaku_usaha_id"]
+            isOneToOne: false
+            referencedRelation: "pelaku_usaha"
+            referencedColumns: ["pelaku_usaha_id"]
+          },
+        ]
       }
       kas: {
         Row: {
@@ -229,7 +294,6 @@ export type Database = {
           created_at: string
           id: number
           menu_code: string
-          profile_id: string | null
           role: string
           updated_at: string
         }
@@ -237,7 +301,6 @@ export type Database = {
           created_at?: string
           id?: number
           menu_code: string
-          profile_id?: string | null
           role: string
           updated_at?: string
         }
@@ -245,19 +308,10 @@ export type Database = {
           created_at?: string
           id?: number
           menu_code?: string
-          profile_id?: string | null
           role?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "menu_access_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       pelaku_usaha: {
         Row: {
@@ -513,90 +567,44 @@ export type Database = {
           },
         ]
       }
-      profile_menu_access: {
-        Row: {
-          id: number
-          menu_access_id: number
-          profile_id: string
-        }
-        Insert: {
-          id?: number
-          menu_access_id: number
-          profile_id: string
-        }
-        Update: {
-          id?: number
-          menu_access_id?: number
-          profile_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_menu_access"
-            columns: ["menu_access_id"]
-            isOneToOne: false
-            referencedRelation: "menu_access"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_profile"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
           business_role: string | null
-          cabang_id: number | null
           created_at: string
           full_name: string
           id: string
           is_employee: boolean | null
-          pelaku_usaha_id: number | null
-          role: string | null
+          status_id: number | null
           updated_at: string
           whatsapp_number: string | null
         }
         Insert: {
           business_role?: string | null
-          cabang_id?: number | null
           created_at?: string
           full_name: string
           id: string
           is_employee?: boolean | null
-          pelaku_usaha_id?: number | null
-          role?: string | null
+          status_id?: number | null
           updated_at?: string
           whatsapp_number?: string | null
         }
         Update: {
           business_role?: string | null
-          cabang_id?: number | null
           created_at?: string
           full_name?: string
           id?: string
           is_employee?: boolean | null
-          pelaku_usaha_id?: number | null
-          role?: string | null
+          status_id?: number | null
           updated_at?: string
           whatsapp_number?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "profiles_cabang_id_fkey"
-            columns: ["cabang_id"]
+            foreignKeyName: "profiles_status_id_fkey"
+            columns: ["status_id"]
             isOneToOne: false
-            referencedRelation: "cabang"
-            referencedColumns: ["cabang_id"]
-          },
-          {
-            foreignKeyName: "profiles_pelaku_usaha_id_fkey"
-            columns: ["pelaku_usaha_id"]
-            isOneToOne: false
-            referencedRelation: "pelaku_usaha"
-            referencedColumns: ["pelaku_usaha_id"]
+            referencedRelation: "user_status"
+            referencedColumns: ["status_id"]
           },
         ]
       }
@@ -828,19 +836,16 @@ export type Database = {
       }
       user_status: {
         Row: {
-          role: string | null
           status_id: number
           uraian: string
           wewenang: string
         }
         Insert: {
-          role?: string | null
           status_id: number
           uraian: string
           wewenang: string
         }
         Update: {
-          role?: string | null
           status_id?: number
           uraian?: string
           wewenang?: string

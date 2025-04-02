@@ -2,11 +2,10 @@
 export interface Branch {
   cabang_id: number;
   branch_name: string;
-  status?: number; // Adding status field to identify HQ branches
 }
 
 export interface Employee {
-  karyawan_id: number; // Kept for compatibility, not using actual IDs anymore
+  karyawan_id: number;
   name: string;
   email?: string;
   role: string;
@@ -16,11 +15,8 @@ export interface Employee {
   pelaku_usaha_id: number;
   isSameBusiness?: boolean;
   businessName?: string;
-  whatsapp_contact?: string;
-  cabang_id?: number;
   cabang?: {
     branch_name: string;
-    status?: number; // Added status to identify headquarters branch
   };
   pelaku_usaha?: {
     business_name: string;

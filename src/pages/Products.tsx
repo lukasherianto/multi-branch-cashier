@@ -14,9 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 const Products = () => {
   const { toast } = useToast();
   const [showAddProduct, setShowAddProduct] = useState(false);
-  const { cabangList, selectedCabangId, setSelectedCabangId, pelakuUsaha, userRole } = useAuth();
-  const isCashier = userRole === 'kasir';
-  
+  const { cabangList, selectedCabangId, setSelectedCabangId, pelakuUsaha } = useAuth();
   const { 
     filteredProducts, 
     handleSearch, 
@@ -104,12 +102,10 @@ const Products = () => {
               </SelectContent>
             </Select>
           )}
-          {!isCashier && (
-            <Button onClick={() => setShowAddProduct(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Tambah Produk
-            </Button>
-          )}
+          <Button onClick={() => setShowAddProduct(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Tambah Produk
+          </Button>
         </div>
       </div>
 
@@ -136,9 +132,7 @@ const Products = () => {
       {!loading && !error && filteredProducts && filteredProducts.length === 0 && (
         <div className="p-8 text-center bg-gray-50 rounded-md border border-gray-200">
           <p className="text-gray-500">Tidak ada produk yang ditemukan.</p>
-          {!isCashier && (
-            <p className="text-gray-500 mt-2">Tambahkan produk baru dengan mengklik tombol "Tambah Produk"</p>
-          )}
+          <p className="text-gray-500 mt-2">Tambahkan produk baru dengan mengklik tombol "Tambah Produk"</p>
         </div>
       )}
 
@@ -148,18 +142,16 @@ const Products = () => {
           onAddToCart={() => {}}
           isRegisteredCustomer={false}
           memberType="none"
-          showStockAction={!isCashier}
+          showStockAction={true}
           onRefresh={() => fetchProducts(selectedCabangId)}
         />
       )}
 
-      {!isCashier && (
-        <ProductFormModal 
-          open={showAddProduct} 
-          onOpenChange={setShowAddProduct}
-          onSuccess={() => fetchProducts(selectedCabangId)}
-        />
-      )}
+      <ProductFormModal 
+        open={showAddProduct} 
+        onOpenChange={setShowAddProduct}
+        onSuccess={() => fetchProducts(selectedCabangId)}
+      />
     </div>
   );
 };

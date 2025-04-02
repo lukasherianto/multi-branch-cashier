@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { MenuItem } from "./MenuItem";
@@ -23,7 +22,7 @@ export const MenuContent = ({
 }: MenuContentProps) => {
   const { userRole } = useAuth();
   
-  // For debugging
+  // Untuk debugging
   console.log('MenuContent rendering:', { userRole, menuConfig });
 
   return (
@@ -31,42 +30,8 @@ export const MenuContent = ({
       <ScrollArea className="flex-grow">
         <div className="space-y-0.5 py-2 pr-2">
           {menuConfig.map((section) => {
-            // Filter items based on user role
-            const items = section.items.filter(item => {
-              // For kasir role, only show allowed menu items
-              if (userRole === 'kasir') {
-                const allowedCodesCashier = [
-                  'dashboard', 'products', 'pos', 
-                  'history', 'returns', 'attendance', 'members'
-                ];
-                return allowedCodesCashier.includes(item.code);
-              }
-              
-              // For warehouse staff (gudang), show inventory management
-              if (userRole === 'gudang') {
-                const allowedCodesWarehouse = [
-                  'products', 'products_categories', 'stock_transfer', 
-                  'attendance', 'profile'
-                ];
-                return allowedCodesWarehouse.includes(item.code);
-              }
-              
-              // For waiters (pelayan), show limited features
-              if (userRole === 'pelayan') {
-                const allowedCodesWaiter = [
-                  'pos', 'history', 'attendance', 'profile'
-                ];
-                return allowedCodesWaiter.includes(item.code);
-              }
-              
-              // Show all menu items for business owner and other roles
-              return true;
-            });
-            
-            // Skip sections with no visible items
-            if (items.length === 0) {
-              return null;
-            }
+            // Tampilkan semua item tanpa filter
+            const items = section.items;
             
             return (
               <div key={section.title} className="mb-3">

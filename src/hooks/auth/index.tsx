@@ -1,4 +1,4 @@
 
-export { AuthContext, AuthProvider } from './AuthContext';
-export { useAuth } from './useAuth';
-export type { AuthContextType } from './types';
+// Re-export dari file AuthContext.tsx
+export { AuthProvider } from "./AuthContext";
+export { useAuth } from "./useAuth";

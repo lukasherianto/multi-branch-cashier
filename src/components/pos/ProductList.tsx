@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 import { StockManagement } from "./StockManagement";
@@ -38,8 +37,7 @@ export const ProductList = ({
     memberType
   });
   
-  const { cabangList, userRole } = useAuth();
-  const isCashier = userRole === 'kasir';
+  const { cabangList } = useAuth();
 
   const getBranchName = (cabangId: number) => {
     const branch = cabangList.find(branch => branch.cabang_id === cabangId);
@@ -53,9 +51,9 @@ export const ProductList = ({
           <TableRow>
             <TableHead>Nama Produk</TableHead>
             <TableHead>Barcode</TableHead>
-            {!isCashier && <TableHead>Kategori</TableHead>}
+            <TableHead>Kategori</TableHead>
             <TableHead>Cabang</TableHead>
-            {!isCashier && <TableHead>Harga Modal</TableHead>}
+            <TableHead>Harga Modal</TableHead>
             <TableHead>Harga Retail</TableHead>
             <TableHead>Harga Member 1</TableHead>
             <TableHead>Harga Member 2</TableHead>
@@ -69,9 +67,9 @@ export const ProductList = ({
             <TableRow key={product.id}>
               <TableCell className="font-medium">{product.name}</TableCell>
               <TableCell>{product.barcode || '-'}</TableCell>
-              {!isCashier && <TableCell>{product.category || '-'}</TableCell>}
+              <TableCell>{product.category || '-'}</TableCell>
               <TableCell>{getBranchName(product.cabang_id)}</TableCell>
-              {!isCashier && <TableCell>Rp {product.cost_price.toLocaleString('id-ID')}</TableCell>}
+              <TableCell>Rp {product.cost_price.toLocaleString('id-ID')}</TableCell>
               <TableCell>Rp {product.price.toLocaleString('id-ID')}</TableCell>
               <TableCell>
                 {product.member_price_1 
@@ -88,7 +86,7 @@ export const ProductList = ({
               <TableCell>{product.stock}</TableCell>
               <TableCell>{product.unit}</TableCell>
               <TableCell>
-                {showStockAction && onRefresh && !isCashier ? (
+                {showStockAction && onRefresh ? (
                   <StockManagement
                     productId={product.id}
                     currentStock={product.stock}
