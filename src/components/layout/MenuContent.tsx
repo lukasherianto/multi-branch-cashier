@@ -36,8 +36,8 @@ export const MenuContent = ({
               // For kasir role, only show allowed menu items
               if (userRole === 'kasir') {
                 const allowedCodesCashier = [
-                  'products', 'products_categories', 'pos', 
-                  'history', 'returns', 'attendance', 'profile'
+                  'dashboard', 'products', 'pos', 
+                  'history', 'returns', 'attendance', 'members'
                 ];
                 return allowedCodesCashier.includes(item.code);
               }

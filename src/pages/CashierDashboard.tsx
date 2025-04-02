@@ -1,20 +1,18 @@
 
+import { useAuth } from "@/hooks/auth";
+import { Navigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useAuth } from "@/hooks/auth";
-import { Palette, Users, LineChart, ShoppingCart, Store, ArrowRight, FileText, Receipt, RotateCcw, CalendarDays } from "lucide-react";
-import { Navigate } from "react-router-dom";
+import { Palette, Users, ShoppingCart, Store, ArrowRight, Receipt, RotateCcw, CalendarDays } from "lucide-react";
 
-export default function Index() {
-  const { user, userRole } = useAuth();
-  const isCashier = userRole === 'kasir';
-
-  // Redirect cashiers to dedicated dashboard
-  if (isCashier) {
-    return <Navigate to="/cashier-dashboard" />;
+const CashierDashboard = () => {
+  const { userRole } = useAuth();
+  
+  // Redirect non-cashiers to regular dashboard
+  if (userRole !== 'kasir') {
+    return <Navigate to="/" />;
   }
 
-  // Business owner dashboard - original with all options
   return (
     <div className="min-h-screen animate-fade-in">
       {/* Hero Section */}
@@ -22,16 +20,16 @@ export default function Index() {
         <div className="container mx-auto px-4">
           <div className="glass-card mb-8 p-8 rounded-xl">
             <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-              Selamat Datang di Xaviera POS
+              Selamat Datang, Kasir
             </h1>
             <p className="text-muted-foreground text-lg">
-              Sistem Point of Sale modern untuk mengelola bisnis Anda dengan lebih efisien
+              Akses cepat ke fitur-fitur utama kasir
             </p>
           </div>
         </div>
       </section>
 
-      {/* Features Grid */}
+      {/* Features Grid - Cashier Version */}
       <section className="py-8">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -65,30 +63,10 @@ export default function Index() {
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold mb-2">Produk</h3>
                     <p className="text-sm text-muted-foreground mb-4">
-                      Kelola produk dan stok dengan mudah
+                      Lihat daftar produk tersedia
                     </p>
                     <a href="/products" className="text-sm text-purple-500 hover:underline flex items-center gap-2">
-                      Kelola Produk <ArrowRight className="h-4 w-4" />
-                    </a>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Reports Card */}
-            <Card className="hover-lift transition-all duration-300 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900 dark:to-green-950">
-              <CardContent className="p-6">
-                <div className="flex items-start space-x-4">
-                  <div className="p-3 rounded-lg bg-green-500/10">
-                    <LineChart className="h-6 w-6 text-green-500" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold mb-2">Laporan</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Analisis performa bisnis Anda
-                    </p>
-                    <a href="/reports" className="text-sm text-green-500 hover:underline flex items-center gap-2">
-                      Lihat Laporan <ArrowRight className="h-4 w-4" />
+                      Lihat Produk <ArrowRight className="h-4 w-4" />
                     </a>
                   </div>
                 </div>
@@ -135,20 +113,60 @@ export default function Index() {
               </CardContent>
             </Card>
 
-            {/* Settings Card */}
+            {/* Attendance Card */}
+            <Card className="hover-lift transition-all duration-300 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900 dark:to-green-950">
+              <CardContent className="p-6">
+                <div className="flex items-start space-x-4">
+                  <div className="p-3 rounded-lg bg-green-500/10">
+                    <CalendarDays className="h-6 w-6 text-green-500" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold mb-2">Absensi</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Catat kehadiran harian
+                    </p>
+                    <a href="/attendance" className="text-sm text-green-500 hover:underline flex items-center gap-2">
+                      Absen <ArrowRight className="h-4 w-4" />
+                    </a>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Members Card */}
+            <Card className="hover-lift transition-all duration-300 bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900 dark:to-indigo-950">
+              <CardContent className="p-6">
+                <div className="flex items-start space-x-4">
+                  <div className="p-3 rounded-lg bg-indigo-500/10">
+                    <Users className="h-6 w-6 text-indigo-500" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold mb-2">Member</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Lihat data member
+                    </p>
+                    <a href="/members" className="text-sm text-indigo-500 hover:underline flex items-center gap-2">
+                      Data Member <ArrowRight className="h-4 w-4" />
+                    </a>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Profile Card */}
             <Card className="hover-lift transition-all duration-300 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950">
               <CardContent className="p-6">
                 <div className="flex items-start space-x-4">
                   <div className="p-3 rounded-lg bg-gray-500/10">
-                    <Users className="h-6 w-6 text-gray-500" />
+                    <Palette className="h-6 w-6 text-gray-500" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold mb-2">Pengaturan</h3>
+                    <h3 className="text-lg font-semibold mb-2">Profil</h3>
                     <p className="text-sm text-muted-foreground mb-4">
-                      Kelola pengaturan sistem
+                      Kelola profil Anda
                     </p>
                     <a href="/settings" className="text-sm text-gray-500 hover:underline flex items-center gap-2">
-                      Buka Pengaturan <ArrowRight className="h-4 w-4" />
+                      Lihat Profil <ArrowRight className="h-4 w-4" />
                     </a>
                   </div>
                 </div>
@@ -157,35 +175,8 @@ export default function Index() {
           </div>
         </div>
       </section>
-
-      {/* Quick Actions Section */}
-      <section className="py-8">
-        <div className="container mx-auto px-4">
-          <Card className="bg-gradient-to-br from-primary/5 to-primary/10">
-            <CardContent className="p-6">
-              <h2 className="text-2xl font-semibold mb-4">Aksi Cepat</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <a href="/pos" className="p-4 rounded-lg bg-background hover:bg-accent transition-colors flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5" />
-                  <span>POS</span>
-                </a>
-                <a href="/products" className="p-4 rounded-lg bg-background hover:bg-accent transition-colors flex items-center gap-2">
-                  <Store className="h-5 w-5" />
-                  <span>Produk</span>
-                </a>
-                <a href="/reports" className="p-4 rounded-lg bg-background hover:bg-accent transition-colors flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  <span>Laporan</span>
-                </a>
-                <a href="/settings" className="p-4 rounded-lg bg-background hover:bg-accent transition-colors flex items-center gap-2">
-                  <Palette className="h-5 w-5" />
-                  <span>Pengaturan</span>
-                </a>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
     </div>
   );
-}
+};
+
+export default CashierDashboard;
