@@ -33,12 +33,18 @@ export const useUserRole = () => {
     setUserStatusId(1); // Default status ID
   };
 
+  // Function to check if user is a cashier
+  const isCashier = () => {
+    return userRole === 'kasir';
+  };
+
   return {
     userRole,
     setUserRole,
     userStatusId,
     setUserStatusId,
     fetchUserRole,
-    setDefaultUserStatus
+    setDefaultUserStatus,
+    isCashier
   };
 };
