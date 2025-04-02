@@ -42,6 +42,23 @@ export const MenuContent = ({
                 return allowedCodesCashier.includes(item.code);
               }
               
+              // For warehouse staff (gudang), show inventory management
+              if (userRole === 'gudang') {
+                const allowedCodesWarehouse = [
+                  'products', 'products_categories', 'stock_transfer', 
+                  'attendance', 'profile'
+                ];
+                return allowedCodesWarehouse.includes(item.code);
+              }
+              
+              // For waiters (pelayan), show limited features
+              if (userRole === 'pelayan') {
+                const allowedCodesWaiter = [
+                  'pos', 'history', 'attendance', 'profile'
+                ];
+                return allowedCodesWaiter.includes(item.code);
+              }
+              
               // Show all menu items for business owner and other roles
               return true;
             });

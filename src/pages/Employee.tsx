@@ -1,16 +1,17 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { EmployeeForm } from '@/components/settings/EmployeeForm';
 
 const Employee = () => {
   return (
     <div className="container mx-auto p-4">
       <Card>
         <CardHeader>
-          <CardTitle>Employee Management</CardTitle>
+          <CardTitle>Manajemen Karyawan</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>Employee management page is under development.</p>
+          <EmployeeForm />
         </CardContent>
       </Card>
     </div>

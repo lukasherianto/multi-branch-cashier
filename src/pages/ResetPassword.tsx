@@ -87,7 +87,7 @@ const ResetPassword = () => {
                   Silakan meminta reset password baru.
                 </p>
                 <Button 
-                  variant="primary" 
+                  variant="default" 
                   className="w-full mt-2"
                   onClick={() => navigate("/auth")}
                 >

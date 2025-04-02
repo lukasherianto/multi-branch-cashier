@@ -89,6 +89,7 @@ export const EmployeeFormFields = ({ form, branches }: EmployeeFormFieldsProps) 
                 <SelectItem value="pelaku_usaha">Pelaku Usaha</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="kasir">Kasir</SelectItem>
+                <SelectItem value="gudang">Staf Gudang</SelectItem>
                 <SelectItem value="pelayan">Pelayan</SelectItem>
               </SelectContent>
             </Select>

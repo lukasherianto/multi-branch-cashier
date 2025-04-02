@@ -11,6 +11,8 @@ import {
   FileText,
   Settings,
   Package,
+  Warehouse,
+  ChefHat,
 } from 'lucide-react';
 
 const menuConfig = [

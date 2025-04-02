@@ -1,5 +1,6 @@
 
 import { Badge } from "@/components/ui/badge";
+import { getRoleDisplayName } from "../utils/roleMapper";
 
 interface RoleBadgeProps {
   role: string;
@@ -14,25 +15,12 @@ export const RoleBadge = ({ role }: RoleBadgeProps) => {
         return "bg-blue-500 hover:bg-blue-600";
       case "kasir":
         return "bg-green-500 hover:bg-green-600";
+      case "gudang":
+        return "bg-purple-500 hover:bg-purple-600";
       case "pelayan":
         return "bg-yellow-500 hover:bg-yellow-600";
       default:
         return "bg-gray-500 hover:bg-gray-600";
-    }
-  };
-
-  const getRoleDisplayName = (role: string) => {
-    switch (role) {
-      case "pelaku_usaha":
-        return "Pelaku Usaha";
-      case "admin":
-        return "Admin";
-      case "kasir":
-        return "Kasir";
-      case "pelayan":
-        return "Pelayan";
-      default:
-        return role;
     }
   };
 
