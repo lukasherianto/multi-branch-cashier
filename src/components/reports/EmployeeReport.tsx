@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +16,7 @@ const EmployeeReport = () => {
     queryKey: ["employee-report"],
     queryFn: async () => {
       const { data: employees, error: employeeError } = await supabase
-        .from("karyawan")
+        .from("karyawan" as any)
         .select(`
           karyawan_id,
           name,

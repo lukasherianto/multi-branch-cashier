@@ -101,6 +101,66 @@ export type Database = {
         }
         Relationships: []
       }
+      karyawan: {
+        Row: {
+          auth_id: string | null
+          business_role: string | null
+          cabang_id: number | null
+          created_at: string
+          email: string | null
+          is_active: boolean | null
+          karyawan_id: number
+          name: string
+          pelaku_usaha_id: number | null
+          role: string | null
+          updated_at: string
+          whatsapp_contact: string | null
+        }
+        Insert: {
+          auth_id?: string | null
+          business_role?: string | null
+          cabang_id?: number | null
+          created_at?: string
+          email?: string | null
+          is_active?: boolean | null
+          karyawan_id?: number
+          name: string
+          pelaku_usaha_id?: number | null
+          role?: string | null
+          updated_at?: string
+          whatsapp_contact?: string | null
+        }
+        Update: {
+          auth_id?: string | null
+          business_role?: string | null
+          cabang_id?: number | null
+          created_at?: string
+          email?: string | null
+          is_active?: boolean | null
+          karyawan_id?: number
+          name?: string
+          pelaku_usaha_id?: number | null
+          role?: string | null
+          updated_at?: string
+          whatsapp_contact?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "karyawan_cabang_id_fkey"
+            columns: ["cabang_id"]
+            isOneToOne: false
+            referencedRelation: "cabang"
+            referencedColumns: ["cabang_id"]
+          },
+          {
+            foreignKeyName: "karyawan_pelaku_usaha_id_fkey"
+            columns: ["pelaku_usaha_id"]
+            isOneToOne: false
+            referencedRelation: "pelaku_usaha"
+            referencedColumns: ["pelaku_usaha_id"]
+          },
+        ]
+      }
       kas: {
         Row: {
           amount: number
@@ -556,6 +616,7 @@ export type Database = {
           is_employee: boolean | null
           pelaku_usaha_id: number | null
           role: string | null
+          status_id: number | null
           updated_at: string
           whatsapp_number: string | null
         }
@@ -568,6 +629,7 @@ export type Database = {
           is_employee?: boolean | null
           pelaku_usaha_id?: number | null
           role?: string | null
+          status_id?: number | null
           updated_at?: string
           whatsapp_number?: string | null
         }
@@ -580,6 +642,7 @@ export type Database = {
           is_employee?: boolean | null
           pelaku_usaha_id?: number | null
           role?: string | null
+          status_id?: number | null
           updated_at?: string
           whatsapp_number?: string | null
         }

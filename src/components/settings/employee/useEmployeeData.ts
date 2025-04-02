@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -55,6 +56,7 @@ export const useEmployeeData = () => {
 
   const loadEmployees = async () => {
     try {
+      setIsLoading(true);
       console.log("Loading employees...");
       if (!user) {
         console.error("No authenticated user");
@@ -77,8 +79,9 @@ export const useEmployeeData = () => {
         return;
       }
 
+      // Use any instead of specific typing until Supabase types are regenerated
       const { data: employeesData, error: employeesError } = await supabase
-        .from("karyawan")
+        .from("karyawan" as any)
         .select(`
           karyawan_id,
           name,
@@ -93,9 +96,7 @@ export const useEmployeeData = () => {
           pelaku_usaha:pelaku_usaha_id (
             business_name
           )
-        `)
-        .eq("is_active", true)
-        .order('name', { ascending: true });
+        `);
 
       if (employeesError) {
         console.error("Error fetching employees:", employeesError);
@@ -117,6 +118,8 @@ export const useEmployeeData = () => {
         description: "Gagal memuat data karyawan",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 

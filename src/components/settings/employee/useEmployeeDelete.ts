@@ -14,7 +14,7 @@ export const useEmployeeDelete = (loadEmployees: () => Promise<void>) => {
       
       // Get employee data first to get auth_id
       const { data: employee, error: getError } = await supabase
-        .from("karyawan")
+        .from("karyawan" as any)
         .select("auth_id")
         .eq("karyawan_id", karyawanId)
         .single();
@@ -23,7 +23,7 @@ export const useEmployeeDelete = (loadEmployees: () => Promise<void>) => {
 
       // Delete from karyawan table
       const { error: deleteError } = await supabase
-        .from("karyawan")
+        .from("karyawan" as any)
         .delete()
         .eq("karyawan_id", karyawanId);
 

@@ -32,13 +32,15 @@ export const useAuthState = () => {
         try {
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
-            .select('status_id, business_role')
+            .select('business_role, status_id')
             .eq('id', session.user.id)
             .maybeSingle();
 
           if (!profileError && profileData) {
-            setUserStatusId(profileData.status_id);
-            console.log("User status_id loaded:", profileData.status_id);
+            if (profileData.status_id) {
+              setUserStatusId(profileData.status_id);
+              console.log("User status_id loaded:", profileData.status_id);
+            }
             
             // Jika business_role tidak ada di metadata, gunakan dari profiles
             if (!role && profileData.business_role) {
@@ -75,13 +77,15 @@ export const useAuthState = () => {
         if (session?.user) {
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
-            .select('status_id, business_role')
+            .select('business_role, status_id')
             .eq('id', session.user.id)
             .maybeSingle();
 
           if (!profileError && profileData) {
-            setUserStatusId(profileData.status_id);
-            console.log("User status_id loaded:", profileData.status_id);
+            if (profileData.status_id) {
+              setUserStatusId(profileData.status_id);
+              console.log("User status_id loaded:", profileData.status_id);
+            }
             
             // Jika business_role tidak ada di metadata, gunakan dari profiles
             if (!role && profileData.business_role) {

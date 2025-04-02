@@ -63,14 +63,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // 1. Ambil profile (jika ada)
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('business_role, status_id')
         .eq('id', userId)
         .maybeSingle();
 
       if (profileError) {
         console.error("Error fetching profile:", profileError);
       } else if (profileData) {
-        setUserStatusId(profileData.status_id);
+        if (profileData.status_id) {
+          setUserStatusId(profileData.status_id);
+        }
         setUserRole(profileData.business_role || 'user');
       }
 

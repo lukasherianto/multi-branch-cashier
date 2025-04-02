@@ -1,162 +1,135 @@
+
 import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { useToast } from "./use-toast";
+import { useAuth } from "./auth";
 
 export const useAttendance = () => {
   const { toast } = useToast();
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [attendanceHistory, setAttendanceHistory] = useState<any[]>([]);
-  const [todayAttendance, setTodayAttendance] = useState<any>(null);
+  const { user, cabang, selectedCabangId } = useAuth();
+  const [employeeData, setEmployeeData] = useState<any[]>([]);
+  const [attendanceData, setAttendanceData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isEmployee, setIsEmployee] = useState<boolean | null>(null);
+  const [todayAttendance, setTodayAttendance] = useState<any[]>([]);
+  const [selectedEmployee, setSelectedEmployee] = useState<number | null>(null);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-
-    loadAttendanceData();
-
-    return () => clearInterval(timer);
-  }, []);
-
-  const loadAttendanceData = async () => {
+  const fetchEmployees = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!selectedCabangId) return;
 
-      console.log("Loading employee data for user:", user.id);
-      
-      const { data: employeeData, error: employeeError } = await supabase
-        .from("karyawan")
-        .select("karyawan_id")
-        .eq("auth_id", user.id)
-        .maybeSingle();
-
-      if (employeeError) {
-        console.error("Error fetching employee data:", employeeError);
-        throw employeeError;
-      }
-
-      if (!employeeData) {
-        console.log("No employee data found for user");
-        setIsEmployee(false);
-        return;
-      }
-
-      setIsEmployee(true);
-      console.log("Employee data found:", employeeData);
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const { data: todayData, error: todayError } = await supabase
-        .from("absensi")
+      const { data, error } = await supabase
+        .from("karyawan" as any)
         .select("*")
-        .eq("karyawan_id", employeeData.karyawan_id)
-        .eq("tanggal", format(today, "yyyy-MM-dd"))
-        .maybeSingle();
+        .eq("cabang_id", selectedCabangId)
+        .eq("is_active", true);
 
-      if (todayError) {
-        console.error("Error fetching today's attendance:", todayError);
-        throw todayError;
+      if (error) {
+        throw error;
       }
 
-      setTodayAttendance(todayData);
-      console.log("Today's attendance:", todayData);
-
-      const { data: historyData, error: historyError } = await supabase
-        .from("absensi")
-        .select("*")
-        .eq("karyawan_id", employeeData.karyawan_id)
-        .order("tanggal", { ascending: false })
-        .limit(10);
-
-      if (historyError) {
-        console.error("Error fetching attendance history:", historyError);
-        throw historyError;
-      }
-
-      setAttendanceHistory(historyData || []);
-      console.log("Attendance history loaded:", historyData);
-
+      setEmployeeData(data || []);
     } catch (error) {
-      console.error("Error loading attendance data:", error);
+      console.error("Error fetching employees:", error);
       toast({
         title: "Error",
-        description: "Gagal memuat data absensi",
+        description: "Gagal memuat data karyawan",
         variant: "destructive",
       });
     }
   };
 
-  const handleAttendance = async () => {
+  const fetchTodayAttendance = async () => {
+    try {
+      if (!selectedCabangId) return;
+
+      // Get today's date in YYYY-MM-DD format
+      const today = new Date().toISOString().split("T")[0];
+
+      const { data, error } = await supabase
+        .from("absensi")
+        .select("*")
+        .eq("tanggal", today);
+
+      if (error) {
+        throw error;
+      }
+
+      setTodayAttendance(data || []);
+
+      // Map attendance data to employees
+      const employeesWithAttendance = employeeData.map((employee) => {
+        const attendance = data?.find(
+          (a) => a.karyawan_id === employee.karyawan_id
+        );
+        return {
+          ...employee,
+          attendance: attendance || null,
+        };
+      });
+
+      setEmployeeData(employeesWithAttendance);
+    } catch (error) {
+      console.error("Error fetching today's attendance:", error);
+      toast({
+        title: "Error",
+        description: "Gagal memuat data kehadiran hari ini",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const fetchAttendanceHistory = async () => {
     try {
       setIsLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!selectedCabangId) return;
 
-      const { data: employeeData, error: employeeError } = await supabase
-        .from("karyawan")
-        .select("karyawan_id")
-        .eq("auth_id", user.id)
-        .maybeSingle();
+      // Get employees from the selected branch first
+      const { data: employees, error: employeeError } = await supabase
+        .from("karyawan" as any)
+        .select("karyawan_id, name")
+        .eq("cabang_id", selectedCabangId)
+        .eq("is_active", true);
 
-      if (employeeError) throw employeeError;
+      if (employeeError) {
+        throw employeeError;
+      }
 
-      if (!employeeData) {
-        toast({
-          title: "Error",
-          description: "Data karyawan tidak ditemukan",
-          variant: "destructive",
-        });
+      if (!employees || employees.length === 0) {
+        setAttendanceData([]);
         return;
       }
 
-      const currentHour = currentTime.getHours();
-      let status = "hadir";
+      // Get all employee IDs
+      const employeeIds = employees.map((emp) => emp.karyawan_id);
 
-      if (!todayAttendance) {
-        const { error } = await supabase
-          .from("absensi")
-          .insert([
-            {
-              karyawan_id: employeeData.karyawan_id,
-              tanggal: format(currentTime, "yyyy-MM-dd"),
-              jam_masuk: format(currentTime, "HH:mm:ss"),
-              status,
-            },
-          ]);
+      // Get attendance data for these employees
+      const { data, error } = await supabase
+        .from("absensi")
+        .select("*")
+        .in("karyawan_id", employeeIds)
+        .order("tanggal", { ascending: false });
 
-        if (error) throw error;
-
-        toast({
-          title: "Sukses",
-          description: "Berhasil melakukan absen masuk",
-        });
-      } else {
-        const { error } = await supabase
-          .from("absensi")
-          .update({
-            jam_keluar: format(currentTime, "HH:mm:ss"),
-          })
-          .eq("absensi_id", todayAttendance.absensi_id);
-
-        if (error) throw error;
-
-        toast({
-          title: "Sukses",
-          description: "Berhasil melakukan absen keluar",
-        });
+      if (error) {
+        throw error;
       }
 
-      await loadAttendanceData();
+      // Combine employee data with attendance data
+      const processedData = data?.map((attendance) => {
+        const employee = employees.find(
+          (emp) => emp.karyawan_id === attendance.karyawan_id
+        );
+        return {
+          ...attendance,
+          name: employee?.name || "Unknown",
+        };
+      });
+
+      setAttendanceData(processedData || []);
     } catch (error) {
-      console.error("Error recording attendance:", error);
+      console.error("Error fetching attendance history:", error);
       toast({
         title: "Error",
-        description: "Gagal melakukan absensi",
+        description: "Gagal memuat riwayat kehadiran",
         variant: "destructive",
       });
     } finally {
@@ -164,12 +137,132 @@ export const useAttendance = () => {
     }
   };
 
+  const recordAttendance = async (
+    employeeId: number,
+    status: string,
+    keterangan?: string
+  ) => {
+    try {
+      setIsLoading(true);
+
+      // Check if employee already has attendance record for today
+      const today = new Date().toISOString().split("T")[0];
+      const { data: existingRecord, error: checkError } = await supabase
+        .from("absensi")
+        .select("*")
+        .eq("karyawan_id", employeeId)
+        .eq("tanggal", today)
+        .maybeSingle();
+
+      if (checkError) {
+        throw checkError;
+      }
+
+      if (existingRecord) {
+        toast({
+          title: "Info",
+          description: "Kehadiran karyawan ini sudah direkam hari ini",
+        });
+        return;
+      }
+
+      // Record new attendance
+      const { data, error } = await supabase.from("absensi").insert([
+        {
+          karyawan_id: employeeId,
+          status,
+          keterangan,
+        },
+      ]);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Sukses",
+        description: "Kehadiran berhasil dicatat",
+      });
+
+      // Refresh data
+      fetchTodayAttendance();
+      fetchAttendanceHistory();
+    } catch (error) {
+      console.error("Error recording attendance:", error);
+      toast({
+        title: "Error",
+        description: "Gagal mencatat kehadiran",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const clockOut = async (absensiId: number) => {
+    try {
+      setIsLoading(true);
+
+      // Get current time
+      const now = new Date();
+      const timeString = now.toTimeString().split(" ")[0]; // Format: HH:MM:SS
+
+      // Update attendance record with clock out time
+      const { data, error } = await supabase
+        .from("absensi")
+        .update({ jam_keluar: timeString })
+        .eq("absensi_id", absensiId);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Sukses",
+        description: "Jam keluar berhasil dicatat",
+      });
+
+      // Refresh data
+      fetchTodayAttendance();
+      fetchAttendanceHistory();
+    } catch (error) {
+      console.error("Error recording clock out:", error);
+      toast({
+        title: "Error",
+        description: "Gagal mencatat jam keluar",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedCabangId) {
+      fetchEmployees();
+      fetchAttendanceHistory();
+    }
+  }, [selectedCabangId]);
+
+  useEffect(() => {
+    if (employeeData.length > 0) {
+      fetchTodayAttendance();
+    }
+  }, [employeeData]);
+
   return {
-    currentTime,
-    attendanceHistory,
+    employeeData,
+    attendanceData,
     todayAttendance,
     isLoading,
-    isEmployee,
-    handleAttendance,
+    selectedEmployee,
+    setSelectedEmployee,
+    recordAttendance,
+    clockOut,
+    fetchEmployees,
+    fetchTodayAttendance,
+    fetchAttendanceHistory,
   };
 };
+
+export default useAttendance;

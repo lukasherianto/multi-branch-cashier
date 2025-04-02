@@ -98,7 +98,10 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
       // Update the status_id in profiles table
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ status_id: statusId })
+        .update({ 
+          status_id: statusId,
+          business_role: data.business_role
+        })
         .eq('id', authData.user.id);
 
       if (profileError) {
@@ -125,7 +128,7 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
 
       // Insert employee data
       const { data: employeeData, error: employeeError } = await supabase
-        .from("karyawan")
+        .from("karyawan" as any)
         .insert({
           name: data.name,
           email: data.email,
