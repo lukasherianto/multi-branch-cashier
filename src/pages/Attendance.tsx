@@ -42,7 +42,7 @@ const Attendance = () => {
         currentTime={currentTime}
         todayAttendance={todayAttendance}
         isLoading={isLoading}
-        onAttendance={handleAttendance}
+        onAttendance={(status, keterangan) => handleAttendance(status, keterangan)}
       />
 
       <AttendanceHistory attendanceHistory={attendanceHistory} />

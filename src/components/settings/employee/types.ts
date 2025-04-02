@@ -24,3 +24,13 @@ export interface Employee {
   isSameBusiness?: boolean;
   businessName?: string;
 }
+
+export interface EmployeeFormData {
+  name: string;
+  email: string;
+  whatsapp_contact: string;
+  role: string;
+  business_role: string;
+  cabang_id: string;
+  password: string;
+}
