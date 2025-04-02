@@ -106,6 +106,12 @@ const menuConfig = [
         code: 'branches'
       },
       {
+        title: 'Karyawan',
+        icon: Users,
+        path: '/employee',
+        code: 'employee'
+      },
+      {
         title: 'Absensi',
         icon: CalendarDays,
         path: '/attendance',
