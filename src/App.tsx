@@ -36,10 +36,8 @@ function App() {
   return (
     <AuthProvider>
       <Routes>
-        <Route element={<AuthLayout />}>
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-        </Route>
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route element={<Layout />}>
           <Route path="/" element={<Index />} />
           <Route path="/cashier-dashboard" element={<CashierDashboard />} />
