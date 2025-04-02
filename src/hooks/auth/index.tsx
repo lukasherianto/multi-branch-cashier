@@ -2,18 +2,9 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { AuthContextType } from "./types";
 
 // Create context for the auth state
-interface AuthContextType {
-  user: any | null;
-  userRole: string | null;
-  isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<any>;
-  signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<any>;
-  setNewPassword: (password: string) => Promise<any>;
-}
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Provider component
@@ -21,6 +12,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<any | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [pelakuUsaha, setPelakuUsaha] = useState<any>(null);
+  const [cabang, setCabang] = useState<any>(null);
+  const [cabangList, setCabangList] = useState<any[]>([]);
+  const [selectedCabangId, setSelectedCabangId] = useState<number | null>(null);
+  const [userStatusId, setUserStatusId] = useState<number | null>(null);
 
   // Function to fetch the user's role from the database
   const fetchUserRole = async (userId: string) => {
@@ -44,6 +40,48 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Function to fetch user's business data
+  const fetchBusinessData = async (userId: string) => {
+    try {
+      console.log("Fetching business data for user ID:", userId);
+      
+      // Get pelaku_usaha data
+      const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
+        .from('pelaku_usaha')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (pelakuUsahaError) {
+        console.error("Error fetching pelaku usaha:", pelakuUsahaError);
+      } else if (pelakuUsahaData) {
+        console.log("Found pelaku usaha:", pelakuUsahaData);
+        setPelakuUsaha(pelakuUsahaData);
+        
+        // Get branches data
+        const { data: cabangData, error: cabangError } = await supabase
+          .from('cabang')
+          .select('*')
+          .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id)
+          .order('cabang_id', { ascending: true });
+
+        if (cabangError) {
+          console.error("Error fetching cabang:", cabangError);
+        } else if (cabangData && cabangData.length > 0) {
+          console.log("Found cabang:", cabangData);
+          setCabangList(cabangData);
+          
+          // Find the main branch (HQ) or use the first branch
+          const mainCabang = cabangData.find(c => c.status === 1) || cabangData[0];
+          setCabang(mainCabang);
+          setSelectedCabangId(mainCabang.cabang_id);
+        }
+      }
+    } catch (error) {
+      console.error("Error in fetchBusinessData:", error);
+    }
+  };
+
   // Check for the initial session when the component mounts
   useEffect(() => {
     // Check for active session
@@ -60,6 +98,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setUser(data.session.user);
           const role = await fetchUserRole(data.session.user.id);
           setUserRole(role);
+          setUserStatusId(1); // Default status ID
+          await fetchBusinessData(data.session.user.id);
         } else {
           setUser(null);
           setUserRole(null);
@@ -84,9 +124,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setUser(session.user);
           const role = await fetchUserRole(session.user.id);
           setUserRole(role);
+          setUserStatusId(1); // Default status ID
+          await fetchBusinessData(session.user.id);
         } else {
           setUser(null);
           setUserRole(null);
+          setPelakuUsaha(null);
+          setCabang(null);
+          setCabangList([]);
+          setSelectedCabangId(null);
         }
         
         setIsLoading(false);
@@ -129,6 +175,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await supabase.auth.signOut();
       setUser(null);
       setUserRole(null);
+      setPelakuUsaha(null);
+      setCabang(null);
+      setCabangList([]);
+      setSelectedCabangId(null);
       toast.success("Logout berhasil");
     } catch (error: any) {
       console.error("Logout error:", error);
@@ -185,6 +235,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     <AuthContext.Provider value={{
       user,
       userRole,
+      userStatusId,
+      pelakuUsaha,
+      cabang,
+      cabangList,
+      selectedCabangId,
+      selectedBranchId: selectedCabangId, // Alias for selectedCabangId
+      setSelectedCabangId,
       isLoading,
       signIn,
       signOut,

@@ -14,7 +14,6 @@ import Returns from "@/pages/Returns";
 import Products from "@/pages/Products";
 import Members from "@/pages/Members";
 import ProductCategories from "@/pages/ProductCategories";
-import { AuthLayout } from "@/components/auth/AuthLayout";
 import Kas from "@/pages/Kas";
 import KasPurchases from "@/pages/KasPurchases";
 import Packages from "@/pages/Packages";
