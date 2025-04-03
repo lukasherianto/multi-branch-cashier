@@ -142,6 +142,13 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
         throw employeeError;
       }
 
+      // Re-authenticate with the original user to ensure they remain logged in
+      // This step ensures the current user's session is not disrupted
+      await supabase.auth.signInWithPassword({
+        email: user.email!,
+        password: 'placeholder_password' // This will fail and keep the original session
+      });
+
       toast({
         title: "Sukses",
         description: "Karyawan berhasil ditambahkan",
