@@ -74,7 +74,7 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
           statusId = 3; // Default to 'kasir' if unknown role
       }
 
-      // Create Supabase auth account for employee
+      // Create Supabase auth account for employee WITHOUT signing in
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
