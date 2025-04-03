@@ -3,10 +3,6 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-interface Employee {
-  auth_id?: string;
-}
-
 export const useEmployeeDelete = (loadEmployees: () => Promise<void>) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -18,29 +14,43 @@ export const useEmployeeDelete = (loadEmployees: () => Promise<void>) => {
       
       // Get employee data first to get auth_id
       const { data: employee, error: getError } = await supabase
-        .from("karyawan" as any)
+        .from("karyawan")
         .select("auth_id")
         .eq("karyawan_id", karyawanId)
         .single();
 
-      if (getError) throw getError;
+      if (getError) {
+        console.error("Error getting employee:", getError);
+        throw getError;
+      }
 
-      // Delete from karyawan table
+      if (!employee?.auth_id) {
+        throw new Error("Employee auth_id not found");
+      }
+
+      // Delete from karyawan table (this will cascade to profiles due to FK constraint)
       const { error: deleteError } = await supabase
-        .from("karyawan" as any)
+        .from("karyawan")
         .delete()
         .eq("karyawan_id", karyawanId);
 
-      if (deleteError) throw deleteError;
+      if (deleteError) {
+        console.error("Error deleting employee:", deleteError);
+        throw deleteError;
+      }
 
-      // Deactivate Supabase auth account
-      const employeeData = employee as any;
-      if (employeeData?.auth_id) {
-        const { error: authError } = await supabase.auth.admin.updateUserById(
-          employeeData.auth_id,
-          { user_metadata: { is_active: false } }
-        );
-        if (authError) throw authError;
+      // Update user profile to mark as not an employee
+      const { error: updateProfileError } = await supabase
+        .from("profiles")
+        .update({ 
+          is_employee: false,
+          business_role: null
+        })
+        .eq("id", employee.auth_id);
+
+      if (updateProfileError) {
+        console.error("Error updating profile:", updateProfileError);
+        // This is not critical, so we don't throw an error
       }
 
       toast({

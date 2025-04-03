@@ -103,7 +103,7 @@ export type Database = {
       }
       karyawan: {
         Row: {
-          auth_id: string | null
+          auth_id: string
           business_role: string | null
           cabang_id: number | null
           created_at: string
@@ -111,13 +111,13 @@ export type Database = {
           is_active: boolean | null
           karyawan_id: number
           name: string
-          pelaku_usaha_id: number | null
+          pelaku_usaha_id: number
           role: string | null
           updated_at: string
           whatsapp_contact: string | null
         }
         Insert: {
-          auth_id?: string | null
+          auth_id: string
           business_role?: string | null
           cabang_id?: number | null
           created_at?: string
@@ -125,13 +125,13 @@ export type Database = {
           is_active?: boolean | null
           karyawan_id?: number
           name: string
-          pelaku_usaha_id?: number | null
+          pelaku_usaha_id: number
           role?: string | null
           updated_at?: string
           whatsapp_contact?: string | null
         }
         Update: {
-          auth_id?: string | null
+          auth_id?: string
           business_role?: string | null
           cabang_id?: number | null
           created_at?: string
@@ -139,12 +139,19 @@ export type Database = {
           is_active?: boolean | null
           karyawan_id?: number
           name?: string
-          pelaku_usaha_id?: number | null
+          pelaku_usaha_id?: number
           role?: string | null
           updated_at?: string
           whatsapp_contact?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_karyawan_profile"
+            columns: ["auth_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "karyawan_cabang_id_fkey"
             columns: ["cabang_id"]

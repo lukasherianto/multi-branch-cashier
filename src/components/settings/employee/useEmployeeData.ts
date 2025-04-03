@@ -79,7 +79,97 @@ export const useEmployeeData = () => {
         return;
       }
 
-      // Filter profiles to show employees from the user's business first
+      // First try to get employees directly from karyawan table with joined profiles
+      const { data: karyawanData, error: karyawanError } = await supabase
+        .from("karyawan")
+        .select(`
+          karyawan_id,
+          name,
+          email,
+          role,
+          business_role,
+          auth_id,
+          is_active,
+          pelaku_usaha_id,
+          cabang_id,
+          cabang:cabang_id (
+            branch_name
+          ),
+          pelaku_usaha:pelaku_usaha_id (
+            business_name
+          ),
+          profiles:auth_id (
+            full_name,
+            whatsapp_number
+          )
+        `)
+        .order("pelaku_usaha_id", { ascending: false });
+
+      if (karyawanError) {
+        console.error("Error fetching karyawan data:", karyawanError);
+        // If karyawan table query fails, fallback to profiles
+        loadEmployeesFromProfiles(currentPelakuUsaha.pelaku_usaha_id);
+        return;
+      }
+
+      if (karyawanData && karyawanData.length > 0) {
+        console.log("Employee data loaded from karyawan table:", karyawanData);
+        
+        // Format the employee data
+        const formattedEmployees: Employee[] = karyawanData.map(employee => ({
+          karyawan_id: employee.karyawan_id,
+          name: employee.name,
+          email: employee.email || "",
+          role: employee.role || employee.business_role,
+          auth_id: employee.auth_id,
+          is_active: employee.is_active,
+          pelaku_usaha_id: employee.pelaku_usaha_id,
+          cabang_id: employee.cabang_id,
+          cabang: employee.cabang,
+          pelaku_usaha: employee.pelaku_usaha,
+          isSameBusiness: employee.pelaku_usaha_id === currentPelakuUsaha.pelaku_usaha_id,
+          businessName: employee.pelaku_usaha?.business_name || 'Tidak diketahui'
+        }));
+
+        // Sort employees: current business first, then by branch, then by name
+        const sortedEmployees = formattedEmployees.sort((a, b) => {
+          // First sort by isSameBusiness (current business first)
+          if (a.isSameBusiness && !b.isSameBusiness) return -1;
+          if (!a.isSameBusiness && b.isSameBusiness) return 1;
+          
+          // Then sort by branch within the same business
+          if (a.isSameBusiness && b.isSameBusiness) {
+            if (a.cabang?.branch_name && b.cabang?.branch_name) {
+              return a.cabang.branch_name.localeCompare(b.cabang.branch_name);
+            }
+          }
+          
+          // Finally sort by name
+          return a.name.localeCompare(b.name);
+        });
+
+        setEmployees(sortedEmployees);
+      } else {
+        // If no employees found in karyawan table, load from profiles
+        loadEmployeesFromProfiles(currentPelakuUsaha.pelaku_usaha_id);
+      }
+    } catch (error) {
+      console.error("Error loading employees:", error);
+      toast({
+        title: "Error",
+        description: "Gagal memuat data karyawan",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fallback method to load employees from profiles
+  const loadEmployeesFromProfiles = async (currentPelakuUsahaId: number) => {
+    try {
+      console.log("Loading employees from profiles...");
+      
       const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
         .select(`
@@ -119,38 +209,29 @@ export const useEmployeeData = () => {
         cabang_id: profile.cabang_id,
         cabang: profile.cabang,
         pelaku_usaha: profile.pelaku_usaha,
-        isSameBusiness: profile.pelaku_usaha_id === currentPelakuUsaha.pelaku_usaha_id,
+        isSameBusiness: profile.pelaku_usaha_id === currentPelakuUsahaId,
         businessName: profile.pelaku_usaha?.business_name || 'Tidak diketahui'
       }));
 
-      // Sort employees: first show employees from current business, then others
+      // Sort employees
       const sortedEmployees = formattedEmployees.sort((a, b) => {
-        // First sort by isSameBusiness (current business first)
         if (a.isSameBusiness && !b.isSameBusiness) return -1;
         if (!a.isSameBusiness && b.isSameBusiness) return 1;
         
-        // Then sort by branch within the same business
         if (a.isSameBusiness && b.isSameBusiness) {
           if (a.cabang?.branch_name && b.cabang?.branch_name) {
             return a.cabang.branch_name.localeCompare(b.cabang.branch_name);
           }
         }
         
-        // Finally sort by name
         return a.name.localeCompare(b.name);
       });
 
       console.log("Employees loaded from profiles:", sortedEmployees);
       setEmployees(sortedEmployees);
     } catch (error) {
-      console.error("Error loading employees:", error);
-      toast({
-        title: "Error",
-        description: "Gagal memuat data karyawan",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+      console.error("Error in loadEmployeesFromProfiles:", error);
+      setEmployees([]);
     }
   };
 

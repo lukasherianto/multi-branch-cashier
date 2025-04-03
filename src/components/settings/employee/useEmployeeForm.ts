@@ -26,6 +26,7 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
       setIsLoading(true);
       console.log("Submitting employee data:", data);
       
+      // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast({
@@ -36,13 +37,15 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
         return;
       }
 
-      const { data: pelakuUsaha } = await supabase
+      // Get pelaku_usaha_id
+      const { data: pelakuUsaha, error: pelakuUsahaError } = await supabase
         .from("pelaku_usaha")
         .select("pelaku_usaha_id")
         .eq("user_id", user.id)
         .single();
 
-      if (!pelakuUsaha) {
+      if (pelakuUsahaError || !pelakuUsaha) {
+        console.error("Error fetching pelaku usaha:", pelakuUsahaError);
         toast({
           title: "Error",
           description: "Data usaha tidak ditemukan",
@@ -95,25 +98,13 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
         throw new Error("Failed to create employee account");
       }
 
-      // Update the status_id in profiles table
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ 
-          status_id: statusId,
-          business_role: data.business_role
-        })
-        .eq('id', authData.user.id);
-
-      if (profileError) {
-        console.error("Error updating profile status_id:", profileError);
-      }
-
       // Verify if the selected branch exists (if one was selected)
+      const branchId = data.cabang_id === "0" ? null : parseInt(data.cabang_id);
       if (data.cabang_id && data.cabang_id !== "0") {
         const { data: branchData, error: branchError } = await supabase
           .from("cabang")
           .select("cabang_id")
-          .eq("cabang_id", parseInt(data.cabang_id))
+          .eq("cabang_id", branchId)
           .single();
 
         if (branchError || !branchData) {
@@ -126,16 +117,19 @@ export const useEmployeeForm = (loadEmployees: () => Promise<void>) => {
         }
       }
 
-      // Insert employee data
+      // Wait a moment for the profile to be created by the trigger
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Insert employee data into karyawan table (this will trigger sync with profiles)
       const { data: employeeData, error: employeeError } = await supabase
-        .from("karyawan" as any)
+        .from("karyawan")
         .insert({
           name: data.name,
           email: data.email,
           whatsapp_contact: data.whatsapp_contact,
           role: data.role,
           business_role: data.business_role,
-          cabang_id: data.cabang_id === "0" ? null : parseInt(data.cabang_id),
+          cabang_id: branchId,
           pelaku_usaha_id: pelakuUsaha.pelaku_usaha_id,
           auth_id: authData.user.id,
           is_active: true
