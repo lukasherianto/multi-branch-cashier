@@ -8,6 +8,7 @@ import { AuthProvider } from "./hooks/auth";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Auth from "./pages/Auth";
 import POS from "./pages/POS";
+import KasirPOS from "./pages/KasirPOS";
 import Products from "./pages/Products";
 import Settings from "./pages/Settings";
 import History from "./pages/History";
@@ -24,6 +25,7 @@ import ProductCategories from "./pages/ProductCategories";
 import StockTransfer from "./pages/StockTransfer";
 import Returns from "./pages/Returns";
 import Members from "./pages/Members";
+import Kasir from "./pages/Kasir";
 import "./App.css";
 
 const queryClient = new QueryClient();
@@ -62,6 +64,11 @@ function App() {
               <Route path="stock-transfer" element={<StockTransfer />} />
               <Route path="returns" element={<Returns />} />
               <Route path="members" element={<Members />} />
+              <Route path="kasir" element={<Kasir />} />
+              <Route path="kasir/pos" element={<KasirPOS />} />
+              <Route path="kasir/history" element={<History />} />
+              <Route path="kasir/returns" element={<Returns />} />
+              <Route path="kasir/attendance" element={<Attendance />} />
             </Route>
           </Routes>
         </BrowserRouter>
