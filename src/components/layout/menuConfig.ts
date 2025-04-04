@@ -12,7 +12,6 @@ import {
   Settings,
   Package,
   UserRound,
-  ShoppingCart,
 } from 'lucide-react';
 
 const menuConfig = [
@@ -53,11 +52,6 @@ const menuConfig = [
         title: 'POS',
         icon: Scale,
         path: '/pos',
-      },
-      {
-        title: 'Menu Kasir',
-        icon: ShoppingCart,
-        path: '/kasir',
       },
       {
         title: 'Riwayat Transaksi',
