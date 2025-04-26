@@ -1,9 +1,8 @@
-
 import { createContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthContextType } from "./types";
 
-// Buat context dengan nilai default undefined
+// Create context with default undefined value
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 interface AuthProviderProps {
@@ -14,14 +13,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userStatusId, setUserStatusId] = useState<number | null>(null);
+  const [userDetails, setUserDetails] = useState<any>(null);
   const [pelakuUsaha, setPelakuUsaha] = useState<any>(null);
   const [cabang, setCabang] = useState<any>(null);
   const [cabangList, setCabangList] = useState<any[]>([]);
   const [selectedCabangId, setSelectedCabangId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [tenants, setTenants] = useState<any[]>([]);
+  const [selectedTenant, setSelectedTenant] = useState<any>(null);
 
   useEffect(() => {
-    // Ambil session pengguna saat ini
+    // Get current user session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setUser(session.user);
@@ -32,7 +34,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     });
 
-    // Set up listener untuk perubahan auth state
+    // Set up listener for auth state changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -43,10 +45,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setUser(null);
         setUserRole(null);
         setUserStatusId(null);
+        setUserDetails(null);
         setPelakuUsaha(null);
         setCabang(null);
         setCabangList([]);
         setSelectedCabangId(null);
+        setTenants([]);
+        setSelectedTenant(null);
         setIsLoading(false);
       }
     });
@@ -54,55 +59,79 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Fungsi untuk mengambil data user, pelaku usaha, dan cabang
+  // Function to fetch user data, business owner data, and branches
   const fetchUserData = async (userId: string) => {
     setIsLoading(true);
     try {
       console.log("Fetching user data for ID:", userId);
 
-      // 1. Ambil profile (jika ada)
+      // 1. Get profile (if exists)
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('business_role, status_id')
+        .select('business_role, status_id, full_name, whatsapp_number, cabang_id, pelaku_usaha_id')
         .eq('id', userId)
         .maybeSingle();
 
       if (profileError) {
         console.error("Error fetching profile:", profileError);
       } else if (profileData) {
+        setUserDetails(profileData);
         if (profileData.status_id) {
           setUserStatusId(profileData.status_id);
         }
         setUserRole(profileData.business_role || 'user');
+        
+        // If the user is an employee (kasir), fetch their assigned business
+        if (profileData.business_role === 'kasir' && profileData.pelaku_usaha_id) {
+          const { data: assignedBusiness, error: assignedError } = await supabase
+            .from('pelaku_usaha')
+            .select('*')
+            .eq('pelaku_usaha_id', profileData.pelaku_usaha_id)
+            .maybeSingle();
+            
+          if (!assignedError && assignedBusiness) {
+            setPelakuUsaha(assignedBusiness);
+            setSelectedTenant(assignedBusiness);
+            
+            // Fetch branches for this business
+            if (assignedBusiness.pelaku_usaha_id) {
+              fetchBusinessBranches(assignedBusiness.pelaku_usaha_id, profileData.cabang_id);
+            }
+          }
+        }
       }
 
-      // 2. Ambil data pelaku usaha (jika user adalah pelaku usaha)
+      // 2. Get business owner data (if user is a business owner)
       const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
         .from('pelaku_usaha')
         .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
+        .eq('user_id', userId);
 
       if (pelakuUsahaError) {
         console.error("Error fetching pelaku usaha:", pelakuUsahaError);
-      } else if (pelakuUsahaData) {
-        console.log("Found pelaku usaha:", pelakuUsahaData);
-        setPelakuUsaha(pelakuUsahaData);
+      } else if (pelakuUsahaData && pelakuUsahaData.length > 0) {
+        console.log("Found business owner data:", pelakuUsahaData);
+        setTenants(pelakuUsahaData);
         
-        // 3. Jika pelaku usaha ditemukan, ambil data cabang
+        // Select the first business by default
+        const defaultBusiness = pelakuUsahaData[0];
+        setPelakuUsaha(defaultBusiness);
+        setSelectedTenant(defaultBusiness);
+        
+        // 3. If business owner data found, fetch branches
         const { data: cabangData, error: cabangError } = await supabase
           .from('cabang')
           .select('*')
-          .eq('pelaku_usaha_id', pelakuUsahaData.pelaku_usaha_id)
+          .eq('pelaku_usaha_id', defaultBusiness.pelaku_usaha_id)
           .order('cabang_id', { ascending: true });
 
         if (cabangError) {
-          console.error("Error fetching cabang:", cabangError);
+          console.error("Error fetching branches:", cabangError);
         } else if (cabangData && cabangData.length > 0) {
-          console.log("Found cabang:", cabangData);
+          console.log("Found branches:", cabangData);
           setCabangList(cabangData);
           
-          // Pilih cabang pertama sebagai default
+          // Select first branch as default
           const defaultCabang = cabangData[0];
           setCabang(defaultCabang);
           setSelectedCabangId(defaultCabang.cabang_id);
@@ -114,17 +143,72 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setIsLoading(false);
     }
   };
+  
+  // Function to fetch branches for a specific business
+  const fetchBusinessBranches = async (businessId: string | number, defaultBranchId?: number | null) => {
+    try {
+      const { data: cabangData, error: cabangError } = await supabase
+        .from('cabang')
+        .select('*')
+        .eq('pelaku_usaha_id', businessId)
+        .order('cabang_id', { ascending: true });
 
-  // Nilai yang akan dishare melalui context
+      if (cabangError) {
+        console.error("Error fetching branches for business:", cabangError);
+        return;
+      }
+      
+      if (cabangData && cabangData.length > 0) {
+        setCabangList(cabangData);
+        
+        // If specific branch ID is provided, select it
+        if (defaultBranchId) {
+          const selectedBranch = cabangData.find(b => b.cabang_id === defaultBranchId);
+          if (selectedBranch) {
+            setCabang(selectedBranch);
+            setSelectedCabangId(selectedBranch.cabang_id);
+            return;
+          }
+        }
+        
+        // Otherwise select first branch as default
+        const defaultCabang = cabangData[0];
+        setCabang(defaultCabang);
+        setSelectedCabangId(defaultCabang.cabang_id);
+      } else {
+        setCabangList([]);
+        setCabang(null);
+        setSelectedCabangId(null);
+      }
+    } catch (error) {
+      console.error("Error fetching branches:", error);
+    }
+  };
+  
+  // Function to change selected tenant/business
+  const changeTenant = async (tenantId: number) => {
+    const selected = tenants.find(t => t.pelaku_usaha_id === tenantId);
+    if (selected) {
+      setSelectedTenant(selected);
+      setPelakuUsaha(selected);
+      await fetchBusinessBranches(selected.pelaku_usaha_id);
+    }
+  };
+
+  // Value to be shared through context
   const value: AuthContextType = {
     user,
     userRole,
     userStatusId,
+    userDetails,
     pelakuUsaha,
     cabang,
     cabangList,
     selectedCabangId,
     setSelectedCabangId,
+    tenants,
+    selectedTenant,
+    changeTenant,
     isLoading
   };
 

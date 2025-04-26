@@ -24,6 +24,7 @@ import ProductCategories from "./pages/ProductCategories";
 import StockTransfer from "./pages/StockTransfer";
 import Returns from "./pages/Returns";
 import Members from "./pages/Members";
+import Kasir from "./pages/Kasir";
 import "./App.css";
 
 const queryClient = new QueryClient();
@@ -62,6 +63,7 @@ function App() {
               <Route path="stock-transfer" element={<StockTransfer />} />
               <Route path="returns" element={<Returns />} />
               <Route path="members" element={<Members />} />
+              <Route path="kasir" element={<Kasir />} />
             </Route>
           </Routes>
         </BrowserRouter>

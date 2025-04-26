@@ -5,11 +5,11 @@ import { useAuth } from "../hooks/auth";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: string[]; // Prop ini masih disimpan untuk kompatibilitas
+  allowedRoles?: string[]; // List of roles that can access this route
 }
 
-function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { user, isLoading: authLoading } = useAuth();
+function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+  const { user, userRole, isLoading: authLoading } = useAuth();
   const location = useLocation();
   const isLoading = authLoading;
 
@@ -18,10 +18,12 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
     path: location.pathname,
     isLoading,
     authLoading,
-    user: !!user
+    user: !!user,
+    userRole,
+    allowedRoles
   });
 
-  // Jika loadingnya terlalu lama, kita tambahkan maksimal 3 detik
+  // If loadingnya terlalu lama, kita tambahkan maksimal 3 detik
   React.useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (isLoading) {
@@ -47,8 +49,30 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // User is authenticated, grant access to all routes
-  console.log('User is authenticated, allowing access to all routes');
+  // Check if there are role restrictions and if the user has the required role
+  if (allowedRoles && allowedRoles.length > 0) {
+    const hasAccess = userRole && allowedRoles.includes(userRole);
+    
+    if (!hasAccess) {
+      console.log(`User with role ${userRole} does not have access to ${location.pathname}`);
+      
+      // Redirect to appropriate dashboard based on role
+      if (userRole === 'kasir') {
+        return <Navigate to="/kasir" replace />;
+      }
+      
+      // Default redirect to home
+      return <Navigate to="/" replace />;
+    }
+  }
+
+  // Direct kasir users to the kasir dashboard if they try to access the main dashboard
+  if (userRole === 'kasir' && location.pathname === '/') {
+    return <Navigate to="/kasir" replace />;
+  }
+
+  // User is authenticated and has required role, grant access
+  console.log('User is authenticated and has required role, allowing access');
   return <>{children}</>;
 }
 

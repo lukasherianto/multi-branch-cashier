@@ -1,7 +1,8 @@
+
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { MenuItem } from "./MenuItem";
-import menuConfig from "./menuConfig";
+import menuConfig, { menuConfigByRole } from "./menuConfig";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/auth";
 
@@ -22,15 +23,20 @@ export const MenuContent = ({
 }: MenuContentProps) => {
   const { userRole } = useAuth();
   
-  // Untuk debugging
-  console.log('MenuContent rendering:', { userRole, menuConfig });
+  // Get menu configuration based on user role
+  const roleBasedMenuConfig = userRole && menuConfigByRole[userRole as keyof typeof menuConfigByRole] 
+    ? menuConfigByRole[userRole as keyof typeof menuConfigByRole] 
+    : menuConfig;
+  
+  // For debugging
+  console.log('MenuContent rendering:', { userRole, roleBasedMenuConfig });
 
   return (
     <div className="flex flex-col h-full">
       <ScrollArea className="flex-grow">
         <div className="space-y-0.5 py-2 pr-2">
-          {menuConfig.map((section) => {
-            // Tampilkan semua item tanpa filter
+          {roleBasedMenuConfig.map((section) => {
+            // Display all items without filtering
             const items = section.items;
             
             return (
