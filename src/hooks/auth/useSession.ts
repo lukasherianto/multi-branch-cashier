@@ -3,7 +3,13 @@ import { useState, useEffect } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-export const useSession = () => {
+interface UseSessionReturn {
+  user: User | null;
+  isLoading: boolean;
+  setUser: (user: User | null) => void;
+}
+
+export const useSession = (): UseSessionReturn => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -44,3 +50,4 @@ export const useSession = () => {
 
   return { user, isLoading, setUser };
 };
+

@@ -4,7 +4,14 @@ import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "./types";
 
-export const useUserRole = (user: User | null) => {
+interface UseUserRoleReturn {
+  userRole: UserRole | null;
+  userStatusId: number | null;
+  setUserRole: (role: UserRole | null) => void;
+  setUserStatusId: (statusId: number | null) => void;
+}
+
+export const useUserRole = (user: User | null): UseUserRoleReturn => {
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [userStatusId, setUserStatusId] = useState<number | null>(null);
 
@@ -51,3 +58,4 @@ export const useUserRole = (user: User | null) => {
 
   return { userRole, userStatusId, setUserRole, setUserStatusId };
 };
+

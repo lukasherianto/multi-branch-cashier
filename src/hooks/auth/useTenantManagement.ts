@@ -2,14 +2,23 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { TenantInfo } from "./types";
+import { User } from "@supabase/supabase-js";
+
+interface UseTenantManagementReturn {
+  tenants: TenantInfo[];
+  selectedTenant: TenantInfo | null;
+  changeTenant: (tenantId: number) => Promise<void>;
+  setTenants: (tenants: TenantInfo[]) => void;
+  setSelectedTenant: (tenant: TenantInfo | null) => void;
+}
 
 export const useTenantManagement = (
-  user: any,
+  user: User | null,
   setPelakuUsaha: (data: any) => void,
   setCabangList: (data: any[]) => void,
   setCabang: (data: any) => void,
   setSelectedCabangId: (id: number | null) => void
-) => {
+): UseTenantManagementReturn => {
   const [tenants, setTenants] = useState<TenantInfo[]>([]);
   const [selectedTenant, setSelectedTenant] = useState<TenantInfo | null>(null);
 
@@ -62,3 +71,4 @@ export const useTenantManagement = (
     changeTenant,
   };
 };
+

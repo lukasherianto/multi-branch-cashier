@@ -20,7 +20,7 @@ export interface TenantInfo {
 
 export interface AuthContextType {
   user: User | null;
-  userRole: string | null;
+  userRole: UserRole | null;
   userStatusId: number | null;
   userDetails?: UserDetails;
   pelakuUsaha: any;
@@ -33,3 +33,4 @@ export interface AuthContextType {
   changeTenant: (tenantId: number) => Promise<void>;
   isLoading: boolean;
 }
+
