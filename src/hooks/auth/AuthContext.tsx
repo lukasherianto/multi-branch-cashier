@@ -1,3 +1,4 @@
+
 import { createContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthContextType } from "./types";
@@ -95,7 +96,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             
             // Fetch branches for this business
             if (assignedBusiness.pelaku_usaha_id) {
-              fetchBusinessBranches(assignedBusiness.pelaku_usaha_id, profileData.cabang_id);
+              // Fix: Ensure businessId is a number by converting it if needed
+              const businessId = typeof assignedBusiness.pelaku_usaha_id === 'string' 
+                ? parseInt(assignedBusiness.pelaku_usaha_id, 10) 
+                : assignedBusiness.pelaku_usaha_id;
+              
+              // Fix: Also ensure cabang_id is a number if it exists
+              const cabangId = profileData.cabang_id 
+                ? (typeof profileData.cabang_id === 'string' 
+                    ? parseInt(profileData.cabang_id, 10) 
+                    : profileData.cabang_id) 
+                : null;
+              
+              fetchBusinessBranches(businessId, cabangId);
             }
           }
         }
@@ -119,10 +132,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setSelectedTenant(defaultBusiness);
         
         // 3. If business owner data found, fetch branches
+        // Fix: Ensure businessId is a number
+        const businessId = typeof defaultBusiness.pelaku_usaha_id === 'string' 
+          ? parseInt(defaultBusiness.pelaku_usaha_id, 10) 
+          : defaultBusiness.pelaku_usaha_id;
+        
         const { data: cabangData, error: cabangError } = await supabase
           .from('cabang')
           .select('*')
-          .eq('pelaku_usaha_id', defaultBusiness.pelaku_usaha_id)
+          .eq('pelaku_usaha_id', businessId)
           .order('cabang_id', { ascending: true });
 
         if (cabangError) {
@@ -145,7 +163,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
   
   // Function to fetch branches for a specific business
-  const fetchBusinessBranches = async (businessId: string | number, defaultBranchId?: number | null) => {
+  const fetchBusinessBranches = async (businessId: number, defaultBranchId?: number | null) => {
     try {
       const { data: cabangData, error: cabangError } = await supabase
         .from('cabang')
@@ -191,7 +209,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     if (selected) {
       setSelectedTenant(selected);
       setPelakuUsaha(selected);
-      await fetchBusinessBranches(selected.pelaku_usaha_id);
+      // Fix: Ensure businessId is a number
+      const businessId = typeof selected.pelaku_usaha_id === 'string' 
+        ? parseInt(selected.pelaku_usaha_id, 10) 
+        : selected.pelaku_usaha_id;
+      await fetchBusinessBranches(businessId);
     }
   };
 
