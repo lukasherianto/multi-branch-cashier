@@ -3,8 +3,8 @@ import { createContext, useState, ReactNode } from "react";
 import { AuthContextType } from "./types";
 import { useAuthState } from "./useAuthState";
 import { useBusinessData } from "./useBusinessData";
+import { useTenantManagement } from "./useTenantManagement";
 
-// Create context with default undefined value
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 interface AuthProviderProps {
@@ -18,8 +18,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [cabang, setCabang] = useState<any>(null);
   const [cabangList, setCabangList] = useState<any[]>([]);
   const [selectedCabangId, setSelectedCabangId] = useState<number | null>(null);
-  const [tenants, setTenants] = useState<any[]>([]);
-  const [selectedTenant, setSelectedTenant] = useState<any>(null);
+
+  // Use the tenant management hook
+  const {
+    tenants,
+    selectedTenant,
+    changeTenant,
+  } = useTenantManagement(
+    user,
+    setPelakuUsaha,
+    setCabangList,
+    setCabang,
+    setSelectedCabangId
+  );
 
   // Use the business data hook
   useBusinessData(
@@ -30,20 +41,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setCabang,
     setSelectedCabangId
   );
-
-  // Function to change selected tenant/business
-  const changeTenant = async (tenantId: number) => {
-    const selected = tenants.find(t => t.pelaku_usaha_id === tenantId);
-    if (selected) {
-      setSelectedTenant(selected);
-      setPelakuUsaha(selected);
-      // Fix: Ensure businessId is a number
-      const businessId = typeof selected.pelaku_usaha_id === 'string' 
-        ? parseInt(selected.pelaku_usaha_id, 10) 
-        : selected.pelaku_usaha_id;
-      await fetchBusinessBranches(businessId);
-    }
-  };
 
   // Value to be shared through context
   const value: AuthContextType = {
