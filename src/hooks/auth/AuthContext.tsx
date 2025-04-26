@@ -1,9 +1,10 @@
 
-import { createContext, useState, ReactNode } from "react";
+import { createContext, ReactNode } from "react";
 import { AuthContextType } from "./types";
 import { useAuthState } from "./useAuthState";
 import { useBusinessData } from "./useBusinessData";
 import { useTenantManagement } from "./useTenantManagement";
+import { useUserDetails } from "./useUserDetails";
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -12,12 +13,19 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const { user, userRole, userStatusId, isLoading, setUser, setUserRole, setUserStatusId } = useAuthState();
-  const [userDetails, setUserDetails] = useState<any>(null);
-  const [pelakuUsaha, setPelakuUsaha] = useState<any>(null);
-  const [cabang, setCabang] = useState<any>(null);
-  const [cabangList, setCabangList] = useState<any[]>([]);
-  const [selectedCabangId, setSelectedCabangId] = useState<number | null>(null);
+  const { user, userRole, userStatusId, isLoading } = useAuthState();
+  const {
+    userDetails,
+    setUserDetails,
+    pelakuUsaha,
+    setPelakuUsaha,
+    cabang,
+    setCabang,
+    cabangList,
+    setCabangList,
+    selectedCabangId,
+    setSelectedCabangId,
+  } = useUserDetails();
 
   // Use the tenant management hook
   const {
@@ -42,7 +50,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setSelectedCabangId
   );
 
-  // Value to be shared through context
   const value: AuthContextType = {
     user,
     userRole,
