@@ -5,6 +5,7 @@ import { useEmployeeData } from "./employee/useEmployeeData";
 import { useEmployeeForm } from "./employee/useEmployeeForm";
 import { useEmployeeDelete } from "./employee/useEmployeeDelete";
 import { EmployeeFormSection } from "./employee/EmployeeFormSection";
+import { useEffect } from "react";
 
 export function EmployeeForm() {
   const { isLoading: dataLoading, employees, branches, loadEmployees } = useEmployeeData();
@@ -12,6 +13,12 @@ export function EmployeeForm() {
   const { deleteEmployee, isDeleting } = useEmployeeDelete(loadEmployees);
 
   const isLoading = dataLoading || formLoading || isDeleting;
+
+  // Memuat ulang data karyawan saat komponen dimount
+  useEffect(() => {
+    console.log("EmployeeForm mounted, loading employees...");
+    loadEmployees();
+  }, []);
 
   return (
     <div className="space-y-6">
