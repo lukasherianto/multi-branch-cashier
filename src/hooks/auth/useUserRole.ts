@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -58,4 +57,3 @@ export const useUserRole = (user: User | null): UseUserRoleReturn => {
 
   return { userRole, userStatusId, setUserRole, setUserStatusId };
 };
-

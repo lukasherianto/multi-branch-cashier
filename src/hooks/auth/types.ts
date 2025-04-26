@@ -33,4 +33,3 @@ export interface AuthContextType {
   changeTenant: (tenantId: number) => Promise<void>;
   isLoading: boolean;
 }
-

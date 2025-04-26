@@ -28,4 +28,3 @@ export const useAuthState = (): UseAuthStateReturn => {
     setUserStatusId 
   };
 };
-

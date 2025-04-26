@@ -35,4 +35,3 @@ export const useUserDetails = (): UseUserDetailsReturn => {
     setSelectedCabangId,
   };
 };
-
