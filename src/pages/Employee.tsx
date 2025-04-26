@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmployeeList } from '@/components/settings/employee/EmployeeList';
-import { useEmployeeData } from '@/components/settings/employee/useEmployeeData';
+import { useEmployeeData } from '@/components/settings/employee/hooks/useEmployeeData';
 import { useEmployeeDelete } from '@/components/settings/employee/useEmployeeDelete';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
