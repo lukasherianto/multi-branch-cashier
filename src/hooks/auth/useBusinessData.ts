@@ -64,7 +64,6 @@ export const useBusinessData = (
           }
           // If there are multiple branches and none selected, default to Pusat (first/lowest ID branch)
           else if (sortedBranches.length > 1 && !selectedCabangId) {
-            // The headquarters is considered the first branch (lowest ID)
             const headquartersId = sortedBranches[0].cabang_id;
             setSelectedCabangId(headquartersId);
             setCabang(sortedBranches[0]);
