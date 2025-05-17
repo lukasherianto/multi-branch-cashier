@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,8 +16,11 @@ export const useSession = (): UseSessionReturn => {
   useEffect(() => {
     // Maksimal waktu untuk loading
     const loadingTimeout = setTimeout(() => {
-      setIsLoading(false);
-    }, 5000);
+      if (isLoading) {
+        console.log("Loading timeout reached, forcing load complete");
+        setIsLoading(false);
+      }
+    }, 3000);
 
     // Set up real-time subscription to auth changes
     const {
@@ -37,7 +41,12 @@ export const useSession = (): UseSessionReturn => {
       if (session?.user) {
         console.log("Active session found:", session.user.id);
         setUser(session.user);
+      } else {
+        console.log("No active session found");
       }
+      setIsLoading(false);
+    }).catch(error => {
+      console.error("Error getting session:", error);
       setIsLoading(false);
     });
 

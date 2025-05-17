@@ -11,8 +11,12 @@ import { LogoUpload } from "./LogoUpload";
 import { SocialMediaInputs } from "./SocialMediaInputs";
 import { PointsToggle } from "./PointsToggle";
 import { useBusinessForm } from "./useBusinessForm";
+import { toast } from "sonner";
+import { useEffect } from "react";
+import { useAuth } from "@/hooks/auth";
 
 export const BusinessForm = () => {
+  const { user, pelakuUsaha } = useAuth();
   const {
     isLoading,
     isSaving,
@@ -28,8 +32,32 @@ export const BusinessForm = () => {
     setLogoUrl,
     pointsEnabled,
     setPointsEnabled,
-    handleSubmit
+    handleSubmit,
+    pelakuUsahaId,
+    loadBusinessData
   } = useBusinessForm();
+
+  // Reload after a successful save to refresh data throughout app
+  useEffect(() => {
+    if (user && !pelakuUsaha && !isLoading && !isSaving) {
+      console.log("No pelakuUsaha data found, checking if we need to reload");
+      // Attempt to reload after 2 seconds
+      const timer = setTimeout(() => {
+        console.log("Reloading business data");
+        loadBusinessData();
+        
+        if (pelakuUsahaId) {
+          toast.success("Data usaha berhasil dibuat. Memuat ulang data...");
+          // Give Supabase time to process data before reload
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        }
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [pelakuUsahaId, user, pelakuUsaha, isLoading, isSaving]);
 
   if (isLoading) {
     return <BusinessFormSkeleton />;

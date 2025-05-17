@@ -17,15 +17,52 @@ export const useBusinessData = (
         try {
           console.log("Fetching pelaku usaha for user:", user.id);
           
-          const { data: pelakuUsahaData, error: pelakuUsahaError } = await supabase
-            .from('pelaku_usaha')
-            .select('*')
-            .eq('user_id', user.id)
+          // Fetch from profiles table first to get pelaku_usaha_id if available
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('pelaku_usaha_id')
+            .eq('id', user.id)
             .maybeSingle();
+            
+          if (profileError) {
+            console.error('Error fetching profile data:', profileError);
+          }
+          
+          let pelakuUsahaId = profileData?.pelaku_usaha_id;
+          let pelakuUsahaData;
+          
+          // If pelaku_usaha_id found in profile, use it to fetch direct
+          if (pelakuUsahaId) {
+            console.log("Found pelaku_usaha_id in profile:", pelakuUsahaId);
+            const { data, error } = await supabase
+              .from('pelaku_usaha')
+              .select('*')
+              .eq('pelaku_usaha_id', pelakuUsahaId)
+              .maybeSingle();
+              
+            if (error) {
+              console.error('Error fetching pelaku_usaha by ID:', error);
+            } else {
+              pelakuUsahaData = data;
+            }
+          }
+          
+          // If not found via profile or direct fetch failed, try by user_id
+          if (!pelakuUsahaData) {
+            console.log("Trying to fetch pelaku_usaha by user_id");
+            const { data: directData, error: directError } = await supabase
+              .from('pelaku_usaha')
+              .select('*')
+              .eq('user_id', user.id)
+              .maybeSingle();
 
-          if (pelakuUsahaError) {
-            console.error('Error mengambil data pelaku usaha:', pelakuUsahaError);
-            return;
+            if (directError) {
+              console.error('Error fetching pelaku usaha by user_id:', directError);
+              setPelakuUsaha(null);
+              return;
+            }
+            
+            pelakuUsahaData = directData;
           }
 
           if (!pelakuUsahaData) {
@@ -63,7 +100,7 @@ export const useBusinessData = (
             setCabang(sortedBranches[0]);
           }
           // If there are multiple branches and none selected, default to Pusat (first/lowest ID branch)
-          else if (sortedBranches.length > 1 && !selectedCabangId) {
+          else if (sortedBranches.length > 0 && !selectedCabangId) {
             const headquartersId = sortedBranches[0].cabang_id;
             setSelectedCabangId(headquartersId);
             setCabang(sortedBranches[0]);

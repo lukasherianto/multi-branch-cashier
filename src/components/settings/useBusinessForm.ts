@@ -129,14 +129,34 @@ export const useBusinessForm = () => {
         if (updateError) throw updateError;
       } else {
         console.log("Creating new business for user:", user.id);
-        const { error: insertError } = await supabase
+        const { data: newBusiness, error: insertError } = await supabase
           .from('pelaku_usaha')
           .insert({
             user_id: user.id,
             ...businessData,
-          });
+          })
+          .select('*')
+          .single();
 
         if (insertError) throw insertError;
+        
+        if (newBusiness) {
+          setPelakuUsahaId(newBusiness.pelaku_usaha_id);
+          
+          // Also update profiles table with pelaku_usaha_id
+          const { error: profileUpdateError } = await supabase
+            .from('profiles')
+            .upsert({
+              id: user.id,
+              pelaku_usaha_id: newBusiness.pelaku_usaha_id,
+              full_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
+              updated_at: new Date().toISOString()
+            });
+            
+          if (profileUpdateError) {
+            console.error("Error updating profile:", profileUpdateError);
+          }
+        }
       }
 
       toast({
@@ -144,7 +164,7 @@ export const useBusinessForm = () => {
         description: "Data usaha berhasil diperbarui",
       });
       
-      loadBusinessData();
+      await loadBusinessData();
     } catch (error) {
       console.error("Error saving business data:", error);
       toast({
@@ -173,6 +193,8 @@ export const useBusinessForm = () => {
     pointsEnabled,
     setPointsEnabled,
     handleSubmit,
-    validateWhatsappNumber
+    validateWhatsappNumber,
+    pelakuUsahaId,
+    loadBusinessData
   };
 };

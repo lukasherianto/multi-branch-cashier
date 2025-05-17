@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/auth";
 
@@ -9,9 +9,11 @@ interface ProtectedRouteProps {
 }
 
 function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
-  const { user, userRole, isLoading: authLoading } = useAuth();
+  const { user, userRole, isLoading: authLoading, pelakuUsaha } = useAuth();
   const location = useLocation();
   const isLoading = authLoading;
+  const needsBusinessData = location.pathname.includes('/products') || 
+                           location.pathname.includes('/branches');
 
   // Add debugging
   console.log('ProtectedRoute checking access:', { 
@@ -20,11 +22,13 @@ function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
     authLoading,
     user: !!user,
     userRole,
-    allowedRoles
+    hasBusiness: !!pelakuUsaha,
+    allowedRoles,
+    needsBusinessData
   });
 
   // If loadingnya terlalu lama, kita tambahkan maksimal 3 detik
-  React.useEffect(() => {
+  useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (isLoading) {
         console.log('Loading timeout triggered, forcing continuation');
@@ -47,6 +51,13 @@ function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
     console.log('No user found, redirecting to auth');
     // Redirect to the login page with a return path
     return <Navigate to="/auth" state={{ from: location }} replace />;
+  }
+
+  // If the user is trying to access a page that requires business data (products or branches)
+  // but they don't have business data yet, redirect them to settings
+  if (needsBusinessData && !pelakuUsaha) {
+    console.log('User trying to access page requiring business data, but has no business data');
+    return <Navigate to="/settings?tab=business" state={{ from: location }} replace />;
   }
 
   // Check if there are role restrictions and if the user has the required role
